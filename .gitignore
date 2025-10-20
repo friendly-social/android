@@ -1,2 +1,5 @@
 .idea/
 .kotlin/
+build/
+.gradle/
+local.properties
