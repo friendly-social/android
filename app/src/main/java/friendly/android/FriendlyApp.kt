@@ -5,17 +5,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 
 @Composable
-fun FriendlyApp(modifier: Modifier = Modifier) {
-    FriendlyAndroidTheme {
+fun FriendlyApp(
+    viewModelFactory: FriendlyViewModelFactory,
+    modifier: Modifier = Modifier,
+) {
+    FriendlyTheme {
         Scaffold(
             modifier = modifier
-                .padding(28.dp)
                 .fillMaxSize(),
         ) { innerPadding ->
-            FriendlyNavGraph(Modifier.padding(innerPadding))
+            FriendlyNavGraph(
+                viewModelFactory = viewModelFactory,
+                Modifier.padding(innerPadding),
+            )
         }
     }
 }

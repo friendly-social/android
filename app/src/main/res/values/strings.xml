@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">friendly-android</string>
+    <string name="sign_up">Sign up</string>
+    <string name="welcome_to_friendly">Welcome to Friendly</string>
+    <string name="welcome_screen_title">Make connections easily. Thank you for testing. Lorem ipsum.</string>
+    <string name="welcome_screen_text">"Friendly is a WIP project that—i hope—will be finished as soon as it posssible. Making some long welcome text to this look a little bit complete.\n\nFor now we only support only sign up feature for testing purposes. That means that currently after sign up you won't be able to sign in to your account when you reset this app or try launching it on another device.\n                "</string>
+    <string name="sign_up_to_friendly">Sign up to Friendly</string>
+    <string name="a_few_words_about_yourself">A few words about yourself</string>
+    <string name="your_interests">Your interests</string>
+    <string name="proceed">Proceed</string>
+    <string name="your_nickname">Your nickname</string>
+    <string name="pick_your_interests">Pick your interests</string>
+    <string name="generating">Generating…</string>
 </resources>

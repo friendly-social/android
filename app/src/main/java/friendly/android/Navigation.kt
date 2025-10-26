@@ -2,6 +2,7 @@ package friendly.android
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -9,12 +10,16 @@ import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import friendly.android.FriendlyGraph.Home
 import friendly.android.FriendlyGraph.Registration
+import friendly.android.FriendlyGraph.Welcome
 import friendly.sdk.UserId
 import kotlinx.serialization.Serializable
 
 object FriendlyGraph {
     @Serializable
     data object Registration
+
+    @Serializable
+    data object Welcome
 
     @Serializable
     data object Home {
@@ -30,16 +35,30 @@ object FriendlyGraph {
 }
 
 @Composable
-fun FriendlyNavGraph(modifier: Modifier = Modifier) {
+fun FriendlyNavGraph(
+    viewModelFactory: FriendlyViewModelFactory,
+    modifier: Modifier = Modifier,
+) {
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = Registration,
+        startDestination = Welcome,
         modifier = modifier,
     ) {
+        composable<Welcome> {
+            WelcomeScreen(
+                onSignUp = { navController.navigate(Registration) },
+                modifier = Modifier,
+            )
+        }
+
         composable<Registration> {
+            val vm = viewModel<RegisterScreenViewModel>(
+                factory = viewModelFactory,
+            )
             RegisterScreen(
+                vm = vm,
                 onHome = {
                     val userId = UserId(123L).serializable()
                     navController.navigate(
@@ -62,7 +81,9 @@ fun FriendlyNavGraph(modifier: Modifier = Modifier) {
             composable<Home.Profile> { backStackEntry ->
                 val profile: Home.Profile = backStackEntry.toRoute()
                 ProfileScreen(
-                    userId = UserId(profile.userId),
+                    vm = viewModel<ProfileScreenViewModel>(
+                        factory = viewModelFactory,
+                    ),
                     modifier = Modifier,
                 )
             }
