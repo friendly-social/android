@@ -29,4 +29,4 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: android-app
-                  path: app/build/outputs/apk/*/*/*.apk
+                  path: app/build/outputs/apk/*/*.apk
