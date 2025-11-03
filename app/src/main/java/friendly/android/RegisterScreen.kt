@@ -1,5 +1,11 @@
 package friendly.android
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -29,130 +36,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import coil3.compose.AsyncImage
 import friendly.sdk.Interest
-import friendly.sdk.Nickname
-import friendly.sdk.UserDescription
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-private data class RegisterState(
-    val nickname: String,
-    val description: String,
-    val availableInterests: List<Interest>,
-    val pickedInterests: List<Interest>,
-    val isGenerating: Boolean,
-) {
-    fun toUiState(): RegisterUiState {
-        if (isGenerating) return RegisterUiState.Generating
-        return RegisterUiState.Editing(
-            nickname = nickname,
-            description = description,
-            isValid = nickname.isNotBlank() &&
-                description.isNotBlank(), // todo add validators
-            availableInterests = availableInterests,
-            pickedInterests = pickedInterests,
-        )
-    }
-}
-
-sealed interface RegisterUiState {
-    data class Editing(
-        val availableInterests: List<Interest>,
-        val pickedInterests: List<Interest>,
-        val nickname: String,
-        val description: String,
-        val isValid: Boolean,
-    ) : RegisterUiState
-
-    data object Generating : RegisterUiState
-}
-
-class RegisterScreenViewModel(private val register: RegisterUseCase) :
-    ViewModel() {
-    private val _state = MutableStateFlow(
-        value = RegisterState(
-            nickname = "",
-            description = "",
-            availableInterests = interests,
-            pickedInterests = listOf(),
-            isGenerating = false,
-        ),
-    )
-    val state = _state
-        .map(RegisterState::toUiState)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = RegisterUiState.Editing(
-                nickname = "",
-                description = "",
-                isValid = false,
-                availableInterests = interests,
-                pickedInterests = listOf(),
-            ),
-        )
-
-    fun updateNickname(new: String) {
-        _state.update {
-            it.copy(
-                nickname = new,
-            )
-        }
-    }
-
-    fun updateDescription(new: String) {
-        _state.update {
-            it.copy(
-                description = new,
-            )
-        }
-    }
-
-    fun toggleInterest(interest: Interest) {
-        val picked = interest in _state.value.pickedInterests
-        if (picked) {
-            _state.update {
-                it.copy(
-                    pickedInterests = it.pickedInterests.minus(interest),
-                )
-            }
-        } else {
-            _state.update {
-                it.copy(
-                    pickedInterests = it.pickedInterests.plus(interest),
-                )
-            }
-        }
-    }
-
-    // todo add validators
-    fun stateIsValid(): Boolean = _state.value.nickname.isNotBlank() &&
-        _state.value.description.isNotBlank() &&
-        _state.value.pickedInterests.isNotEmpty()
-
-    fun register(onSuccess: () -> Unit) {
-        viewModelScope.launch {
-            if (!stateIsValid()) return@launch
-
-            _state.update { it.copy(isGenerating = true) }
-
-            val nickname = Nickname.orThrow(_state.value.nickname)
-            val description = UserDescription.orThrow(_state.value.description)
-            val interests = _state.value.pickedInterests
-            register(nickname, description, interests)
-            onSuccess()
-        }
-    }
-}
 
 @Composable
 fun RegisterScreen(
@@ -165,7 +56,7 @@ fun RegisterScreen(
     val state by vm.state.collectAsState()
 
     when (val state = state) {
-        is RegisterUiState.Generating -> {
+        is RegisterScreenUiState.Generating -> {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize(),
@@ -180,7 +71,7 @@ fun RegisterScreen(
             }
         }
 
-        is RegisterUiState.Editing -> {
+        is RegisterScreenUiState.Editing -> {
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = false,
@@ -191,9 +82,12 @@ fun RegisterScreen(
                         state = state,
                         onNickname = vm::updateNickname,
                         onDescription = vm::updateDescription,
+                        onAvatarResult = vm::pickAvatar,
                         onProceed = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(1)
+                            if (state.isFirstPageValid) {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(1)
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxSize(),
@@ -224,8 +118,14 @@ private fun NicknameAndDescriptionPage(
     modifier: Modifier = Modifier,
     onNickname: (String) -> Unit,
     onDescription: (String) -> Unit,
-    state: RegisterUiState.Editing,
+    onAvatarResult: (Uri?) -> Unit,
+    state: RegisterScreenUiState.Editing,
 ) {
+    val pickMedia = rememberLauncherForActivityResult(
+        contract = PickVisualMedia(),
+        onResult = onAvatarResult,
+    )
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(
@@ -239,6 +139,19 @@ private fun NicknameAndDescriptionPage(
         Text(
             text = stringResource(R.string.sign_up_to_friendly),
             style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier,
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        AvatarPicker(
+            uiState = state,
+            onPick = {
+                val pickRequest = PickVisualMediaRequest(
+                    mediaType = PickVisualMedia.ImageOnly,
+                )
+                pickMedia.launch(pickRequest)
+            },
             modifier = Modifier,
         )
 
@@ -283,18 +196,87 @@ private fun NicknameAndDescriptionPage(
             )
         }
 
-        Row(
-            horizontalArrangement = Arrangement.End,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Button(
-                onClick = {
-                    onProceed()
-                },
+        if (state.isFirstPageValid) {
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp),
             ) {
-                Text(
-                    text = stringResource(R.string.proceed),
+                Button(
+                    onClick = {
+                        onProceed()
+                    },
+                ) {
+                    Text(
+                        text = stringResource(R.string.proceed),
+                    )
+                }
+            }
+        } else {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(64.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AvatarPicker(
+    uiState: RegisterScreenUiState.Editing,
+    onPick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .clip(CircleShape)
+            .size(128.dp)
+            .clickable { onPick() },
+    ) {
+        when (uiState.avatar) {
+            is RegisterScreenUiState.AvatarState.None -> {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            color = MaterialTheme.colorScheme
+                                .secondaryContainer,
+                        ),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_photo_camera),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+
+            is RegisterScreenUiState.AvatarState.Uploaded -> {
+                AsyncImage(
+                    model = uiState.avatar.uriOrNull,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
                 )
+            }
+
+            is RegisterScreenUiState.AvatarState.Uploading -> {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    AsyncImage(
+                        model = uiState.avatar.uriOrNull,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    CircularProgressIndicator(Modifier.size(32.dp))
+                }
             }
         }
     }
@@ -302,7 +284,7 @@ private fun NicknameAndDescriptionPage(
 
 @Composable
 private fun InterestsPage(
-    state: RegisterUiState.Editing,
+    state: RegisterScreenUiState.Editing,
     onToggle: (Interest) -> Unit,
     onBack: () -> Unit,
     onProceed: () -> Unit,
@@ -341,7 +323,6 @@ private fun InterestsPage(
             interests.forEach { interest ->
                 InterestChip(
                     interest = interest,
-                    // todo wrap in remember maybe
                     selected = interest in state.pickedInterests,
                     onToggle = onToggle,
                 )
@@ -361,21 +342,23 @@ private fun InterestsPage(
 
             Spacer(Modifier.weight(1f))
 
-            Button(
-                onClick = {
-                    onProceed()
-                },
-            ) {
-                Text(
-                    text = stringResource(R.string.proceed),
-                )
+            if (state.pickedInterests.isNotEmpty()) {
+                Button(
+                    onClick = {
+                        onProceed()
+                    },
+                ) {
+                    Text(
+                        text = stringResource(R.string.proceed),
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun InterestChip(
+private fun InterestChip(
     interest: Interest,
     selected: Boolean,
     onToggle: (Interest) -> Unit,

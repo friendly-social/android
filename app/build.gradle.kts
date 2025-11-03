@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.molecule)
     implementation(libs.friendly.sdk)
     implementation(libs.serialization.json)
+    implementation(libs.coil.compose)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

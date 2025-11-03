@@ -11,13 +11,18 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val context = this
         val client = FriendlyClient.meetacy()
-        val authStorage = AuthStorage(this)
+        val authStorage = AuthStorage(context)
 
         val viewModelFactory = FriendlyViewModelFactory(
             registerUseCase = RegisterUseCase(
                 client = client,
                 authStorage = authStorage,
+            ),
+            avatarUploadUseCase = AvatarUploadUseCase(
+                client = client,
+                context = context,
             ),
             authStorage = authStorage,
         )
