@@ -12,7 +12,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.io.IOException
 import kotlinx.io.asSource
 import kotlinx.io.buffered
@@ -20,8 +19,14 @@ import java.io.InputStream
 
 class AvatarUploadUseCase(
     private val client: FriendlyClient,
-    context: Context,
+    private val context: Context,
 ) {
+    companion object {
+        private const val MAX_IMAGE_SIZE = 2048L
+        private const val COMPRESSION_QUALITY = 75
+        private const val MAX_FILE_SIZE_BYTES = 2L * 1024L * 1024L
+    }
+
     @JvmInline
     value class UploadingPercentage(val double: Double)
 
@@ -41,19 +46,33 @@ class AvatarUploadUseCase(
         val inputStream = contentResolver
             .openInputStream(avatarUri)
             ?: return UploadingResult.Failure
-        val size = getSize(avatarUri)
         val fileName = getFileName(avatarUri)
         val fileDescriptor = CompletableDeferred<FileDescriptor>()
+        val compressor = ImageCompressor(
+            uri = avatarUri,
+            inputStream = inputStream,
+            maxImageSize = MAX_IMAGE_SIZE,
+            compressionQuality = COMPRESSION_QUALITY,
+            maxFileSizeBytes = MAX_FILE_SIZE_BYTES,
+            context = context,
+        )
+
+        val (compressedInputStream, compressedSize) = compressor.compress()
 
         try {
-            inputStream.use { inputStream ->
+            compressedInputStream.use { inputStream ->
                 val flow = channelFlow {
+                    try {
+
                     val uploadResult = uploadAvatar(
                         fileName = fileName,
-                        size = size,
+                        size = compressedSize,
                         inputStream = inputStream,
                     )
                     fileDescriptor.complete(uploadResult)
+                    } catch (exception: IOException) {
+                       println("IO EXCEPTION: $exception")
+                    }
                 }
                 block(flow)
             }
@@ -108,8 +127,8 @@ class AvatarUploadUseCase(
             ?: "avatar"
     }
 
-    private fun getSize(avatarUri: Uri): Long = contentResolver
-        .openFileDescriptor(avatarUri, "r")
-        ?.use { fileDescriptor -> fileDescriptor.statSize }
-        ?: error("file size is null")
+//    private fun getSize(avatarUri: Uri): Long = contentResolver
+//        .openFileDescriptor(avatarUri, "r")
+//        ?.use { fileDescriptor -> fileDescriptor.statSize }
+//        ?: error("file size is null")
 }

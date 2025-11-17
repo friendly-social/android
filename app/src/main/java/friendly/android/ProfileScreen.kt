@@ -49,13 +49,6 @@ import kotlinx.coroutines.flow.update
 
 data class ProfileScreenVmState(
     val profile: UserProfile? = null,
-//    val nickname: Nickname? = null,
-//    val description: UserDescription? = null,
-//    val avatar: FileDescriptor? = null,
-//    val interests: List<Interest>? = null,
-//    val id: UserId? = null,
-//    val accessHash: UserAccessHash? = null,
-//    val token: Token? = null,
     val isError: Boolean = false,
     val isLoading: Boolean = false,
 ) {
@@ -212,6 +205,7 @@ fun LoadedProfileState(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                println(state.profile.avatar.string)
                 AsyncImage(
                     model = state.profile.avatar.string,
                     contentDescription = null,
