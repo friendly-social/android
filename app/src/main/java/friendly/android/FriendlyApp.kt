@@ -83,7 +83,7 @@ fun BottomNavigationBar(
 ) {
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = currentBackStackEntry?.destination
-    val currentDestinationHierarchy =currentDestination?.hierarchy
+    val currentDestinationHierarchy = currentDestination?.hierarchy
 
     val isHome = currentDestinationHierarchy?.any { destination ->
         homeNavigationItems.any { item ->

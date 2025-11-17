@@ -63,15 +63,14 @@ class AvatarUploadUseCase(
             compressedInputStream.use { inputStream ->
                 val flow = channelFlow {
                     try {
-
-                    val uploadResult = uploadAvatar(
-                        fileName = fileName,
-                        size = compressedSize,
-                        inputStream = inputStream,
-                    )
-                    fileDescriptor.complete(uploadResult)
+                        val uploadResult = uploadAvatar(
+                            fileName = fileName,
+                            size = compressedSize,
+                            inputStream = inputStream,
+                        )
+                        fileDescriptor.complete(uploadResult)
                     } catch (exception: IOException) {
-                       println("IO EXCEPTION: $exception")
+                        println("IO EXCEPTION: $exception")
                     }
                 }
                 block(flow)

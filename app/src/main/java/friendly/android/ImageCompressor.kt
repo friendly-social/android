@@ -23,9 +23,7 @@ class ImageCompressor(
 ) {
     private val contentResolver = context.contentResolver
 
-    fun compress(): Pair<InputStream, Long> {
-        return compressImage(uri, inputStream)
-    }
+    fun compress(): Pair<InputStream, Long> = compressImage(uri, inputStream)
 
     private fun compressImage(
         uri: Uri,
@@ -123,5 +121,4 @@ class ImageCompressor(
 
         return bitmap.scale(newWidth, newHeight)
     }
-
 }

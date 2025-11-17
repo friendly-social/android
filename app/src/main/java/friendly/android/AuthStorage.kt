@@ -46,7 +46,7 @@ class AuthStorage(context: Context) {
         return Authorization(
             id = getUserId() ?: return null,
             accessHash = getAccessHash() ?: return null,
-            token = getToken() ?: return null
+            token = getToken() ?: return null,
         )
     }
 }

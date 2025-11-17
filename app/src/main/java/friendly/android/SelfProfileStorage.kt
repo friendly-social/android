@@ -82,7 +82,7 @@ class SelfProfileStorage(context: Context) {
             nickname = getNickname() ?: return null,
             description = getDescription() ?: return null,
             avatar = getAvatar() ?: return null,
-            interest = getInterests() ?: return null
+            interest = getInterests() ?: return null,
         )
     }
 }

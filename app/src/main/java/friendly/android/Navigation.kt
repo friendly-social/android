@@ -65,7 +65,7 @@ fun FriendlyNavGraph(
                 vm = vm,
                 onHome = {
                     navController.navigate(
-                        Home.HomeProfile
+                        Home.HomeProfile,
                     )
                 },
                 modifier = Modifier,

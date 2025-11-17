@@ -65,9 +65,7 @@ data class ProfileScreenVmState(
 }
 
 sealed interface ProfileScreenUiState {
-    data class Present(
-        val profile: UserProfile,
-    ) : ProfileScreenUiState
+    data class Present(val profile: UserProfile) : ProfileScreenUiState
 
     data object Loading : ProfileScreenUiState
 
@@ -153,11 +151,13 @@ fun ProfileScreen(
                 actions = {
                     IconButton(onClick = {}) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_photo_camera),
+                            painter = painterResource(
+                                R.drawable.ic_photo_camera,
+                            ),
                             contentDescription = null,
                         )
                     }
-                }
+                },
             )
         },
         modifier = modifier.fillMaxSize(),
