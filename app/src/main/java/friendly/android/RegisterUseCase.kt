@@ -9,6 +9,7 @@ import friendly.sdk.UserDescription
 class RegisterUseCase(
     private val client: FriendlyClient,
     private val authStorage: AuthStorage,
+    private val profileStorage: SelfProfileStorage,
 ) {
     suspend operator fun invoke(
         nickname: Nickname,
@@ -23,5 +24,6 @@ class RegisterUseCase(
             avatar = avatar,
         )
         authStorage.store(authorization)
+        profileStorage.store(nickname, description, avatar, interests)
     }
 }

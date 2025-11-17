@@ -11,4 +11,7 @@
     <string name="your_nickname">Your nickname</string>
     <string name="pick_your_interests">Pick your interests</string>
     <string name="generating">Generating…</string>
+    <string name="feed">Feed</string>
+    <string name="network">Network</string>
+    <string name="profile">Profile</string>
 </resources>

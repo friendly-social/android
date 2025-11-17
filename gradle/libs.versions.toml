@@ -4,10 +4,10 @@ kotlin = "2.2.21"
 coreKtx = "1.17.0"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
-composeBom = "2025.10.01"
-ktlint = "13.1.0"
-friendlySdk = "0.0.1-dev008"
-navigation = "2.9.5"
+composeBom = "2025.11.00"
+ktlint = "14.0.1"
+friendlySdk = "0.0.1-dev011"
+navigation = "2.9.6"
 molecule = "2.2.0"
 serialization = "1.9.0"
 coil = "3.3.0"
@@ -25,6 +25,7 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 
 molecule = { module = "app.cash.molecule:molecule-runtime", version.ref = "molecule" }
 

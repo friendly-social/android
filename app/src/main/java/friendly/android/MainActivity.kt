@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import friendly.sdk.FriendlyClient
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -12,23 +14,32 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val context = this
-        val client = FriendlyClient.meetacy()
+        val client = FriendlyClient.meetacy(HttpClient(CIO))
         val authStorage = AuthStorage(context)
+        val selfProfileStorage = SelfProfileStorage(context)
 
         val viewModelFactory = FriendlyViewModelFactory(
             registerUseCase = RegisterUseCase(
                 client = client,
                 authStorage = authStorage,
+                profileStorage = selfProfileStorage,
             ),
             avatarUploadUseCase = AvatarUploadUseCase(
                 client = client,
                 context = context,
             ),
             authStorage = authStorage,
+            selfProfileStorage = selfProfileStorage,
+            client = client,
         )
 
+        val authorization = authStorage.getAuth()
+
         setContent {
-            FriendlyApp(viewModelFactory)
+            FriendlyApp(
+                viewModelFactory = viewModelFactory,
+                authorization = authorization,
+            )
         }
     }
 }

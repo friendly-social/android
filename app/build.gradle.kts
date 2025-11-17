@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.friendly.sdk)
     implementation(libs.serialization.json)
     implementation(libs.coil.compose)
+    implementation(libs.coil.network.ktor)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

@@ -3,18 +3,17 @@ package friendly.android
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navigation
-import androidx.navigation.toRoute
-import friendly.android.FriendlyGraph.Home
-import friendly.android.FriendlyGraph.Registration
-import friendly.android.FriendlyGraph.Welcome
-import friendly.sdk.UserId
+import androidx.navigation.compose.navigation
+import friendly.android.FriendlyNavGraph.Home
+import friendly.android.FriendlyNavGraph.Registration
+import friendly.android.FriendlyNavGraph.Welcome
+import friendly.sdk.Authorization
 import kotlinx.serialization.Serializable
 
-object FriendlyGraph {
+object FriendlyNavGraph {
     @Serializable
     data object Registration
 
@@ -22,28 +21,33 @@ object FriendlyGraph {
     data object Welcome
 
     @Serializable
-    data object Home {
+    open class Home {
         @Serializable
-        data object Feed
+        data object Feed : Home()
 
         @Serializable
-        data object Network
+        data object Network : Home()
 
         @Serializable
-        data class Profile(val userId: Long)
+        data object HomeProfile : Home()
     }
 }
 
 @Composable
 fun FriendlyNavGraph(
+    navController: NavHostController,
     viewModelFactory: FriendlyViewModelFactory,
+    authorization: Authorization?,
     modifier: Modifier = Modifier,
 ) {
-    val navController = rememberNavController()
+    val firstDestination = when (authorization) {
+        null -> Welcome
+        else -> Home()
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Welcome,
+        startDestination = firstDestination,
         modifier = modifier,
     ) {
         composable<Welcome> {
@@ -60,9 +64,8 @@ fun FriendlyNavGraph(
             RegisterScreen(
                 vm = vm,
                 onHome = {
-                    val userId = UserId(123L).serializable()
                     navController.navigate(
-                        Home.Profile(userId.long),
+                        Home.HomeProfile
                     )
                 },
                 modifier = Modifier,
@@ -78,9 +81,9 @@ fun FriendlyNavGraph(
                 NetworkScreen(Modifier)
             }
 
-            composable<Home.Profile> { backStackEntry ->
-                val profile: Home.Profile = backStackEntry.toRoute()
+            composable<Home.HomeProfile> { backStackEntry ->
                 ProfileScreen(
+                    source = ProfileScreenSource.SelfProfile,
                     vm = viewModel<ProfileScreenViewModel>(
                         factory = viewModelFactory,
                     ),

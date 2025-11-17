@@ -41,4 +41,12 @@ class AuthStorage(context: Context) {
         val string = preferences.getString(ACCESS_HASH, null)
         return string?.let { UserAccessHash.orThrow(it) }
     }
+
+    fun getAuth(): Authorization? {
+        return Authorization(
+            id = getUserId() ?: return null,
+            accessHash = getAccessHash() ?: return null,
+            token = getToken() ?: return null
+        )
+    }
 }
