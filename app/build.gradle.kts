@@ -37,7 +37,9 @@ kotlin {
 }
 
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
+   // Will use alpha version till the material3-expressive release
+//    implementation(platform(libs.androidx.compose.bom))
+    implementation(platform(libs.androidx.compose.bom.alpha))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -53,6 +55,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.ktor)
     implementation(libs.androidx.exifinterface)
+    implementation(libs.zxing.core)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

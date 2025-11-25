@@ -14,4 +14,6 @@
     <string name="feed">Feed</string>
     <string name="network">Network</string>
     <string name="profile">Profile</string>
+    <string name="copy">Copy</string>
+    <string name="back">Back</string>
 </resources>

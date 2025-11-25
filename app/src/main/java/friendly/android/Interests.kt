@@ -6,6 +6,8 @@ val interests = listOf(
     Interest.orThrow("apples"),
     Interest.orThrow("coding"),
     Interest.orThrow("cookies"),
+    Interest.orThrow("carding"),
+    Interest.orThrow("reverse engineering"),
     Interest.orThrow("travel"),
     Interest.orThrow("phronology"),
     Interest.orThrow("neovim"),
@@ -16,4 +18,5 @@ val interests = listOf(
     Interest.orThrow("chinese tea"),
     Interest.orThrow("coffee"),
     Interest.orThrow("sport"),
+    Interest.orThrow("hello kitty"),
 )

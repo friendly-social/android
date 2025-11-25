@@ -106,7 +106,7 @@ class AvatarUploadUseCase(
                 .buffered()
                 .transferTo(this)
         }
-        return uploadResult
+        return uploadResult.orThrow()
     }
 
     private fun getFileName(avatarUri: Uri): String {

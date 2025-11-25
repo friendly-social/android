@@ -26,6 +26,20 @@ class FriendlyViewModelFactory(
                 filesClient = client.files,
             ) as T
         }
+        if (modelClass.isAssignableFrom(ShareProfileScreenViewModel::class.java)) {
+            return ShareProfileScreenViewModel(
+                authStorage = authStorage,
+                client = client,
+            ) as T
+        }
+        val isAddFriendByTokenVm = modelClass
+            .isAssignableFrom(AddFriendByTokenScreenViewModel::class.java)
+        if (isAddFriendByTokenVm) {
+            return AddFriendByTokenScreenViewModel(
+                client = client,
+                authStorage = authStorage,
+            ) as T
+        }
         error("unknown viewmodel class")
     }
 }

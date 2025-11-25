@@ -335,9 +335,7 @@ private fun InterestsPage(
             OutlinedButton(
                 onClick = onBack,
             ) {
-                Text(
-                    text = "Back",
-                )
+                Text(stringResource(R.string.back))
             }
 
             Spacer(Modifier.weight(1f))

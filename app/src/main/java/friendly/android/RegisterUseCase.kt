@@ -23,7 +23,7 @@ class RegisterUseCase(
             interests = interests,
             avatar = avatar,
         )
-        authStorage.store(authorization)
+        authStorage.store(authorization.orThrow())
         profileStorage.store(nickname, description, avatar, interests)
     }
 }

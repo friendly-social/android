@@ -1,5 +1,7 @@
 package friendly.android
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -28,6 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -135,6 +139,7 @@ sealed interface ProfileScreenSource {
 @Composable
 fun ProfileScreen(
     source: ProfileScreenSource,
+    onShare: () -> Unit,
     vm: ProfileScreenViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -149,11 +154,9 @@ fun ProfileScreen(
             CenterAlignedTopAppBar(
                 title = { Text(text = "Profile") },
                 actions = {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = onShare) {
                         Icon(
-                            painter = painterResource(
-                                R.drawable.ic_photo_camera,
-                            ),
+                            painter = painterResource(R.drawable.ic_share),
                             contentDescription = null,
                         )
                     }
@@ -178,7 +181,7 @@ fun ProfileScreen(
 
             is ProfileScreenUiState.Error ->
                 Text(
-                    text = "An error occured during loading the profile screen",
+                    text = "An error occurred during loading the profile screen",
                     modifier = Modifier.padding(innerPadding),
                 )
         }
@@ -241,6 +244,7 @@ fun LoadedProfileState(
                     label = {
                         Text(interest.string)
                     },
+                    modifier = Modifier.disablePointerInput(),
                 )
             }
         }
@@ -253,3 +257,19 @@ fun LoadedProfileState(
         )
     }
 }
+
+@Composable
+private fun Modifier.disablePointerInput(): Modifier = this.pointerInput(
+    key1 = Unit,
+    block = {
+        awaitEachGesture {
+            val pointerEvent = this
+                .awaitPointerEvent(
+                    pass = PointerEventPass.Initial,
+                )
+            for (change in pointerEvent.changes) {
+                change.consume()
+            }
+        }
+    },
+)
