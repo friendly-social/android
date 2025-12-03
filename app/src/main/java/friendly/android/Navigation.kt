@@ -121,7 +121,7 @@ fun FriendlyNavGraph(
                     vm = viewModel<ProfileScreenViewModel>(
                         factory = viewModelFactory,
                     ),
-                    onHome = { navController.navigate(Home) },
+                    onHome = {},
                     modifier = Modifier,
                 )
             }
