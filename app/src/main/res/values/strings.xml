@@ -22,4 +22,5 @@
     <string name="unknown_error_occurred">Unknown error occurred.</string>
     <string name="add_friend_by_token_success_text">Success. Soon here would be navigation to the user you were added, but for now you can go home</string>
     <string name="profile_screen_error_text">An error occurred during loading the profile screen</string>
+    <string name="go_home">Go home</string>
 </resources>
