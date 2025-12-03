@@ -82,9 +82,7 @@ fun AddFriendByTokenScreen(
 }
 
 @Composable
-private fun FriendTokenExpired(
-    modifier: Modifier = Modifier,
-) {
+private fun FriendTokenExpired(modifier: Modifier = Modifier) {
     Text(
         text = stringResource(R.string.friend_token_expired_text),
         modifier = modifier,
@@ -126,10 +124,7 @@ private fun Unauthorized(
 }
 
 @Composable
-private fun Success(
-    goHome: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun Success(goHome: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text(
             text = stringResource(R.string.add_friend_by_token_success_text),

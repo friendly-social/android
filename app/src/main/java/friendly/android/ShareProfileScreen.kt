@@ -3,9 +3,8 @@ package friendly.android
 import android.content.ClipData
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,8 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +29,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
@@ -70,7 +70,7 @@ fun ShareProfileScreen(
         ) { state ->
             when (state) {
                 is ShareProfileScreenUiState.Generating -> {
-                    ContainedLoadingIndicator(
+                    LoadingIndicator(
                         modifier = Modifier.size(300.dp),
                     )
                 }
@@ -86,26 +86,30 @@ fun ShareProfileScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        AnimatedVisibility(
-            visible = state is ShareProfileScreenUiState.Share,
-            enter = slideInVertically(),
+        Column(
+            modifier = Modifier.height(48.dp),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth(),
+            AnimatedVisibility(
+                visible = state is ShareProfileScreenUiState.Share,
+                enter = fadeIn(),
             ) {
-                Button(onClick = onHome) {
-                    Text(stringResource(R.string.back))
-                }
-
-                Spacer(Modifier.width(16.dp))
-
-                Button(
-                    onClick = {
-                        copyToClipboardIn(scope, state, clipboardManager)
-                    },
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(text = stringResource(R.string.copy))
+                    Button(onClick = onHome) {
+                        Text(stringResource(R.string.back))
+                    }
+
+                    Spacer(Modifier.width(16.dp))
+
+                    Button(
+                        onClick = {
+                            copyToClipboardIn(scope, state, clipboardManager)
+                        },
+                    ) {
+                        Text(text = stringResource(R.string.copy))
+                    }
                 }
             }
         }
@@ -123,13 +127,12 @@ private fun QrCode(
             size = 300.dp,
             padding = 0.dp,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
-            backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+            backgroundColor = Color.Unspecified,
         ),
         contentDescription = null,
         modifier = modifier
             .size(300.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer)
             .padding(16.dp),
     )
 }

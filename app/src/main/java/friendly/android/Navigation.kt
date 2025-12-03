@@ -8,11 +8,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navDeepLink
+import androidx.navigation.toRoute
 import friendly.android.FriendlyNavGraph.Home
 import friendly.android.FriendlyNavGraph.Registration
 import friendly.android.FriendlyNavGraph.Welcome
 import friendly.sdk.Authorization
 import friendly.sdk.FriendToken
+import friendly.sdk.UserAccessHash
 import friendly.sdk.UserId
 import kotlinx.serialization.Serializable
 
@@ -37,6 +39,9 @@ object FriendlyNavGraph {
 
         @Serializable
         data object HomeProfile : Home()
+
+        @Serializable
+        data class Profile(val id: Long, val accessHash: String) : Home()
 
         @Serializable
         data object ShareProfile : Home()
@@ -91,7 +96,20 @@ fun FriendlyNavGraph(
             }
 
             composable<Home.Network> {
-                NetworkScreen(Modifier)
+                NetworkScreen(
+                    vm = viewModel<NetworkScreenViewModel>(
+                        factory = viewModelFactory,
+                    ),
+                    onProfile = { id: UserId, accessHash: UserAccessHash ->
+                        navController.navigate(
+                            Home.Profile(
+                                id = id.long,
+                                accessHash = accessHash.string,
+                            ),
+                        )
+                    },
+                    modifier = Modifier,
+                )
             }
 
             composable<Home.HomeProfile> { backStackEntry ->
@@ -103,6 +121,7 @@ fun FriendlyNavGraph(
                     vm = viewModel<ProfileScreenViewModel>(
                         factory = viewModelFactory,
                     ),
+                    onHome = { navController.navigate(Home) },
                     modifier = Modifier,
                 )
             }
@@ -113,6 +132,22 @@ fun FriendlyNavGraph(
                         factory = viewModelFactory,
                     ),
                     onHome = navController::popBackStack,
+                    modifier = Modifier,
+                )
+            }
+
+            composable<Home.Profile> { backStackEntry ->
+                val route: Home.Profile = backStackEntry.toRoute()
+                ProfileScreen(
+                    vm = viewModel<ProfileScreenViewModel>(
+                        factory = viewModelFactory,
+                    ),
+                    source = ProfileScreenSource.FriendProfile(
+                        id = UserId(route.id),
+                        accessHash = UserAccessHash.orThrow(route.accessHash),
+                    ),
+                    onShare = {},
+                    onHome = { navController.navigate(Home.Network) },
                     modifier = Modifier,
                 )
             }

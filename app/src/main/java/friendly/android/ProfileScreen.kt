@@ -2,6 +2,7 @@ package friendly.android
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -14,10 +15,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
@@ -39,17 +41,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.compose.AsyncImage
 import friendly.android.ProfileScreenViewModel.UserProfile
+import friendly.sdk.Authorization
 import friendly.sdk.FriendlyEndpoint
 import friendly.sdk.FriendlyFilesClient
+import friendly.sdk.FriendlyUsersClient
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
+import friendly.sdk.UserAccessHash
 import friendly.sdk.UserDescription
+import friendly.sdk.UserId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class ProfileScreenVmState(
     val profile: UserProfile? = null,
@@ -80,6 +87,7 @@ class ProfileScreenViewModel(
     private val authStorage: AuthStorage,
     private val selfProfileStorage: SelfProfileStorage,
     private val filesClient: FriendlyFilesClient,
+    private val usersClient: FriendlyUsersClient,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ProfileScreenVmState())
     val state: StateFlow<ProfileScreenUiState> = _state
@@ -93,31 +101,44 @@ class ProfileScreenViewModel(
     data class UserProfile(
         val nickname: Nickname,
         val description: UserDescription,
-        val avatar: FriendlyEndpoint,
+        val avatar: FriendlyEndpoint?,
         val interests: List<Interest>,
     )
 
     fun load(source: ProfileScreenSource) {
         _state.update { old -> old.copy(isLoading = true) }
 
-        val profile: UserProfile? = getUserProfile(source)
+        val auth = authStorage.getAuth()
 
-        if (profile == null) {
+        if (auth == null) {
             _state.update { old ->
                 old.copy(isError = true)
             }
+            return
         }
+        viewModelScope.launch {
+            val profile: UserProfile? = getUserProfile(auth, source)
 
-        _state.update { old ->
-            old.copy(
-                profile = profile,
-                isError = false,
-                isLoading = false,
-            )
+            if (profile == null) {
+                _state.update { old ->
+                    old.copy(isError = true)
+                }
+            }
+
+            _state.update { old ->
+                old.copy(
+                    profile = profile,
+                    isError = false,
+                    isLoading = false,
+                )
+            }
         }
     }
 
-    private fun getUserProfile(source: ProfileScreenSource): UserProfile? {
+    private suspend fun getUserProfile(
+        auth: Authorization,
+        source: ProfileScreenSource,
+    ): UserProfile? {
         when (source) {
             is ProfileScreenSource.SelfProfile -> {
                 val (nickname, description, avatar, interests) =
@@ -127,19 +148,49 @@ class ProfileScreenViewModel(
 
                 return UserProfile(nickname, description, avatarUrl, interests)
             }
+
+            is ProfileScreenSource.FriendProfile -> {
+                val result = usersClient
+                    .details(auth, source.id, source.accessHash)
+
+                val details = when (result) {
+                    is FriendlyUsersClient.DetailsResult.IOError,
+                    is FriendlyUsersClient.DetailsResult.ServerError,
+                    is FriendlyUsersClient.DetailsResult.Unauthorized,
+                    -> return null
+
+                    is FriendlyUsersClient.DetailsResult.Success ->
+                        result.details
+                }
+
+                return UserProfile(
+                    nickname = details.nickname,
+                    description = details.description,
+                    avatar = details.avatar?.let { avatar ->
+                        filesClient.getEndpoint(avatar)
+                    },
+                    interests = details.interests,
+                )
+            }
         }
     }
 }
 
 sealed interface ProfileScreenSource {
     data object SelfProfile : ProfileScreenSource
+    data class FriendProfile(val id: UserId, val accessHash: UserAccessHash) :
+        ProfileScreenSource
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+)
 @Composable
 fun ProfileScreen(
     source: ProfileScreenSource,
     onShare: () -> Unit,
+    onHome: () -> Unit,
     vm: ProfileScreenViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -152,13 +203,26 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = "Profile") },
+                title = { Text(stringResource(R.string.profile)) },
+                navigationIcon = {
+                    if (source is ProfileScreenSource.FriendProfile) {
+                        IconButton(onClick = onHome) {
+                            Icon(
+                                painter =
+                                painterResource(R.drawable.ic_arrow_back),
+                                contentDescription = null,
+                            )
+                        }
+                    }
+                },
                 actions = {
-                    IconButton(onClick = onShare) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_share),
-                            contentDescription = null,
-                        )
+                    if (source is ProfileScreenSource.SelfProfile) {
+                        IconButton(onClick = onShare) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_share),
+                                contentDescription = null,
+                            )
+                        }
                     }
                 },
             )
@@ -167,7 +231,14 @@ fun ProfileScreen(
     ) { innerPadding ->
         when (val state = state) {
             is ProfileScreenUiState.Loading -> {
-                CircularProgressIndicator(Modifier.padding(innerPadding))
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                ) {
+                    LoadingIndicator(Modifier.size(48.dp))
+                }
             }
 
             is ProfileScreenUiState.Present -> {
@@ -208,11 +279,11 @@ fun LoadedProfileState(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                println(state.profile.avatar.string)
                 AsyncImage(
-                    model = state.profile.avatar.string,
+                    model = state.profile.avatar?.string,
                     contentDescription = null,
-                    placeholder = painterResource(R.drawable.ic_photo_camera),
+                    error = painterResource(R.drawable.ic_person),
+                    placeholder = painterResource(R.drawable.ic_person),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(128.dp)
