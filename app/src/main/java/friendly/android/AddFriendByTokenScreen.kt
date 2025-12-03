@@ -16,6 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -38,7 +39,6 @@ class AddFriendByTokenScreenViewModel(
     val state = _state.asStateFlow()
 
     fun add(userId: UserId, friendToken: FriendToken) {
-        // todo add handling of null authorization cases
         val authorization = authStorage.getAuth()
 
         if (authorization == null) {
@@ -114,33 +114,19 @@ fun AddFriendByTokenScreen(
     ) {
         when (state) {
             AddFriendByTokenScreenUiState.FriendTokenExpired -> {
-                Text(
-                    text = "Friend token has been expired. Try generating new QR code",
-                )
+                FriendTokenExpired()
             }
 
             AddFriendByTokenScreenUiState.NetworkError -> {
-                Column {
-                    Text(text = "Network error occurred.")
-                    Spacer(Modifier.height(16.dp))
-                    OutlinedButton(onClick = { vm.add(userId, friendToken) }) {
-                        Text(text = "Retry")
-                    }
-                }
+                NetworkError(vm, userId, friendToken)
             }
 
             AddFriendByTokenScreenUiState.Unauthorized -> {
-                Column {
-                    Text("You should authorize to start adding friends")
-                    Spacer(Modifier.height(16.dp))
-                    OutlinedButton(onClick = goToSignUp) {
-                        Text(text = "Sign up")
-                    }
-                }
+                Unauthorized(goToSignUp)
             }
 
             AddFriendByTokenScreenUiState.UnknownError -> {
-                Text(text = "Unknown error occurred.")
+                Text(stringResource(R.string.unknown_error_occurred))
             }
 
             AddFriendByTokenScreenUiState.Waiting -> {
@@ -148,16 +134,58 @@ fun AddFriendByTokenScreen(
             }
 
             AddFriendByTokenScreenUiState.Success -> {
-                Column {
-                    Text(
-                        text = "Success. Soon here would be navigation to the user you were added, but for now you can go home",
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    OutlinedButton(onClick = goHome) {
-                        Text(text = "Go home")
-                    }
-                }
+                Success(goHome)
             }
+        }
+    }
+}
+
+@Composable
+private fun FriendTokenExpired() {
+    Text(
+        text = stringResource(R.string.friend_token_expired_text),
+    )
+}
+
+@Composable
+private fun NetworkError(
+    vm: AddFriendByTokenScreenViewModel,
+    userId: UserId,
+    friendToken: FriendToken,
+) {
+    Column {
+        Text(text = stringResource(R.string.network_error_occurred))
+        Spacer(Modifier.height(16.dp))
+        OutlinedButton(onClick = { vm.add(userId, friendToken) }) {
+            Text(text = "Retry")
+        }
+    }
+}
+
+@Composable
+private fun Unauthorized(goToSignUp: () -> Unit) {
+    Column {
+        Text(
+            text = stringResource(
+                R.string.add_friend_by_token_unauthorized_text,
+            ),
+        )
+        Spacer(Modifier.height(16.dp))
+        OutlinedButton(onClick = goToSignUp) {
+            Text(stringResource(R.string.sign_up))
+        }
+    }
+}
+
+@Composable
+private fun Success(goHome: () -> Unit) {
+    Column {
+        Text(
+            text = stringResource(R.string.add_friend_by_token_success_text),
+        )
+        Spacer(Modifier.height(16.dp))
+        OutlinedButton(onClick = goHome) {
+            Text(text = "Go home")
         }
     }
 }

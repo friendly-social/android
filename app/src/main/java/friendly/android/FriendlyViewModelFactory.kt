@@ -26,7 +26,10 @@ class FriendlyViewModelFactory(
                 filesClient = client.files,
             ) as T
         }
-        if (modelClass.isAssignableFrom(ShareProfileScreenViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(
+                ShareProfileScreenViewModel::class.java,
+            )
+        ) {
             return ShareProfileScreenViewModel(
                 authStorage = authStorage,
                 client = client,

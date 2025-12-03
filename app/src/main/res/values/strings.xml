@@ -16,4 +16,10 @@
     <string name="profile">Profile</string>
     <string name="copy">Copy</string>
     <string name="back">Back</string>
+    <string name="friend_token_expired_text">Friend token has been expired. Try generating new QR code</string>
+    <string name="network_error_occurred">Network error occurred.</string>
+    <string name="add_friend_by_token_unauthorized_text">You should authorize to start adding friends</string>
+    <string name="unknown_error_occurred">Unknown error occurred.</string>
+    <string name="add_friend_by_token_success_text">Success. Soon here would be navigation to the user you were added, but for now you can go home</string>
+    <string name="profile_screen_error_text">An error occurred during loading the profile screen</string>
 </resources>

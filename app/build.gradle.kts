@@ -34,10 +34,15 @@ android {
 
 kotlin {
     jvmToolchain(21)
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-sensitive-resolution")
+        freeCompilerArgs.add("-Xnested-type-aliases")
+        optIn.add("kotlin.time.ExperimentalTime")
+    }
 }
 
 dependencies {
-   // Will use alpha version till the material3-expressive release
+    // Will use alpha version till the material3-expressive release
 //    implementation(platform(libs.androidx.compose.bom))
     implementation(platform(libs.androidx.compose.bom.alpha))
 

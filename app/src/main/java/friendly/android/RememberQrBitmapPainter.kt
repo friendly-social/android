@@ -54,11 +54,16 @@ fun rememberQrBitmapPainter(
 
             val bitmapMatrix = try {
                 qrCodeWriter.encode(
-                    /* contents = */ content,
-                    /* format = */ BarcodeFormat.QR_CODE,
-                    /* width = */ sizePx,
-                    /* height = */ sizePx,
-                    /* hints = */ encodeHints,
+                    /* contents = */
+                    content,
+                    /* format = */
+                    BarcodeFormat.QR_CODE,
+                    /* width = */
+                    sizePx,
+                    /* height = */
+                    sizePx,
+                    /* hints = */
+                    encodeHints,
                 )
             } catch (ex: Exception) {
                 ex.printStackTrace()
@@ -91,7 +96,8 @@ fun rememberQrBitmapPainter(
 
     return remember(bitmap) {
         val currentBitmap = bitmap ?: createBitmap(
-            sizePx, sizePx,
+            sizePx,
+            sizePx,
         ).apply { eraseColor(Color.TRANSPARENT) }
         BitmapPainter(currentBitmap.asImageBitmap())
     }

@@ -3,6 +3,8 @@ package friendly.android
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import friendly.sdk.FriendlyClient
+import friendly.sdk.FriendlyFriendsClient
+import friendly.sdk.UserId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -10,9 +12,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private data class ShareProfileScreenVmState(
-    val shareUrl: String?,
-) {
+private data class ShareProfileScreenVmState(val shareUrl: String?) {
     fun toUiState(): ShareProfileScreenUiState {
         if (shareUrl == null) {
             return ShareProfileScreenUiState.Generating
@@ -43,10 +43,14 @@ class ShareProfileScreenViewModel(
             val userId = authStorage.getUserId() ?: return@launch
 
             _state.update { old ->
-                old.copy(
-                    shareUrl = "friendly://add/${userId.long}/${friendToken.orThrow().string}",
-                )
+                val shareUrl = buildShareUrl(userId, friendToken)
+                old.copy(shareUrl = shareUrl)
             }
         }
     }
+
+    private fun buildShareUrl(
+        userId: UserId,
+        friendToken: FriendlyFriendsClient.GenerateResult,
+    ): String = "friendly://add/${userId.long}/${friendToken.orThrow().string}"
 }

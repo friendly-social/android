@@ -31,8 +31,7 @@ class AvatarUploadUseCase(
     value class UploadingPercentage(val double: Double)
 
     sealed interface UploadingResult {
-        data class Success(val fileDescriptor: FileDescriptor) :
-            UploadingResult
+        data class Success(val fileDescriptor: FileDescriptor) : UploadingResult
 
         data object Failure : UploadingResult
     }

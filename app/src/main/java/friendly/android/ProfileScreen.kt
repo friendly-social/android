@@ -1,6 +1,5 @@
 package friendly.android
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,6 +33,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -181,7 +181,7 @@ fun ProfileScreen(
 
             is ProfileScreenUiState.Error ->
                 Text(
-                    text = "An error occurred during loading the profile screen",
+                    text = stringResource(R.string.profile_screen_error_text),
                     modifier = Modifier.padding(innerPadding),
                 )
         }
