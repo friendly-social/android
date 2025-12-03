@@ -25,4 +25,5 @@
     <string name="go_home">Go home</string>
     <string name="network_auth_failure_text">You should authorize before you be able to see your network</string>
     <string name="retry">Retry</string>
+    <string name="share_your_profile">Share your profile</string>
 </resources>

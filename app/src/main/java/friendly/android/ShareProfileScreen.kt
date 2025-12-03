@@ -64,6 +64,13 @@ fun ShareProfileScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxSize(),
     ) {
+        Text(
+            text = stringResource(R.string.share_your_profile),
+            style = MaterialTheme.typography.headlineMedium,
+        )
+
+        Spacer(Modifier.height(16.dp))
+
         Crossfade(
             targetState = state,
             modifier = Modifier.size(300.dp),
