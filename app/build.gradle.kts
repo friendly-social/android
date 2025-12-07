@@ -20,14 +20,10 @@ android {
 
     signingConfigs {
         getByName("debug") {
-            val keystorePath = System.getenv("HOME")?.let {
-                "$it/.android/debug.keystore"
-            } ?: "${System.getProperty("user.home")}/.android/debug.keystore"
-
-            storeFile = file(keystorePath)
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+            storeFile = file("keystore.jks")
+            storePassword = "12345678"
+            keyAlias = "public"
+            keyPassword = "12345678"
         }
     }
 

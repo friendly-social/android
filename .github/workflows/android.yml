@@ -22,7 +22,10 @@ jobs:
                     cache: gradle
 
             -   name: Decode keystore
-                run: base64 -d debug_keystore_base64.txt > $HOME/debug.keystore
+                run: echo "$KEYSTORE_BASE64" | base64 --decode > keystore.jks
+
+            -   name: Build debug with signing
+                run: ./gradlew assembleDebug
 
             -   name: Grant execute permission for gradlew
                 run: chmod +x gradlew
