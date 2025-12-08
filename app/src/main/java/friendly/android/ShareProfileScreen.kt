@@ -133,7 +133,7 @@ private fun QrCode(
             content = state.shareUrl,
             size = 300.dp,
             padding = 0.dp,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            color = MaterialTheme.colorScheme.onBackground,
             backgroundColor = Color.Unspecified,
         ),
         contentDescription = null,
