@@ -33,14 +33,16 @@ class FriendlyViewModelFactory(
                 authStorage = authStorage,
             ) as T
         }
-        if (modelClass.isAssignableFrom(
-                ShareProfileScreenViewModel::class.java,
-            )
-        ) {
+        val isShareProfileVm = modelClass
+            .isAssignableFrom(ShareProfileScreenViewModel::class.java)
+        if (isShareProfileVm) {
             return ShareProfileScreenViewModel(
                 authStorage = authStorage,
                 client = client,
             ) as T
+        }
+        if (modelClass.isAssignableFrom(FeedScreenViewModel::class.java)) {
+            return FeedScreenViewModel(client.feed) as T
         }
         val isAddFriendByTokenVm = modelClass
             .isAssignableFrom(AddFriendByTokenScreenViewModel::class.java)

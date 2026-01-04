@@ -1,20 +1,22 @@
 [versions]
 agp = "8.13.1"
+composeExtendedColors = "1.0.0-alpha07"
+composeSwipeableCards = "1.1.4"
 zxing = "3.5.4"
-kotlin = "2.2.21"
+kotlin = "2.3.0"
 coreKtx = "1.17.0"
 lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.12.0"
+activityCompose = "1.12.2"
 # Will use alpha version till the material3-expressive release
 # composeBom = "2025.11.01"
-composeBomAlpha = "2025.11.01"
+composeBomAlpha = "2025.12.01"
 ktlint = "14.0.1"
 friendlySdk = "0.0.1-dev016"
 navigation = "2.9.6"
 molecule = "2.2.0"
 serialization = "1.9.0"
 coil = "3.3.0"
-exifinterface = "1.4.1"
+exifinterface = "1.4.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,6 +35,7 @@ androidx-navigation-compose = { module = "androidx.navigation:navigation-compose
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 
+smartword-compose-swipeable-cards = { module = "com.github.smartword-app:compose-swipeable-cards", version.ref = "composeSwipeableCards" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 molecule = { module = "app.cash.molecule:molecule-runtime", version.ref = "molecule" }
 

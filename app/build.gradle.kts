@@ -71,5 +71,9 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.zxing.core)
 
+    // TODO: using for now this dependency with further plans to
+    //  use own implementation of swipeable cards
+    implementation(libs.smartword.compose.swipeable.cards)
+
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
