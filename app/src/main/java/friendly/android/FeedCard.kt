@@ -35,7 +35,8 @@ fun FeedCard(entry: FeedItem.Entry, modifier: Modifier = Modifier) {
     OutlinedCard(
         modifier = modifier.fillMaxSize(),
     ) {
-        SubcomposeAsyncImage( // todo make wrapper for that and use in other places
+        // todo make wrapper for that and use in other places
+        SubcomposeAsyncImage(
             model = entry.avatarUri,
             loading = {
                 Box(modifier = Modifier.shimmer())

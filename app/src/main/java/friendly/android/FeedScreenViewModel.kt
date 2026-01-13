@@ -164,7 +164,7 @@ class FeedScreenViewModel(
             is FriendlyFriendsClient.RequestResult.NotFound,
             is FriendlyFriendsClient.RequestResult.ServerError,
             is FriendlyFriendsClient.RequestResult.Unauthorized,
-                -> {
+            -> {
                 _state.setFeedEntry(currentEntry)
             }
 
@@ -189,7 +189,7 @@ class FeedScreenViewModel(
             is FriendlyFriendsClient.DeclineResult.NotFound,
             is FriendlyFriendsClient.DeclineResult.ServerError,
             is FriendlyFriendsClient.DeclineResult.Unauthorized,
-                -> {
+            -> {
                 _state.setFeedEntry(currentEntry)
             }
 
@@ -228,9 +228,8 @@ class FeedScreenViewModel(
 
 private typealias MutableVmStateFlow = MutableStateFlow<FeedScreenVmState>
 
-private fun MutableVmStateFlow.currentFeedEntryOrNull(): FeedItem.Entry? {
-    return this.value.currentFeedItem as? FeedItem.Entry
-}
+private fun MutableVmStateFlow.currentFeedEntryOrNull(): FeedItem.Entry? =
+    this.value.currentFeedItem as? FeedItem.Entry
 
 private fun MutableVmStateFlow.setNetworkError() {
     this.update { old ->
@@ -288,9 +287,7 @@ private fun MutableVmStateFlow.setEmptyFeed() {
     }
 }
 
-private fun MutableVmStateFlow.setFeedEntry(
-    entry: FeedItem.Entry,
-) {
+private fun MutableVmStateFlow.setFeedEntry(entry: FeedItem.Entry) {
     this.update { old ->
         old.copy(currentFeedItem = entry)
     }

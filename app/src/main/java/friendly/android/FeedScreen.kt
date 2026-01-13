@@ -5,18 +5,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
@@ -108,7 +102,8 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
                     Spacer(Modifier.height(8.dp))
 
                     Text(
-                        text = "Add more friends and ask them to add their friends to make feed more interesting",
+                        text = "Add more friends and ask them to " +
+                            "add their friends to make feed more interesting",
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.outline,
                     )
@@ -117,7 +112,8 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
 
                     OutlinedButton(
                         onClick = vm::refreshFeed,
-                        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                        contentPadding =
+                        ButtonDefaults.ButtonWithIconContentPadding,
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_refresh),

@@ -53,7 +53,7 @@ class FriendlyViewModelFactory(
                 ),
                 loadFeedQueue = LoadFeedQueueUseCase(
                     feedClient = client.feed,
-                    authStorage = authStorage
+                    authStorage = authStorage,
                 ),
                 filesClient = client.files,
             ) as T
