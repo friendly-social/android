@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 
 sealed interface FeedScreenUiState {
     data object NetworkError : FeedScreenUiState
@@ -52,14 +51,6 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
 
     LaunchedEffect(Unit) {
         vm.loadFeed()
-        delay(1600)
-        vm.like()
-        delay(1600)
-        vm.like()
-        delay(1600)
-        vm.like()
-        delay(1600)
-        vm.like()
 //        vm.refreshFeed() // todo
     }
 
