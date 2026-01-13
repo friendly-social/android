@@ -42,7 +42,15 @@ class AuthStorage(context: Context) {
         return string?.let { UserAccessHash.orThrow(it) }
     }
 
-    fun getAuth(): Authorization? {
+    fun getAuth(): Authorization = Authorization(
+        id = getUserId() ?: error("UserId is required for Authorization"),
+        accessHash =
+        getAccessHash()
+            ?: error("UserAccessHash is required for Authorization"),
+        token = getToken() ?: error("Token is required for Authorization"),
+    )
+
+    fun getAuthOrNull(): Authorization? {
         return Authorization(
             id = getUserId() ?: return null,
             accessHash = getAccessHash() ?: return null,

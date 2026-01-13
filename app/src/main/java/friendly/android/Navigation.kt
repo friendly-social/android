@@ -92,7 +92,12 @@ fun FriendlyNavGraph(
 
         navigation<Home>(startDestination = Home.Feed) {
             composable<Home.Feed> {
-                FeedScreen(Modifier)
+                FeedScreen(
+                    vm = viewModel<FeedScreenViewModel>(
+                        factory = viewModelFactory,
+                    ),
+                    modifier = Modifier,
+                )
             }
 
             composable<Home.Network> {

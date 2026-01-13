@@ -42,7 +42,21 @@ class FriendlyViewModelFactory(
             ) as T
         }
         if (modelClass.isAssignableFrom(FeedScreenViewModel::class.java)) {
-            return FeedScreenViewModel(client.feed) as T
+            return FeedScreenViewModel(
+                sendRequest = SendFriendshipRequestUseCase(
+                    friendsClient = client.friends,
+                    authStorage = authStorage,
+                ),
+                decline = DeclineFriendshipUseCase(
+                    friendsClient = client.friends,
+                    authStorage = authStorage,
+                ),
+                loadFeedQueue = LoadFeedQueueUseCase(
+                    feedClient = client.feed,
+                    authStorage = authStorage
+                ),
+                filesClient = client.files,
+            ) as T
         }
         val isAddFriendByTokenVm = modelClass
             .isAssignableFrom(AddFriendByTokenScreenViewModel::class.java)

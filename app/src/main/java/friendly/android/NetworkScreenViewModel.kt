@@ -69,7 +69,7 @@ class NetworkScreenViewModel(
         _state.update { NetworkScreenVmState.Initial }
 
         viewModelScope.launch {
-            val auth = authStorage.getAuth() ?: error("no auth bro")
+            val auth = authStorage.getAuthOrNull() ?: error("no auth bro")
             val newState = when (val result = client.network.details(auth)) {
                 is FriendlyNetworkClient.DetailsResult.IOError -> {
                     NetworkScreenVmState.NetworkError

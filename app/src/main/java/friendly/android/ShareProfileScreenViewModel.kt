@@ -38,7 +38,7 @@ class ShareProfileScreenViewModel(
 
     fun generateUrl() {
         viewModelScope.launch {
-            val auth = authStorage.getAuth() ?: return@launch // TODO
+            val auth = authStorage.getAuthOrNull() ?: return@launch // TODO
             val friendToken = client.friends.generate(auth)
             val userId = authStorage.getUserId() ?: return@launch
 

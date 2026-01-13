@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
             client = client,
         )
 
-        val authorization = authStorage.getAuth()
+        val authorization = authStorage.getAuthOrNull()
 
         setContent {
             FriendlyApp(

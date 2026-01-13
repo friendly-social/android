@@ -3,6 +3,7 @@ package friendly.android
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.spartapps.swipeablecards.state.rememberSwipeableCardsState
 import com.spartapps.swipeablecards.ui.SwipeableCardDirection
@@ -22,6 +24,23 @@ import com.spartapps.swipeablecards.ui.lazy.item
 import kotlin.math.absoluteValue
 
 private const val MAX_CARD_OFFSET = 500
+
+private val animations = SwipeableCardsAnimations(
+    cardsAnimationSpec = spring(
+        dampingRatio = 0.6f,
+        stiffness = 100f,
+    ),
+    rotationAnimationSpec = spring(),
+)
+
+private val cardsProperties = SwipeableCardsProperties(
+    padding = 0.dp,
+    swipeThreshold = 150.dp,
+    lockBelowCardDragging = true,
+    enableHapticFeedbackOnThreshold = true,
+    stackedCardsOffset = 0.dp,
+    draggingAcceleration = 0.6f,
+)
 
 // TODO:
 //  make own card implementation that should work without
@@ -48,55 +67,29 @@ fun IndicatedCardFeed(
         val size = (128 * xPercentage).dp
 
         if (xOffset > 0) {
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.error)
-                    .size(size)
-                    .align(Alignment.CenterStart),
-            )
+            DislikeIndicator(size)
         }
 
         if (xOffset < 0) {
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
-                    .size(size)
-                    .align(Alignment.CenterEnd),
-            )
+            LikeIndicator(size)
         }
 
         LazySwipeableCards(
             state = swipeCardsState,
-            properties = SwipeableCardsProperties(
-                padding = 0.dp,
-                swipeThreshold = 150.dp,
-                lockBelowCardDragging = true,
-                enableHapticFeedbackOnThreshold = true,
-                stackedCardsOffset = 0.dp,
-                draggingAcceleration = 0.6f,
-            ),
-            animations = SwipeableCardsAnimations(
-                cardsAnimationSpec = spring(
-                    dampingRatio = 0.6f,
-                    stiffness = 100f,
-                ),
-                rotationAnimationSpec = spring(),
-            ),
-            onSwipe = { details, direction ->
-                swipeCardsState.goBack()
-
+            properties = cardsProperties,
+            animations = animations,
+            onSwipe = { _, direction ->
                 when (direction) {
                     SwipeableCardDirection.Right -> like()
 
                     SwipeableCardDirection.Left -> dislike()
                 }
+                swipeCardsState.goBack()
             },
             modifier = Modifier.fillMaxSize(),
         ) {
-            item(currentItem) { element, _, _ ->
-                when (element) {
+            item(currentItem) { item, _, _ ->
+                when (item) {
                     is FeedItem.Loading -> {
                         ShimmerFeedCard(
                             modifier = Modifier.fillMaxSize(),
@@ -105,7 +98,7 @@ fun IndicatedCardFeed(
 
                     is FeedItem.Entry -> {
                         FeedCard(
-                            entry = element.details,
+                            entry = item,
                             modifier = Modifier
                                 .fillMaxSize(),
                         )
@@ -114,4 +107,26 @@ fun IndicatedCardFeed(
             }
         }
     }
+}
+
+@Composable
+private fun BoxScope.LikeIndicator(size: Dp) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary)
+            .size(size)
+            .align(Alignment.CenterEnd),
+    )
+}
+
+@Composable
+private fun BoxScope.DislikeIndicator(size: Dp) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.error)
+            .size(size)
+            .align(Alignment.CenterStart),
+    )
 }

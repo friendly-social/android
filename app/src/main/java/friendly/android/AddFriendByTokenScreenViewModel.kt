@@ -21,7 +21,7 @@ class AddFriendByTokenScreenViewModel(
     val state = _state.asStateFlow()
 
     fun add(userId: UserId, friendToken: FriendToken) {
-        val authorization = authStorage.getAuth()
+        val authorization = authStorage.getAuthOrNull()
 
         if (authorization == null) {
             _state.update {

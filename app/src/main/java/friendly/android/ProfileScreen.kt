@@ -111,7 +111,7 @@ class ProfileScreenViewModel(
     fun load(source: ProfileScreenSource) {
         _state.update { old -> old.copy(isLoading = true) }
 
-        val auth = authStorage.getAuth()
+        val auth = authStorage.getAuthOrNull()
 
         if (auth == null) {
             _state.update { old ->
