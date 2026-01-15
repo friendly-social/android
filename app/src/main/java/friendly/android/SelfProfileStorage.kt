@@ -23,7 +23,7 @@ class SelfProfileStorage(context: Context) {
     data class Cache(
         val nickname: Nickname,
         val description: UserDescription,
-        val avatar: FileDescriptor,
+        val avatar: FileDescriptor?,
         val interest: List<Interest>,
     )
 
@@ -35,18 +35,22 @@ class SelfProfileStorage(context: Context) {
     fun store(
         nickname: Nickname,
         description: UserDescription,
-        avatar: FileDescriptor,
+        avatar: FileDescriptor?,
         interests: List<Interest>,
     ) {
         preferences.edit {
             putString(NICKNAME, nickname.string)
             putString(DESCRIPTION, description.string)
-            putString(AVATAR_ACCESS_HASH, avatar.accessHash.string)
+            avatar?.accessHash?.string?.let { avatarAccessHash ->
+                putString(AVATAR_ACCESS_HASH, avatarAccessHash)
+            }
             val interestsSet = interests
                 .map { interest -> interest.string }
                 .toSet()
             putStringSet(INTERESTS, interestsSet)
-            putLong(AVATAR_ID, avatar.id.long)
+            avatar?.id?.long?.let { long ->
+                putLong(AVATAR_ID, long)
+            }
             commit()
         }
     }
@@ -69,7 +73,7 @@ class SelfProfileStorage(context: Context) {
     fun getAvatar(): FileDescriptor? {
         val accessHash = preferences.getString(AVATAR_ACCESS_HASH, null)
         val id = preferences.getLong(AVATAR_ID, 0)
-        return accessHash?.let { string ->
+        return accessHash?.let { accessHash ->
             FileDescriptor(
                 id = FileId(id),
                 accessHash = FileAccessHash.orThrow(accessHash),
@@ -77,11 +81,18 @@ class SelfProfileStorage(context: Context) {
         }
     }
 
+    fun clear() {
+        preferences.edit {
+            this.clear()
+            commit()
+        }
+    }
+
     fun getCache(): Cache? {
         return Cache(
             nickname = getNickname() ?: return null,
             description = getDescription() ?: return null,
-            avatar = getAvatar() ?: return null,
+            avatar = getAvatar(),
             interest = getInterests() ?: return null,
         )
     }

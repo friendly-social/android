@@ -8,14 +8,15 @@ lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.2"
 # Will use alpha version till the material3-expressive release
 # composeBom = "2025.11.01"
-composeBomAlpha = "2025.12.01"
+composeBomAlpha = "2026.01.00"
 ktlint = "14.0.1"
-friendlySdk = "0.0.1-dev019"
+friendlySdk = "0.0.1-dev023"
 navigation = "2.9.6"
 molecule = "2.2.0"
 serialization = "1.9.0"
 coil = "3.3.0"
 exifinterface = "1.4.2"
+composeBom = "2026.01.00"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -42,6 +43,9 @@ friendly-sdk = { module = "me.y9san9.friendly:sdk", version.ref = "friendlySdk" 
 
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -4,6 +4,7 @@ import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
+import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
 
 class RegisterUseCase(
@@ -22,6 +23,7 @@ class RegisterUseCase(
             description = description,
             interests = interests,
             avatar = avatar,
+            socialLink = SocialLink.orThrow("TODO()"),
         )
         authStorage.store(authorization.orThrow())
         profileStorage.store(nickname, description, avatar, interests)

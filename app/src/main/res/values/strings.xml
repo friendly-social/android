@@ -11,6 +11,7 @@
     <string name="your_nickname">Your nickname</string>
     <string name="pick_your_interests">Pick your interests</string>
     <string name="generating">Generating…</string>
+    <string name="generate">generate</string>
     <string name="feed">Feed</string>
     <string name="network">Network</string>
     <string name="profile">Profile</string>
@@ -26,4 +27,8 @@
     <string name="network_auth_failure_text">You should authorize before you be able to see your network</string>
     <string name="retry">Retry</string>
     <string name="share_your_profile">Share your profile</string>
+    <string name="add_more_friends_feed_text">Add more friends and ask them to add their friends to make feed more interesting</string>
+    <string name="the_feed_is_empty">The feed is empty</string>
+    <string name="refresh">Refresh</string>
+    <string name="title_activity_mock_data">MockDataActivity</string>
 </resources>

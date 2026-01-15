@@ -27,6 +27,13 @@ class AuthStorage(context: Context) {
         }
     }
 
+    fun clear() {
+        preferences.edit {
+            clear()
+            commit()
+        }
+    }
+
     fun getToken(): Token? {
         val tokenString = preferences.getString(TOKEN, null)
         return tokenString?.let { string -> Token.orThrow(string) }

@@ -1,7 +1,6 @@
 package friendly.android
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,8 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -147,7 +144,9 @@ class ProfileScreenViewModel(
                 val (nickname, description, avatar, interests) =
                     selfProfileStorage.getCache() ?: return null
 
-                val avatarUrl = filesClient.getEndpoint(avatar)
+                val avatarUrl = avatar?.let { avatar ->
+                    filesClient.getEndpoint(avatar)
+                }
 
                 return UserProfile(nickname, description, avatarUrl, interests)
             }
@@ -336,19 +335,3 @@ fun LoadedProfileState(
         )
     }
 }
-
-@Composable
-private fun Modifier.disablePointerInput(): Modifier = this.pointerInput(
-    key1 = Unit,
-    block = {
-        awaitEachGesture {
-            val pointerEvent = this
-                .awaitPointerEvent(
-                    pass = PointerEventPass.Initial,
-                )
-            for (change in pointerEvent.changes) {
-                change.consume()
-            }
-        }
-    },
-)

@@ -74,6 +74,10 @@ dependencies {
     // TODO: using for now this dependency with further plans to
     //  use own implementation of swipeable cards
     implementation(libs.smartword.compose.swipeable.cards)
+    implementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

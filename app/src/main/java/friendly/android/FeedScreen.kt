@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -51,10 +52,11 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
 
     LaunchedEffect(Unit) {
         vm.loadFeed()
-//        vm.refreshFeed() // todo
     }
 
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+    ) { innerPadding ->
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -84,44 +86,46 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
                     LoadingIndicator(Modifier.size(96.dp))
                 }
 
-                is FeedScreenUiState.EmptyFeed -> {
-                    Text(
-                        text = "The feed is empty",
-                        style = MaterialTheme.typography.headlineSmall,
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Text(
-                        text = "Add more friends and ask them to " +
-                            "add their friends to make feed more interesting",
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.outline,
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-
-                    OutlinedButton(
-                        onClick = vm::refreshFeed,
-                        contentPadding =
-                        ButtonDefaults.ButtonWithIconContentPadding,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_refresh),
-                            contentDescription = null,
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = "Refresh",
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                    }
-                }
+                is FeedScreenUiState.EmptyFeed -> EmptyFeed(vm)
 
                 is FeedScreenUiState.ServerError -> {
                     Text("server err")
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun EmptyFeed(vm: FeedScreenViewModel) {
+    Text(
+        text = stringResource(R.string.the_feed_is_empty),
+        style = MaterialTheme.typography.headlineSmall,
+    )
+
+    Spacer(Modifier.height(8.dp))
+
+    Text(
+        text = stringResource(R.string.add_more_friends_feed_text),
+        textAlign = TextAlign.Center,
+        color = MaterialTheme.colorScheme.outline,
+    )
+
+    Spacer(Modifier.height(16.dp))
+
+    OutlinedButton(
+        onClick = vm::refreshFeed,
+        contentPadding =
+        ButtonDefaults.ButtonWithIconContentPadding,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_refresh),
+            contentDescription = null,
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = stringResource(R.string.refresh),
+            style = MaterialTheme.typography.labelLarge,
+        )
     }
 }
