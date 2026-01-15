@@ -21,21 +21,31 @@ private data class NetworkScreenVmState(
     val friends: List<FriendItem>?,
 ) {
     fun toUiState(): NetworkScreenUiState {
-        if (isLoading) return NetworkScreenUiState.Loading(
-            isRefreshing = isRefreshing,
-        )
-        if (isNetworkFailure) return NetworkScreenUiState.NetworkFailure(
-            isRefreshing = isRefreshing,
-        )
-        if (isAuthFailure) return NetworkScreenUiState.AuthFailure(
-            isRefreshing = isRefreshing,
-        )
-        if (friends == null) return NetworkScreenUiState.Other(
-            isRefreshing = isRefreshing,
-        )
-        if (friends.isEmpty()) return NetworkScreenUiState.NoFriends(
-            isRefreshing = isRefreshing,
-        )
+        if (isLoading) {
+            return NetworkScreenUiState.Loading(
+                isRefreshing = isRefreshing,
+            )
+        }
+        if (isNetworkFailure) {
+            return NetworkScreenUiState.NetworkFailure(
+                isRefreshing = isRefreshing,
+            )
+        }
+        if (isAuthFailure) {
+            return NetworkScreenUiState.AuthFailure(
+                isRefreshing = isRefreshing,
+            )
+        }
+        if (friends == null) {
+            return NetworkScreenUiState.Other(
+                isRefreshing = isRefreshing,
+            )
+        }
+        if (friends.isEmpty()) {
+            return NetworkScreenUiState.NoFriends(
+                isRefreshing = isRefreshing,
+            )
+        }
         return NetworkScreenUiState.Success(
             friends = friends,
             isRefreshing = isRefreshing,

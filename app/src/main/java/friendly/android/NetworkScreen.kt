@@ -50,25 +50,20 @@ import friendly.sdk.UserId
 sealed interface NetworkScreenUiState {
     val isRefreshing: Boolean
 
-    data class AuthFailure(
-        override val isRefreshing: Boolean = false,
-    ) : NetworkScreenUiState
+    data class AuthFailure(override val isRefreshing: Boolean = false) :
+        NetworkScreenUiState
 
-    data class NetworkFailure(
-        override val isRefreshing: Boolean = false,
-    ) : NetworkScreenUiState
+    data class NetworkFailure(override val isRefreshing: Boolean = false) :
+        NetworkScreenUiState
 
-    data class Other(
-        override val isRefreshing: Boolean = false,
-    ) : NetworkScreenUiState
+    data class Other(override val isRefreshing: Boolean = false) :
+        NetworkScreenUiState
 
-    data class Loading(
-        override val isRefreshing: Boolean = false,
-    ) : NetworkScreenUiState
+    data class Loading(override val isRefreshing: Boolean = false) :
+        NetworkScreenUiState
 
-    data class NoFriends(
-        override val isRefreshing: Boolean = false,
-    ) : NetworkScreenUiState
+    data class NoFriends(override val isRefreshing: Boolean = false) :
+        NetworkScreenUiState
 
     data class Success(
         val friends: List<FriendItem>,
@@ -131,7 +126,7 @@ fun NetworkScreen(
             },
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize()
+                .fillMaxSize(),
         ) {
             when (val state = state) {
                 is NetworkScreenUiState.AuthFailure -> {
@@ -182,7 +177,7 @@ fun NetworkScreen(
                     ) {
                         Text(
                             text =
-                                stringResource(R.string.unknown_error_occurred),
+                            stringResource(R.string.unknown_error_occurred),
                             modifier = Modifier,
                         )
                     }
