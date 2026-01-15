@@ -82,9 +82,7 @@ fun FriendlyNavGraph(
             RegisterScreen(
                 vm = vm,
                 onHome = {
-                    navController.navigate(
-                        Home.HomeProfile,
-                    )
+                    navController.navigate(Home.HomeProfile)
                 },
                 modifier = Modifier,
             )
@@ -117,6 +115,7 @@ fun FriendlyNavGraph(
                 )
             }
 
+            // TODO: make separate composables for both profile screens
             composable<Home.HomeProfile> { backStackEntry ->
                 ProfileScreen(
                     source = ProfileScreenSource.SelfProfile,
@@ -127,6 +126,11 @@ fun FriendlyNavGraph(
                         factory = viewModelFactory,
                     ),
                     onHome = {},
+                    onSignOut = {
+                        navController.navigate(Welcome) {
+                            popUpTo(0)
+                        }
+                    },
                     modifier = Modifier,
                 )
             }
@@ -141,6 +145,7 @@ fun FriendlyNavGraph(
                 )
             }
 
+            // TODO: make separate composables for both profile screens
             composable<Home.Profile> { backStackEntry ->
                 val route: Home.Profile = backStackEntry.toRoute()
                 ProfileScreen(
@@ -153,6 +158,7 @@ fun FriendlyNavGraph(
                     ),
                     onShare = {},
                     onHome = { navController.navigate(Home.Network) },
+                    onSignOut = {},
                     modifier = Modifier,
                 )
             }

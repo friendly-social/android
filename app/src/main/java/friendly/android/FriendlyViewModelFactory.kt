@@ -25,6 +25,10 @@ class FriendlyViewModelFactory(
                 selfProfileStorage = selfProfileStorage,
                 filesClient = client.files,
                 usersClient = client.users,
+                logout = LogoutUseCase(
+                    authStorage = authStorage,
+                    selfProfileStorage = selfProfileStorage,
+                ),
             ) as T
         }
         if (modelClass.isAssignableFrom(NetworkScreenViewModel::class.java)) {

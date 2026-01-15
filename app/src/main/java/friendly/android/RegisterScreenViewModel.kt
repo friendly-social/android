@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import friendly.android.RegisterScreenUiState.AvatarState
+import friendly.android.RegisterScreenUiState.AvatarState.None
+import friendly.android.RegisterScreenUiState.AvatarState.Uploaded
 import friendly.sdk.FileDescriptor
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
@@ -162,18 +164,30 @@ class RegisterScreenViewModel(
         }
 
         when (uploadingResult) {
-            is AvatarUploadUseCase.UploadingResult.Failure -> {
-                _state.update { old ->
-                    old.copy(avatar = AvatarState.None)
-                }
-            }
-
             is AvatarUploadUseCase.UploadingResult.Success -> {
                 _state.update { old ->
                     old.copy(
-                        avatar = AvatarState.Uploaded(uri),
+                        avatar = Uploaded(uri),
                         avatarFileDescriptor = uploadingResult.fileDescriptor,
                     )
+                }
+            }
+
+            is AvatarUploadUseCase.UploadingResult.CompressionFailure -> {
+                _state.update { old ->
+                    old.copy(avatar = None)
+                }
+            }
+
+            is AvatarUploadUseCase.UploadingResult.IOError -> {
+                _state.update { old ->
+                    old.copy(avatar = None)
+                }
+            }
+
+            is AvatarUploadUseCase.UploadingResult.ServerError -> {
+                _state.update { old ->
+                    old.copy(avatar = None)
                 }
             }
         }

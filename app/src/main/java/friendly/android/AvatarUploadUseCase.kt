@@ -7,12 +7,12 @@ import android.provider.OpenableColumns
 import android.util.Log
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
+import friendly.sdk.FriendlyFilesClient.UploadFileResult
 import io.ktor.http.ContentType
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.io.IOException
 import kotlinx.io.asSource
 import kotlinx.io.buffered
 import java.io.InputStream
@@ -24,7 +24,7 @@ class AvatarUploadUseCase(
     companion object {
         private const val MAX_IMAGE_SIZE = 2048L
         private const val COMPRESSION_QUALITY = 75
-        private const val MAX_FILE_SIZE_BYTES = 2L * 1024L * 1024L
+        private const val MAX_FILE_SIZE_BYTES = 2L * 1024L
     }
 
     @JvmInline
@@ -33,7 +33,11 @@ class AvatarUploadUseCase(
     sealed interface UploadingResult {
         data class Success(val fileDescriptor: FileDescriptor) : UploadingResult
 
-        data object Failure : UploadingResult
+        data object CompressionFailure : UploadingResult
+
+        data class IOError(val cause: Exception) : UploadingResult
+
+        data object ServerError : UploadingResult
     }
 
     private val contentResolver = context.contentResolver
@@ -44,9 +48,9 @@ class AvatarUploadUseCase(
     ): UploadingResult {
         val inputStream = contentResolver
             .openInputStream(avatarUri)
-            ?: return UploadingResult.Failure
+            ?: error("Couldn't read $avatarUri from the storage")
         val fileName = getFileName(avatarUri)
-        val fileDescriptor = CompletableDeferred<FileDescriptor>()
+        val fileDescriptorUploadResult = CompletableDeferred<UploadFileResult>()
         val compressor = ImageCompressor(
             uri = avatarUri,
             inputStream = inputStream,
@@ -58,35 +62,36 @@ class AvatarUploadUseCase(
 
         val (compressedInputStream, compressedSize) = compressor.compress()
 
-        try {
-            compressedInputStream.use { inputStream ->
-                val flow = channelFlow {
-                    try {
-                        val uploadResult = uploadAvatar(
-                            fileName = fileName,
-                            size = compressedSize,
-                            inputStream = inputStream,
-                        )
-                        fileDescriptor.complete(uploadResult)
-                    } catch (exception: IOException) {
-                        println("IO EXCEPTION: $exception")
-                    }
-                }
-                block(flow)
+        compressedInputStream.use { inputStream ->
+            val flow = channelFlow {
+                val uploadResult = uploadAvatar(
+                    fileName = fileName,
+                    size = compressedSize,
+                    inputStream = inputStream,
+                )
+                fileDescriptorUploadResult.complete(uploadResult)
             }
-        } catch (exception: IOException) {
-            Log.d("avatar", "Uploading IO exception", exception)
-            return UploadingResult.Failure
+            block(flow)
         }
 
-        return UploadingResult.Success(fileDescriptor.await())
+        return when (val result = fileDescriptorUploadResult.await()) {
+            is UploadFileResult.IOError -> {
+                UploadingResult.IOError(result.cause)
+            }
+
+            is UploadFileResult.ServerError -> UploadingResult.ServerError
+
+            is UploadFileResult.Success -> {
+                UploadingResult.Success(result.descriptor)
+            }
+        }
     }
 
     private suspend fun ProducerScope<UploadingPercentage>.uploadAvatar(
         fileName: String,
         size: Long,
         inputStream: InputStream,
-    ): FileDescriptor {
+    ): UploadFileResult {
         val uploadResult = client.files.upload(
             filename = fileName,
             contentType = ContentType.Image.Any,
@@ -94,10 +99,7 @@ class AvatarUploadUseCase(
             onUpload = { sent, total ->
                 val percent = sent.toDouble() / size * 100
                 send(UploadingPercentage(percent))
-                Log.d(
-                    "avatar",
-                    "$sent of $total (${"%.0f".format(percent)}%)",
-                )
+                Log.d("avatar", "$sent of $total (${"%.0f".format(percent)}%)")
             },
         ) {
             inputStream
@@ -105,7 +107,7 @@ class AvatarUploadUseCase(
                 .buffered()
                 .transferTo(this)
         }
-        return uploadResult.orThrow()
+        return uploadResult
     }
 
     private fun getFileName(avatarUri: Uri): String {
@@ -124,9 +126,4 @@ class AvatarUploadUseCase(
             ?.use(::useCursor)
             ?: "avatar"
     }
-
-//    private fun getSize(avatarUri: Uri): Long = contentResolver
-//        .openFileDescriptor(avatarUri, "r")
-//        ?.use { fileDescriptor -> fileDescriptor.statSize }
-//        ?: error("file size is null")
 }
