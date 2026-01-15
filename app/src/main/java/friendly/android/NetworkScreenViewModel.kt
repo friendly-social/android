@@ -17,14 +17,29 @@ private data class NetworkScreenVmState(
     val isNetworkFailure: Boolean,
     val isAuthFailure: Boolean,
     val isLoading: Boolean,
+    val isRefreshing: Boolean,
     val friends: List<FriendItem>?,
 ) {
     fun toUiState(): NetworkScreenUiState {
-        if (isLoading) return NetworkScreenUiState.Loading
-        if (isNetworkFailure) return NetworkScreenUiState.NetworkFailure
-        if (isAuthFailure) return NetworkScreenUiState.AuthFailure
-        if (friends == null) return NetworkScreenUiState.Other
-        return NetworkScreenUiState.Success(friends)
+        if (isLoading) return NetworkScreenUiState.Loading(
+            isRefreshing = isRefreshing,
+        )
+        if (isNetworkFailure) return NetworkScreenUiState.NetworkFailure(
+            isRefreshing = isRefreshing,
+        )
+        if (isAuthFailure) return NetworkScreenUiState.AuthFailure(
+            isRefreshing = isRefreshing,
+        )
+        if (friends == null) return NetworkScreenUiState.Other(
+            isRefreshing = isRefreshing,
+        )
+        if (friends.isEmpty()) return NetworkScreenUiState.NoFriends(
+            isRefreshing = isRefreshing,
+        )
+        return NetworkScreenUiState.Success(
+            friends = friends,
+            isRefreshing = isRefreshing,
+        )
     }
 
     companion object {
@@ -32,6 +47,7 @@ private data class NetworkScreenVmState(
             isNetworkFailure = false,
             isAuthFailure = false,
             isLoading = true,
+            isRefreshing = false,
             friends = null,
         )
 
@@ -39,6 +55,7 @@ private data class NetworkScreenVmState(
             isNetworkFailure = true,
             isAuthFailure = false,
             isLoading = false,
+            isRefreshing = false,
             friends = null,
         )
 
@@ -46,6 +63,7 @@ private data class NetworkScreenVmState(
             isNetworkFailure = false,
             isAuthFailure = true,
             isLoading = false,
+            isRefreshing = false,
             friends = null,
         )
     }
@@ -62,14 +80,31 @@ class NetworkScreenViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = NetworkScreenUiState.Loading,
+            initialValue = NetworkScreenUiState.Loading(),
         )
 
-    fun getFriends() {
-        _state.update { NetworkScreenVmState.Initial }
+    fun initialize() {
+        if (_state.value.friends == null) {
+            _state.update { NetworkScreenVmState.Initial }
+        }
+        loadFriends()
+    }
 
+    fun retry() {
+        _state.update { NetworkScreenVmState.Initial }
+        loadFriends()
+    }
+
+    fun refresh() {
+        _state.update { old ->
+            old.copy(isRefreshing = true)
+        }
+        loadFriends()
+    }
+
+    private fun loadFriends() {
         viewModelScope.launch {
-            val auth = authStorage.getAuthOrNull() ?: error("no auth bro")
+            val auth = authStorage.getAuth()
             val newState = when (val result = client.network.details(auth)) {
                 is FriendlyNetworkClient.DetailsResult.IOError -> {
                     NetworkScreenVmState.NetworkError
@@ -89,6 +124,7 @@ class NetworkScreenViewModel(
                         isNetworkFailure = false,
                         isAuthFailure = false,
                         isLoading = false,
+                        isRefreshing = false,
                         friends = friendItems,
                     )
                 }

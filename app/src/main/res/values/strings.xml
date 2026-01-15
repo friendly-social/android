@@ -31,4 +31,6 @@
     <string name="the_feed_is_empty">The feed is empty</string>
     <string name="refresh">Refresh</string>
     <string name="title_activity_mock_data">MockDataActivity</string>
+    <string name="no_friends_title">You have no friends</string>
+    <string name="no_friends_text">Add them via QR code to extend your network</string>
 </resources>

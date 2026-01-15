@@ -54,7 +54,6 @@ dependencies {
     // Will use alpha version till the material3-expressive release
 //    implementation(platform(libs.androidx.compose.bom))
     implementation(platform(libs.androidx.compose.bom.alpha))
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -75,6 +74,7 @@ dependencies {
     //  use own implementation of swipeable cards
     implementation(libs.smartword.compose.swipeable.cards)
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.lifecycle.viewmodel)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 
