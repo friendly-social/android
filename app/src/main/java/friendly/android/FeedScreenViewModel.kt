@@ -9,6 +9,7 @@ import friendly.sdk.FriendlyFeedClient
 import friendly.sdk.FriendlyFilesClient
 import friendly.sdk.FriendlyFriendsClient
 import friendly.sdk.UserDetails
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -39,21 +40,17 @@ private data class FeedScreenVmState(
 
     fun toUiState(): FeedScreenUiState {
         if (isServerError) {
-            return FeedScreenUiState.ServerError
+            return FeedScreenUiState.ServerError(isRefreshing)
         }
         if (isNetworkError) {
-            return FeedScreenUiState.NetworkError
+            return FeedScreenUiState.NetworkError(isRefreshing)
         }
         if (isAuthorizationError) {
-            return FeedScreenUiState.AuthorizationError
+            return FeedScreenUiState.AuthorizationError(isRefreshing)
         }
         if (isFeedEmpty) {
-            return FeedScreenUiState.EmptyFeed
+            return FeedScreenUiState.EmptyFeed(isRefreshing)
         }
-        if (isRefreshing) {
-            return FeedScreenUiState.Refreshing
-        }
-
         return FeedScreenUiState.Idle(currentFeedItem)
     }
 }
@@ -91,12 +88,11 @@ class FeedScreenViewModel(
             "Feed",
             "Start refreshing feed",
         )
-        _state.clearState()
         _state.setRefreshing()
         viewModelScope.launch {
             val result = loadFeedQueue()
+            _state.clearState()
             handleFeedQueueResult(result)
-            _state.setNotRefreshing()
             Log.d(
                 "Feed",
                 "Finished refreshing feed",

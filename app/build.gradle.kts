@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.coil.network.ktor)
     implementation(libs.androidx.exifinterface)
     implementation(libs.zxing.core)
+    implementation(libs.lightspark.compose.qr.code)
 
     // TODO: using for now this dependency with further plans to
     //  use own implementation of swipeable cards

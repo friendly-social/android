@@ -118,14 +118,14 @@ private fun BoxScope.LikeIndicator(size: Dp) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary)
+            .background(MaterialTheme.colorScheme.primaryContainer)
             .size(size)
             .align(Alignment.CenterStart),
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_person_heart),
+            painter = painterResource(R.drawable.ic_thumb_up),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onPrimary,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.size(size / 2),
         )
     }
@@ -137,14 +137,14 @@ private fun BoxScope.DislikeIndicator(size: Dp) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.error)
+            .background(MaterialTheme.colorScheme.errorContainer)
             .size(size)
             .align(Alignment.CenterEnd),
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_hearth_minus),
+            painter = painterResource(R.drawable.ic_thumb_down),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onError,
+            tint = MaterialTheme.colorScheme.onErrorContainer,
             modifier = Modifier.size(size / 2),
         )
     }

@@ -7,16 +7,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,15 +30,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 sealed interface FeedScreenUiState {
-    data object NetworkError : FeedScreenUiState
+    data class NetworkError(
+        val isRefreshing: Boolean,
+    ) : FeedScreenUiState
 
-    data object ServerError : FeedScreenUiState
+    data class ServerError(
+        val isRefreshing: Boolean,
+    ) : FeedScreenUiState
 
-    data object AuthorizationError : FeedScreenUiState
+    data class AuthorizationError(
+        val isRefreshing: Boolean,
+    ) : FeedScreenUiState
 
-    data object EmptyFeed : FeedScreenUiState
-
-    data object Refreshing : FeedScreenUiState
+    data class EmptyFeed(
+        val isRefreshing: Boolean,
+    ) : FeedScreenUiState
 
     data class Idle(val currentFeedItem: FeedItem) : FeedScreenUiState
 }
@@ -49,6 +56,10 @@ sealed interface FeedScreenUiState {
 @Composable
 fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
     val state by vm.state.collectAsState()
+    val pullToRefreshState = rememberPullToRefreshState()
+    val isRefreshing = (state as? FeedScreenUiState.EmptyFeed)
+        ?.isRefreshing
+        ?: false
 
     LaunchedEffect(Unit) {
         vm.loadFeed()
@@ -57,39 +68,59 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            state = pullToRefreshState,
+            onRefresh = vm::refreshFeed,
+            indicator = {
+                PullToRefreshDefaults.LoadingIndicator(
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    isRefreshing = isRefreshing,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    state = pullToRefreshState,
+                )
+            },
             modifier = Modifier
-                .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
+                .fillMaxSize(),
         ) {
-            when (val state = state) {
-                is FeedScreenUiState.Idle -> {
-                    IndicatedCardFeed(
-                        currentItem = state.currentFeedItem,
-                        like = vm::like,
-                        dislike = vm::dislike,
-                    )
-                }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+            ) {
+                when (val state = state) {
+                    is FeedScreenUiState.Idle -> {
+                        IndicatedCardFeed(
+                            currentItem = state.currentFeedItem,
+                            like = vm::like,
+                            dislike = vm::dislike,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
 
-                is FeedScreenUiState.NetworkError -> {
-                    Text("network err")
-                }
+                    is FeedScreenUiState.NetworkError -> {
+                        Text("network err")
+                    }
 
-                is FeedScreenUiState.AuthorizationError -> {
-                    Text("auth err")
-                }
+                    is FeedScreenUiState.AuthorizationError -> {
+                        Text("auth err")
+                    }
 
-                is FeedScreenUiState.Refreshing -> {
-                    LoadingIndicator(Modifier.size(96.dp))
-                }
+                    is FeedScreenUiState.EmptyFeed -> {
+                        EmptyFeed(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState()),
+                        )
+                    }
 
-                is FeedScreenUiState.EmptyFeed -> EmptyFeed(vm)
-
-                is FeedScreenUiState.ServerError -> {
-                    Text("server err")
+                    is FeedScreenUiState.ServerError -> {
+                        Text("server err")
+                    }
                 }
             }
         }
@@ -97,35 +128,35 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun EmptyFeed(vm: FeedScreenViewModel) {
-    Text(
-        text = stringResource(R.string.the_feed_is_empty),
-        style = MaterialTheme.typography.headlineSmall,
-    )
-
-    Spacer(Modifier.height(8.dp))
-
-    Text(
-        text = stringResource(R.string.add_more_friends_feed_text),
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.outline,
-    )
-
-    Spacer(Modifier.height(16.dp))
-
-    OutlinedButton(
-        onClick = vm::refreshFeed,
-        contentPadding =
-        ButtonDefaults.ButtonWithIconContentPadding,
+private fun EmptyFeed(
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier,
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_refresh),
+            painter = painterResource(R.drawable.ic_inbox),
             contentDescription = null,
+            modifier = Modifier.size(48.dp),
+            tint = MaterialTheme.colorScheme.outline,
         )
-        Spacer(Modifier.width(4.dp))
+
+        Spacer(Modifier.height(8.dp))
+
         Text(
-            text = stringResource(R.string.refresh),
-            style = MaterialTheme.typography.labelLarge,
+            text = stringResource(R.string.you_re_all_caught_up),
+            style = MaterialTheme.typography.headlineSmall,
         )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = stringResource(R.string.add_more_friends_feed_text),
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.outline,
+        )
+
     }
 }
