@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.spartapps.swipeablecards.state.rememberSwipeableCardsState
@@ -35,16 +37,17 @@ private val animations = SwipeableCardsAnimations(
 
 private val cardsProperties = SwipeableCardsProperties(
     padding = 0.dp,
-    swipeThreshold = 150.dp,
+    swipeThreshold = 100.dp,
     lockBelowCardDragging = true,
     enableHapticFeedbackOnThreshold = true,
     stackedCardsOffset = 0.dp,
     draggingAcceleration = 0.6f,
 )
 
-// TODO:
+// TODO 1:
 //  make own card implementation that should work without
 //  workarounds with goBack()
+// TODO 2: stop using indicators in favor of ard stack usage
 @Composable
 fun IndicatedCardFeed(
     currentItem: FeedItem,
@@ -66,11 +69,11 @@ fun IndicatedCardFeed(
         val xPercentage = xOffset.absoluteValue / MAX_CARD_OFFSET
         val size = (128 * xPercentage).dp
 
-        if (xOffset > 0) {
+        if (xOffset < 0) {
             DislikeIndicator(size)
         }
 
-        if (xOffset < 0) {
+        if (xOffset > 0) {
             LikeIndicator(size)
         }
 
@@ -112,21 +115,37 @@ fun IndicatedCardFeed(
 @Composable
 private fun BoxScope.LikeIndicator(size: Dp) {
     Box(
+        contentAlignment = Alignment.Center,
         modifier = Modifier
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primary)
             .size(size)
-            .align(Alignment.CenterEnd),
-    )
+            .align(Alignment.CenterStart),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_person_heart),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier.size(size / 2),
+        )
+    }
 }
 
 @Composable
 private fun BoxScope.DislikeIndicator(size: Dp) {
     Box(
+        contentAlignment = Alignment.Center,
         modifier = Modifier
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.error)
             .size(size)
-            .align(Alignment.CenterStart),
-    )
+            .align(Alignment.CenterEnd),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_hearth_minus),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onError,
+            modifier = Modifier.size(size / 2),
+        )
+    }
 }
