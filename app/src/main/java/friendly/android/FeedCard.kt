@@ -1,5 +1,6 @@
 package friendly.android
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -12,10 +13,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -27,43 +27,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.SubcomposeAsyncImage
 import friendly.sdk.Interest
+import friendly.sdk.Nickname
+import friendly.sdk.UserId
 
 @Composable
 fun FeedCard(entry: FeedItem.Entry, modifier: Modifier = Modifier) {
     OutlinedCard(
         modifier = modifier.fillMaxSize(),
     ) {
-        // todo make wrapper for that and use in other places
-        SubcomposeAsyncImage(
-            model = entry.avatarUri,
-            loading = {
-                Box(modifier = Modifier.shimmer())
-            },
-            error = {
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.secondary)
-                        .size(64.dp),
-                )
-            },
-            contentDescription = null,
-            contentScale = ContentScale.FillWidth,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f),
+        ProfileImage(
+            nickname = entry.nickname,
+            userId = entry.id,
+            avatarUri = entry.avatarUri,
         )
-//
-//        AsyncImage(
-//            model = entry.avatarUri,
-//            contentDescription = null,
-//            contentScale = ContentScale.FillBounds,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .height(256.dp),
-//        )
 
         Spacer(Modifier.height(8.dp))
 
@@ -95,6 +74,48 @@ fun FeedCard(entry: FeedItem.Entry, modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ProfileImage(
+    userId: UserId,
+    nickname: Nickname,
+    avatarUri: Uri?,
+) {
+    SubcomposeAsyncImage(
+        model = avatarUri,
+        loading = {
+            Box(modifier = Modifier.shimmer())
+        },
+        error = {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Color.pastelFromLong(
+                            long = userId.long,
+                            useDark = isSystemInDarkTheme(),
+                        ),
+                    )
+                    .aspectRatio(1f),
+            ) {
+                Text(
+                    text = nickname.string.take(1).uppercase(),
+                    style = MaterialTheme.typography.displayLargeEmphasized,
+                    fontSize = 192.sp,
+                    color = MaterialTheme.colorScheme.onBackground
+                        .copy(alpha = 0.7f),
+                )
+            }
+        },
+        contentDescription = null,
+        contentScale = ContentScale.FillBounds,
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f),
+    )
 }
 
 @Composable

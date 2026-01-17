@@ -94,9 +94,7 @@ fun IndicatedCardFeed(
             item(currentItem) { item, _, _ ->
                 when (item) {
                     is FeedItem.Loading -> {
-                        ShimmerFeedCard(
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                        ShimmerFeedCard(modifier = Modifier.fillMaxSize())
                     }
 
                     is FeedItem.Entry -> {
