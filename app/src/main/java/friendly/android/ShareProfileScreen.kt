@@ -81,7 +81,7 @@ fun ShareProfileScreen(
                 is ShareProfileScreenUiState.Share -> {
                     QrCodeView(
                         data = state.shareUrl,
-                        modifier = Modifier.size(300.dp)
+                        modifier = Modifier.size(300.dp),
                     )
                 }
             }

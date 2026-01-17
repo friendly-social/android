@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,11 +32,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import friendly.android.ProfileScreenViewModel.UserProfile
 import friendly.sdk.UserAccessHash
 import friendly.sdk.UserId
@@ -162,15 +159,11 @@ fun LoadedProfileState(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                AsyncImage(
-                    model = state.profile.avatar?.string,
-                    contentDescription = null,
-                    error = painterResource(R.drawable.ic_person),
-                    placeholder = painterResource(R.drawable.ic_person),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(128.dp)
-                        .clip(CircleShape),
+                UserAvatar(
+                    nickname = state.profile.nickname,
+                    userId = state.profile.userId,
+                    uri = state.profile.avatar,
+                    modifier = Modifier.size(128.dp),
                 )
 
                 Spacer(Modifier.height(24.dp))

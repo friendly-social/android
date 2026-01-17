@@ -25,7 +25,14 @@ class RegisterUseCase(
             avatar = avatar,
             socialLink = SocialLink.orThrow("TODO()"),
         )
-        authStorage.store(authorization.orThrow())
-        profileStorage.store(nickname, description, avatar, interests)
+        val authorizationSuccess = authorization.orThrow()
+        authStorage.store(authorizationSuccess)
+        profileStorage.store(
+            nickname = nickname,
+            userId = authorizationSuccess.id,
+            description = description,
+            avatar = avatar,
+            interests = interests,
+        )
     }
 }

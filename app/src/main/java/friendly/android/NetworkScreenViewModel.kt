@@ -1,5 +1,6 @@
 package friendly.android
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import friendly.android.NetworkScreenUiState.Success.FriendItem
@@ -148,9 +149,9 @@ class NetworkScreenViewModel(
     ): List<FriendItem> = details.friends.map { friend ->
         FriendItem(
             avatar = friend.avatar?.let { avatar ->
-                client.files.getEndpoint(avatar)
-            }?.string,
-            nickname = friend.nickname.string,
+                Uri.parse(client.files.getEndpoint(avatar).string)
+            },
+            nickname = friend.nickname,
             id = friend.id,
             accessHash = friend.accessHash,
         )

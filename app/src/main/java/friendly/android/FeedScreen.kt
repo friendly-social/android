@@ -30,21 +30,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 sealed interface FeedScreenUiState {
-    data class NetworkError(
-        val isRefreshing: Boolean,
-    ) : FeedScreenUiState
+    data class NetworkError(val isRefreshing: Boolean) : FeedScreenUiState
 
-    data class ServerError(
-        val isRefreshing: Boolean,
-    ) : FeedScreenUiState
+    data class ServerError(val isRefreshing: Boolean) : FeedScreenUiState
 
-    data class AuthorizationError(
-        val isRefreshing: Boolean,
-    ) : FeedScreenUiState
+    data class AuthorizationError(val isRefreshing: Boolean) :
+        FeedScreenUiState
 
-    data class EmptyFeed(
-        val isRefreshing: Boolean,
-    ) : FeedScreenUiState
+    data class EmptyFeed(val isRefreshing: Boolean) : FeedScreenUiState
 
     data class Idle(val currentFeedItem: FeedItem) : FeedScreenUiState
 }
@@ -128,9 +121,7 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun EmptyFeed(
-    modifier: Modifier = Modifier,
-) {
+private fun EmptyFeed(modifier: Modifier = Modifier) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -157,6 +148,5 @@ private fun EmptyFeed(
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.outline,
         )
-
     }
 }

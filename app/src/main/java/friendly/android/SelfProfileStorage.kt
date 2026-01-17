@@ -8,6 +8,7 @@ import friendly.sdk.FileId
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
 import friendly.sdk.UserDescription
+import friendly.sdk.UserId
 
 class SelfProfileStorage(context: Context) {
     companion object {
@@ -17,6 +18,7 @@ class SelfProfileStorage(context: Context) {
         private const val DESCRIPTION = "DESCRIPTION"
         private const val AVATAR_ACCESS_HASH = "AVATAR_ACCESS_HASH"
         private const val AVATAR_ID = "AVATAR_ID"
+        private const val USER_ID = "USER_ID"
         private const val INTERESTS = "INTERESTS"
     }
 
@@ -25,6 +27,7 @@ class SelfProfileStorage(context: Context) {
         val description: UserDescription,
         val avatar: FileDescriptor?,
         val interest: List<Interest>,
+        val userId: UserId,
     )
 
     private val preferences = context.getSharedPreferences(
@@ -34,6 +37,7 @@ class SelfProfileStorage(context: Context) {
 
     fun store(
         nickname: Nickname,
+        userId: UserId,
         description: UserDescription,
         avatar: FileDescriptor?,
         interests: List<Interest>,
@@ -51,6 +55,7 @@ class SelfProfileStorage(context: Context) {
             avatar?.id?.long?.let { long ->
                 putLong(AVATAR_ID, long)
             }
+            putLong(USER_ID, userId.long)
             commit()
         }
     }
@@ -58,6 +63,11 @@ class SelfProfileStorage(context: Context) {
     fun getNickname(): Nickname? {
         val string = preferences.getString(NICKNAME, null)
         return string?.let { string -> Nickname.orThrow(string) }
+    }
+
+    fun getUserId(): UserId {
+        val long = preferences.getLong(USER_ID, 0L)
+        return UserId(long)
     }
 
     fun getDescription(): UserDescription? {
@@ -94,6 +104,7 @@ class SelfProfileStorage(context: Context) {
             description = getDescription() ?: return null,
             avatar = getAvatar(),
             interest = getInterests() ?: return null,
+            userId = getUserId(),
         )
     }
 }

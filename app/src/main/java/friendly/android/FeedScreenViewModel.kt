@@ -9,7 +9,6 @@ import friendly.sdk.FriendlyFeedClient
 import friendly.sdk.FriendlyFilesClient
 import friendly.sdk.FriendlyFriendsClient
 import friendly.sdk.UserDetails
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

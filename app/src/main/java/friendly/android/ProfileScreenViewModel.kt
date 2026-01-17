@@ -1,15 +1,16 @@
 package friendly.android
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import friendly.android.ProfileScreenViewModel.UserProfile
 import friendly.sdk.Authorization
-import friendly.sdk.FriendlyEndpoint
 import friendly.sdk.FriendlyFilesClient
 import friendly.sdk.FriendlyUsersClient
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
 import friendly.sdk.UserDescription
+import friendly.sdk.UserId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -53,8 +54,9 @@ class ProfileScreenViewModel(
 
     data class UserProfile(
         val nickname: Nickname,
+        val userId: UserId,
         val description: UserDescription,
-        val avatar: FriendlyEndpoint?,
+        val avatar: Uri?,
         val interests: List<Interest>,
     )
 
@@ -99,14 +101,20 @@ class ProfileScreenViewModel(
     ): UserProfile? {
         when (source) {
             is ProfileScreenSource.SelfProfile -> {
-                val (nickname, description, avatar, interests) =
+                val (nickname, description, avatar, interests, userId) =
                     selfProfileStorage.getCache() ?: return null
 
                 val avatarUrl = avatar?.let { avatar ->
-                    filesClient.getEndpoint(avatar)
+                    Uri.parse(filesClient.getEndpoint(avatar).string)
                 }
 
-                return UserProfile(nickname, description, avatarUrl, interests)
+                return UserProfile(
+                    nickname,
+                    userId,
+                    description,
+                    avatarUrl,
+                    interests,
+                )
             }
 
             is ProfileScreenSource.FriendProfile -> {
@@ -127,9 +135,10 @@ class ProfileScreenViewModel(
                     nickname = details.nickname,
                     description = details.description,
                     avatar = details.avatar?.let { avatar ->
-                        filesClient.getEndpoint(avatar)
+                        Uri.parse(filesClient.getEndpoint(avatar).string)
                     },
                     interests = details.interests,
+                    userId = details.id,
                 )
             }
         }

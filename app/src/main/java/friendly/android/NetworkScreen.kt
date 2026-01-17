@@ -1,7 +1,7 @@
 package friendly.android
 
+import android.net.Uri
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,13 +36,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
 import friendly.android.NetworkScreenUiState.Success.FriendItem
+import friendly.sdk.Nickname
 import friendly.sdk.UserAccessHash
 import friendly.sdk.UserId
 
@@ -70,8 +68,8 @@ sealed interface NetworkScreenUiState {
         override val isRefreshing: Boolean = false,
     ) : NetworkScreenUiState {
         data class FriendItem(
-            val avatar: String?,
-            val nickname: String,
+            val avatar: Uri?,
+            val nickname: Nickname,
             val id: UserId,
             val accessHash: UserAccessHash,
         )
@@ -238,7 +236,8 @@ private fun Success(
         ) { friend ->
             FriendItem(
                 avatarUri = friend.avatar,
-                name = friend.nickname,
+                nickname = friend.nickname,
+                userId = friend.id,
                 onClick = { onFriendClick(friend) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -262,8 +261,9 @@ private fun Success(
 
 @Composable
 private fun FriendItem(
-    avatarUri: String?,
-    name: String,
+    avatarUri: Uri?,
+    nickname: Nickname,
+    userId: UserId,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -274,29 +274,17 @@ private fun FriendItem(
             .fillMaxWidth()
             .padding(16.dp),
     ) {
-        SubcomposeAsyncImage(
-            model = avatarUri,
-            loading = {
-                Box(modifier = Modifier.shimmer())
-            },
-            error = {
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.secondary)
-                        .size(64.dp),
-                )
-            },
-            contentDescription = null,
-            modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape),
+        UserAvatar(
+            nickname = nickname,
+            userId = userId,
+            uri = avatarUri,
+            modifier = Modifier,
         )
 
         Spacer(Modifier.width(16.dp))
 
         Text(
-            text = name,
+            text = nickname.string,
             style = MaterialTheme.typography.headlineSmall,
         )
     }

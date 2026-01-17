@@ -69,3 +69,15 @@ fun Color.Companion.pastelFromString(string: String, useDark: Boolean): Color {
 
     return if (useDark) darkPastelColors[num] else lightPastelColors[num]
 }
+
+fun Color.Companion.pastelFromLong(long: Long, useDark: Boolean): Color {
+    val utf16String = long.toString().toByteArray(Charsets.UTF_16)
+    val hash = utf16String.fold(0) { hash, char ->
+        val shifted = hash shl DJB_SHIFT_OFFSET
+        char + shifted - hash
+    }
+
+    val num = (hash shr (0 * BITS_PER_CHANNEL)) and BYTE_MASK
+
+    return if (useDark) darkPastelColors[num] else lightPastelColors[num]
+}

@@ -164,6 +164,7 @@ class MockDataActivity : ComponentActivity() {
                 description = description,
                 avatar = null,
                 interests = interests,
+                userId = authorization1.id,
             )
             authStorage.store(authorization1)
 
