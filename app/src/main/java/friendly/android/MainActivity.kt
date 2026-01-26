@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import friendly.sdk.FriendlyClient
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.logging.Logging
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,7 +15,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val context = this
-        val client = FriendlyClient.meetacy(HttpClient(CIO))
+        val client = FriendlyClient.meetacy(
+            HttpClient(CIO) { install(Logging) }
+        )
         val authStorage = AuthStorage(context)
         val selfProfileStorage = SelfProfileStorage(context)
 

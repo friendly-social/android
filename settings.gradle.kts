@@ -1,3 +1,5 @@
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 pluginManagement {
     repositories {
         google {
@@ -22,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "friendly-android"
 include(":app")
+include(":cards")

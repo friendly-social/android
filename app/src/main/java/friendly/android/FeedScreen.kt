@@ -1,6 +1,7 @@
 package friendly.android
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -34,12 +36,11 @@ sealed interface FeedScreenUiState {
 
     data class ServerError(val isRefreshing: Boolean) : FeedScreenUiState
 
-    data class AuthorizationError(val isRefreshing: Boolean) :
-        FeedScreenUiState
-
     data class EmptyFeed(val isRefreshing: Boolean) : FeedScreenUiState
 
-    data class Idle(val currentFeedItem: FeedItem) : FeedScreenUiState
+    data object Loading : FeedScreenUiState
+
+    data class Idle(val currentFeedItems: List<FeedEntry>) : FeedScreenUiState
 }
 
 @OptIn(
@@ -55,7 +56,7 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
         ?: false
 
     LaunchedEffect(Unit) {
-        vm.loadFeed()
+        vm.loadInitial()
     }
 
     Scaffold(
@@ -64,7 +65,7 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             state = pullToRefreshState,
-            onRefresh = vm::refreshFeed,
+            onRefresh = vm::refresh,
             indicator = {
                 PullToRefreshDefaults.LoadingIndicator(
                     modifier = Modifier.align(Alignment.TopCenter),
@@ -87,20 +88,34 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
             ) {
                 when (val state = state) {
                     is FeedScreenUiState.Idle -> {
-                        IndicatedCardFeed(
-                            currentItem = state.currentFeedItem,
-                            like = vm::like,
-                            dislike = vm::dislike,
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize(),
+                        ) {
+                            EmptyFeed(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState()),
+                            )
+                            IndicatedCardFeed(
+                                currentItems = state.currentFeedItems,
+                                like = vm::like,
+                                dislike = vm::dislike,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
                     }
 
                     is FeedScreenUiState.NetworkError -> {
-                        Text("network err")
-                    }
-
-                    is FeedScreenUiState.AuthorizationError -> {
-                        Text("auth err")
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState()),
+                        ) {
+                            Text("Network error")
+                        }
                     }
 
                     is FeedScreenUiState.EmptyFeed -> {
@@ -112,7 +127,24 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
                     }
 
                     is FeedScreenUiState.ServerError -> {
-                        Text("server err")
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState()),
+                        ) {
+                            Text("server err")
+                        }
+                    }
+
+                    is FeedScreenUiState.Loading -> {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize(),
+                        ) {
+                            ContainedLoadingIndicator(Modifier.size(64.dp))
+                        }
                     }
                 }
             }

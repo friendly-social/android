@@ -5,10 +5,8 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import friendly.sdk.FeedQueue
-import friendly.sdk.FriendlyFeedClient
+import friendly.sdk.FriendlyFeedClient.QueueResult
 import friendly.sdk.FriendlyFilesClient
-import friendly.sdk.FriendlyFriendsClient
-import friendly.sdk.UserDetails
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,22 +16,27 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 private data class FeedScreenVmState(
-    val currentFeedItem: FeedItem = FeedItem.Loading,
+    val currentFeedItems: List<FeedEntry> = emptyList(),
+    val isLoading: Boolean,
     val isRefreshing: Boolean,
     val isNetworkError: Boolean,
     val isServerError: Boolean,
-    val isAuthorizationError: Boolean,
-    val isFeedEmpty: Boolean,
-    // TODO: val hasNewItems: Boolean,
 ) {
     companion object {
         val Initial = FeedScreenVmState(
-            currentFeedItem = FeedItem.Loading,
+            currentFeedItems = emptyList(),
             isNetworkError = false,
             isServerError = false,
-            isAuthorizationError = false,
-            isFeedEmpty = false,
+            isLoading = true,
             isRefreshing = false,
+        )
+
+        val Refreshing = FeedScreenVmState(
+            currentFeedItems = emptyList(),
+            isNetworkError = false,
+            isServerError = false,
+            isLoading = false,
+            isRefreshing = true,
         )
     }
 
@@ -44,187 +47,141 @@ private data class FeedScreenVmState(
         if (isNetworkError) {
             return FeedScreenUiState.NetworkError(isRefreshing)
         }
-        if (isAuthorizationError) {
-            return FeedScreenUiState.AuthorizationError(isRefreshing)
+        if (isLoading) {
+            return FeedScreenUiState.Loading
         }
-        if (isFeedEmpty) {
+        if (currentFeedItems.isEmpty()) {
             return FeedScreenUiState.EmptyFeed(isRefreshing)
         }
-        return FeedScreenUiState.Idle(currentFeedItem)
+        return FeedScreenUiState.Idle(currentFeedItems)
     }
 }
 
 class FeedScreenViewModel(
-    private val sendRequest: SendFriendshipRequestUseCase,
-    private val decline: DeclineFriendshipUseCase,
+    private val like: SendFriendshipRequestUseCase,
+    private val dislike: DeclineFriendshipUseCase,
     private val loadFeedQueue: LoadFeedQueueUseCase,
     private val filesClient: FriendlyFilesClient,
 ) : ViewModel() {
     private val _state = MutableStateFlow(FeedScreenVmState.Initial)
+
     val state: StateFlow<FeedScreenUiState> = _state
         .map(FeedScreenVmState::toUiState)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = FeedScreenUiState.Idle(FeedItem.Loading),
+            initialValue = FeedScreenUiState.Idle(emptyList()),
         )
 
-    private val feedQueue = ArrayDeque<FeedQueue.Entry>()
+    fun loadInitial() {
+        if (_state.value.currentFeedItems.isNotEmpty()) return
 
-    fun loadFeed() {
-        Log.d(
-            "Feed",
-            "Start refreshing feed",
-        )
+        Log.d("Feed", "loadInitial start")
+
         viewModelScope.launch {
-            val result = loadFeedQueue()
-            handleFeedQueueResult(result)
+            val feedQueueResult = loadFeedQueue()
+            _state.setLoadFeedQueueState(
+                filesClient = filesClient,
+                result = feedQueueResult,
+                onAuthError = {
+                    TODO("Unhandled Authorization error")
+                },
+            )
+            Log.d("Feed", "loadInitial finished")
         }
     }
 
-    fun refreshFeed() {
-        Log.d(
-            "Feed",
-            "Start refreshing feed",
-        )
+    fun refresh() {
+        require(_state.value.isLoading.not())
+
         _state.setRefreshing()
+
         viewModelScope.launch {
-            val result = loadFeedQueue()
-            _state.clearState()
-            handleFeedQueueResult(result)
-            Log.d(
-                "Feed",
-                "Finished refreshing feed",
+            val feedQueueResult = loadFeedQueue()
+            _state.setRefreshFeedState(
+                filesClient = filesClient,
+                result = feedQueueResult,
+                onAuthError = {
+                    TODO("Unhandled Authorization error")
+                },
             )
         }
     }
 
-    private fun handleFeedQueueResult(result: FriendlyFeedClient.QueueResult) {
-        when (result) {
-            is FriendlyFeedClient.QueueResult.IOError ->
-                _state.setNetworkError()
-
-            is FriendlyFeedClient.QueueResult.ServerError ->
-                _state.setServerError()
-
-            is FriendlyFeedClient.QueueResult.Unauthorized ->
-                _state.setAuthorizationError()
-
-            is FriendlyFeedClient.QueueResult.Success -> {
-                val queue = result.queue
-                Log.d(
-                    "FEED",
-                    "Loaded feed (${queue.entries.size}): $result",
-                )
-                feedQueue.addAll(queue.entries)
-                dequeueFeed()
-            }
-        }
-    }
-
-    private fun dequeueFeed() {
-        val pendingItem = feedQueue.removeLastOrNull()
-
-        if (pendingItem == null) {
-            _state.setEmptyFeed()
-            return
-        }
-
-        val feedEntry = pendingItem.details.toFeedEntry(filesClient)
-        _state.setFeedEntry(feedEntry)
-    }
-
-    fun like() {
-        val currentItem = _state.currentFeedEntryOrNull() ?: return
-
+    fun like(entry: FeedEntry) {
         viewModelScope.launch {
-            _state.setLoading()
-            val result = sendRequest(
-                userId = currentItem.id,
-                accessHash = currentItem.accessHash,
+            Log.d("Feed", "Sent like: $entry")
+            like(
+                userId = entry.id,
+                accessHash = entry.accessHash,
             )
-            Log.d("FEED", "sent friendship request")
-            handleFriendshipRequestResult(currentItem, result)
+            Log.d("Feed", "Received like response: $entry")
         }
     }
 
-    // TODO: add ui state for errors
-    private fun handleFriendshipRequestResult(
-        currentEntry: FeedItem.Entry,
-        result: FriendlyFriendsClient.RequestResult,
-    ) {
-        Log.d("FEED", "Got friendship request result: $result")
-        when (result) {
-            is FriendlyFriendsClient.RequestResult.IOError,
-            is FriendlyFriendsClient.RequestResult.NotFound,
-            is FriendlyFriendsClient.RequestResult.ServerError,
-            is FriendlyFriendsClient.RequestResult.Unauthorized,
-            -> {
-                _state.setFeedEntry(currentEntry)
-            }
-
-            is FriendlyFriendsClient.RequestResult.Success -> {
-                Log.d(
-                    "FEED",
-                    "Got successful friendship request result, loading next element",
-                )
-                loadNext()
-            }
-        }
-    }
-
-    // TODO: add ui state for errors
-    private fun unwrapDeclineFriendshipResult(
-        currentEntry: FeedItem.Entry,
-        result: FriendlyFriendsClient.DeclineResult,
-    ) {
-        Log.d("FEED", "Got decline friendship result: $result")
-        when (result) {
-            is FriendlyFriendsClient.DeclineResult.IOError,
-            is FriendlyFriendsClient.DeclineResult.NotFound,
-            is FriendlyFriendsClient.DeclineResult.ServerError,
-            is FriendlyFriendsClient.DeclineResult.Unauthorized,
-            -> {
-                _state.setFeedEntry(currentEntry)
-            }
-
-            is FriendlyFriendsClient.DeclineResult.Success -> {
-                Log.d(
-                    "FEED",
-                    "Got successful decline result, loading next element",
-                )
-                loadNext()
-            }
-        }
-    }
-
-    fun dislike() {
-        val currentEntry = _state.currentFeedEntryOrNull() ?: return
-
+    fun dislike(entry: FeedEntry) {
         viewModelScope.launch {
-            val result = decline(
-                userId = currentEntry.id,
-                accessHash = currentEntry.accessHash,
+            Log.d("Feed", "Sent dislike: $entry")
+            dislike(
+                userId = entry.id,
+                accessHash = entry.accessHash,
             )
-            Log.d("FEED", "Sent decline request")
-            unwrapDeclineFriendshipResult(currentEntry, result)
+            Log.d("Feed", "Received dislike response: $entry")
         }
     }
+}
 
-    private fun loadNext() {
-        _state.clearErrors()
-        _state.setLoading()
+private fun MutableVmStateFlow.setRefreshFeedState(
+    filesClient: FriendlyFilesClient,
+    result: QueueResult,
+    onAuthError: () -> Unit,
+) {
+    when (result) {
+        is QueueResult.IOError -> this.setNetworkError()
 
-        viewModelScope.launch {
-            dequeueFeed()
+        is QueueResult.ServerError -> this.setServerError()
+
+        is QueueResult.Unauthorized -> onAuthError()
+
+        is QueueResult.Success -> {
+            this.update { old ->
+                old.copy(
+                    isRefreshing = false,
+                    currentFeedItems = result.queue.entries.map { entry ->
+                        entry.toFeedEntry(filesClient)
+                    },
+                )
+            }
+        }
+    }
+}
+
+private fun MutableVmStateFlow.setLoadFeedQueueState(
+    filesClient: FriendlyFilesClient,
+    result: QueueResult,
+    onAuthError: () -> Unit,
+) {
+    when (result) {
+        is QueueResult.IOError -> this.setNetworkError()
+
+        is QueueResult.ServerError -> this.setServerError()
+
+        is QueueResult.Unauthorized -> onAuthError()
+
+        is QueueResult.Success -> {
+            this.update { old ->
+                old.copy(
+                    isLoading = false,
+                    currentFeedItems = result.queue.entries.map { entry ->
+                        entry.toFeedEntry(filesClient)
+                    },
+                )
+            }
         }
     }
 }
 
 private typealias MutableVmStateFlow = MutableStateFlow<FeedScreenVmState>
-
-private fun MutableVmStateFlow.currentFeedEntryOrNull(): FeedItem.Entry? =
-    this.value.currentFeedItem as? FeedItem.Entry
 
 private fun MutableVmStateFlow.setNetworkError() {
     this.update { old ->
@@ -238,64 +195,19 @@ private fun MutableVmStateFlow.setServerError() {
     }
 }
 
-private fun MutableVmStateFlow.setAuthorizationError() {
-    this.update { old ->
-        old.copy(isAuthorizationError = true)
-    }
-}
-
-private fun MutableVmStateFlow.clearErrors() {
-    this.update { old ->
-        old.copy(
-            isServerError = false,
-            isNetworkError = false,
-            isAuthorizationError = false,
-        )
-    }
-}
-
-private fun MutableVmStateFlow.clearState() {
-    this.value = FeedScreenVmState.Initial
-}
-
-private fun MutableVmStateFlow.setLoading() {
-    this.update { old ->
-        old.copy(currentFeedItem = FeedItem.Loading)
-    }
-}
-
 private fun MutableVmStateFlow.setRefreshing() {
-    this.update { old ->
-        old.copy(isRefreshing = true)
-    }
+    this.value = FeedScreenVmState.Refreshing
 }
 
-private fun MutableVmStateFlow.setNotRefreshing() {
-    this.update { old ->
-        old.copy(isRefreshing = true)
-    }
-}
-
-private fun MutableVmStateFlow.setEmptyFeed() {
-    this.update { old ->
-        old.copy(isFeedEmpty = true)
-    }
-}
-
-private fun MutableVmStateFlow.setFeedEntry(entry: FeedItem.Entry) {
-    this.update { old ->
-        old.copy(currentFeedItem = entry)
-    }
-}
-
-private fun UserDetails.toFeedEntry(
+private fun FeedQueue.Entry.toFeedEntry(
     filesClient: FriendlyFilesClient,
-): FeedItem.Entry {
-    val details = this
+): FeedEntry {
+    val entry = this
+    val details = entry.details
     val avatarEndpoint = details.avatar?.let { avatar ->
         filesClient.getEndpoint(avatar)
     }
-    return FeedItem.Entry(
+    return FeedEntry(
         id = details.id,
         accessHash = details.accessHash,
         nickname = details.nickname,

@@ -47,11 +47,11 @@ class FriendlyViewModelFactory(
         }
         if (modelClass.isAssignableFrom(FeedScreenViewModel::class.java)) {
             return FeedScreenViewModel(
-                sendRequest = SendFriendshipRequestUseCase(
+                like = SendFriendshipRequestUseCase(
                     friendsClient = client.friends,
                     authStorage = authStorage,
                 ),
-                decline = DeclineFriendshipUseCase(
+                dislike = DeclineFriendshipUseCase(
                     friendsClient = client.friends,
                     authStorage = authStorage,
                 ),

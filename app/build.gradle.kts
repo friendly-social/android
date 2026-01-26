@@ -70,15 +70,8 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.zxing.core)
     implementation(libs.lightspark.compose.qr.code)
-
-    // TODO: using for now this dependency with further plans to
-    //  use own implementation of swipeable cards
-    implementation(libs.smartword.compose.swipeable.cards)
-    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.ktor.logging)
+    implementation(libs.slf4j.android)
+    implementation(projects.cards)
     implementation(libs.androidx.lifecycle.viewmodel)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
