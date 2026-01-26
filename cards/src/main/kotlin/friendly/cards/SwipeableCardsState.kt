@@ -18,7 +18,8 @@ import friendly.cards.SwipeableCardDirection
  * between cards while enforcing boundaries and tracking navigation possibilities.
  */
 class SwipeableCardsState(
-    val visibleCardsInStack: Int = SwipeableCardsDefaults.VISIBLE_CARDS_IN_STACK,
+    val visibleCardsInStack: Int =
+        SwipeableCardsDefaults.VISIBLE_CARDS_IN_STACK,
     initialCardIndex: Int = 0,
     private val itemCount: () -> Int,
 ) {
@@ -62,10 +63,7 @@ class SwipeableCardsState(
         (currentCardIndex..lastIndex).toList() + swipingVisibleCards
     }
 
-    internal fun onDragOffsetChange(
-        index: Int,
-        offset: Offset,
-    ) {
+    internal fun onDragOffsetChange(index: Int, offset: Offset) {
         dragOffsets[index] = offset
     }
 

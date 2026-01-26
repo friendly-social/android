@@ -28,9 +28,12 @@ object SwipeableCardsDefaults {
 data class SwipeableCardsProperties(
     val padding: Dp = SwipeableCardsDefaults.PADDING,
     val swipeThreshold: Dp = SwipeableCardsDefaults.SWIPE_THRESHOLD,
-    val lockBelowCardDragging: Boolean = SwipeableCardsDefaults.LOCK_BELOW_CARD_DRAGGING,
+    val lockBelowCardDragging: Boolean =
+        SwipeableCardsDefaults.LOCK_BELOW_CARD_DRAGGING,
     val enableRotation: Boolean = SwipeableCardsDefaults.ENABLE_ROTATION,
-    val enableHapticFeedbackOnThreshold: Boolean = SwipeableCardsDefaults.ENABLE_HAPTIC_FEEDBACK_ON_THRESHOLD,
+    val enableHapticFeedbackOnThreshold: Boolean =
+        SwipeableCardsDefaults.ENABLE_HAPTIC_FEEDBACK_ON_THRESHOLD,
     val stackedCardsOffset: Dp = SwipeableCardsDefaults.STACKED_CARDS_OFFSET,
-    val draggingAcceleration: Float = SwipeableCardsDefaults.DRAGGING_ACCELERATION,
+    val draggingAcceleration: Float =
+        SwipeableCardsDefaults.DRAGGING_ACCELERATION,
 )

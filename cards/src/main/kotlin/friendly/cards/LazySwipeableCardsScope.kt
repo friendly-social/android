@@ -10,10 +10,7 @@ interface LazySwipeableCardsScope<T> {
         itemContent: @Composable (T, Int, Offset) -> Unit,
     )
 
-    fun addItem(
-        item: T,
-        itemContent: @Composable (T, Int, Offset) -> Unit,
-    )
+    fun addItem(item: T, itemContent: @Composable (T, Int, Offset) -> Unit)
 }
 
 class LazySwipeableCardsScopeImpl<T> : LazySwipeableCardsScope<T> {
@@ -40,10 +37,10 @@ class LazySwipeableCardsScopeImpl<T> : LazySwipeableCardsScope<T> {
 
 inline fun <reified T> LazySwipeableCardsScope<T>.items(
     items: List<T>,
-    noinline itemContent: @Composable (T, Int, Offset) -> Unit
+    noinline itemContent: @Composable (T, Int, Offset) -> Unit,
 ) = addItems(items, itemContent)
 
 inline fun <reified T> LazySwipeableCardsScope<T>.item(
     item: T,
-    noinline itemContent: @Composable (T, Int, Offset) -> Unit
+    noinline itemContent: @Composable (T, Int, Offset) -> Unit,
 ) = addItem(item, itemContent)

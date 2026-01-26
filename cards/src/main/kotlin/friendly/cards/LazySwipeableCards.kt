@@ -73,14 +73,21 @@ fun <T> LazySwipeableCards(
 
     LaunchedEffect(indexes) {
         indexes.forEach { index ->
-            animatables.putIfAbsent(index, Animatable(Offset.Zero, Offset.VectorConverter))
+            animatables.putIfAbsent(
+                index,
+                Animatable(Offset.Zero, Offset.VectorConverter),
+            )
         }
 
         animatables.forEach { index, animatable ->
             launch {
                 animatable.animateTo(
-                    targetValue = factors.cardOffsetCalculation(index, state, properties),
-                    animationSpec = tween()
+                    targetValue = factors.cardOffsetCalculation(
+                        index,
+                        state,
+                        properties,
+                    ),
+                    animationSpec = tween(),
                 )
             }
         }
@@ -93,7 +100,7 @@ fun <T> LazySwipeableCards(
             }
             .padding(
                 end = properties.padding,
-                top = properties.padding.div(2)
+                top = properties.padding.div(2),
             ),
         itemProvider = { itemProvider },
     ) { constraints ->
@@ -112,7 +119,9 @@ fun <T> LazySwipeableCards(
                 item?.let {
                     placeables.forEach { placeable ->
                         placeable.placeRelative(
-                            position = animatables[index]?.value?.round() ?: IntOffset.Zero,
+                            position =
+                            animatables[index]?.value?.round()
+                                ?: IntOffset.Zero,
                             zIndex = -index.toFloat(),
                         )
                     }

@@ -16,7 +16,7 @@ internal fun <T> rememberItemProvider(
     animations: SwipeableCardsAnimations,
     factors: SwipeableCardsFactors,
     onSwipe: (T, SwipeableCardDirection) -> Unit,
-    customLazyListScope: LazySwipeableCardsScope<T>.() -> Unit
+    customLazyListScope: LazySwipeableCardsScope<T>.() -> Unit,
 ): CardItemProvider<T> {
     val customLazyListScopeState = rememberUpdatedState(customLazyListScope)
 
@@ -24,7 +24,9 @@ internal fun <T> rememberItemProvider(
         CardItemProvider(
             itemsState = derivedStateOf {
                 val layoutScope =
-                    LazySwipeableCardsScopeImpl<T>().apply(customLazyListScopeState.value)
+                    LazySwipeableCardsScopeImpl<T>().apply(
+                        customLazyListScopeState.value,
+                    )
                 layoutScope.items
             },
             state = state,
@@ -55,7 +57,7 @@ class CardItemProvider<T>(
         val scale = factors.scaleFactor(index, state, properties)
 
         val offset = remember {
-            derivedStateOf() {
+            derivedStateOf {
                 state.dragOffsets.getOrDefault(
                     key = index,
                     defaultValue = Offset.Zero,
@@ -67,8 +69,10 @@ class CardItemProvider<T>(
             onSwipe = { direction ->
                 item?.let { cardItem -> onSwipe(cardItem.item, direction) }
                 val targetX = when (direction) {
-                    SwipeableCardDirection.Left -> -state.size.width.toFloat() * 1.5f
-                    SwipeableCardDirection.Right -> state.size.width.toFloat() * 1.5f
+                    SwipeableCardDirection.Left -> -state.size.width.toFloat() *
+                        1.5f
+                    SwipeableCardDirection.Right -> state.size.width.toFloat() *
+                        1.5f
                 }
 
                 state.swipingVisibleCards.add(state.currentCardIndex)
@@ -97,14 +101,11 @@ class CardItemProvider<T>(
         }
     }
 
-    fun getItem(index: Int): T? {
-        return itemsState.value.getOrNull(index)?.item
-    }
+    fun getItem(index: Int): T? = itemsState.value.getOrNull(index)?.item
 }
 
-internal fun Offset.accelerateX(acceleration: Float): Offset {
-    return Offset(x = x * acceleration, y = y)
-}
+internal fun Offset.accelerateX(acceleration: Float): Offset =
+    Offset(x = x * acceleration, y = y)
 
 internal fun Offset.consume(other: Offset, reverseX: Boolean = false): Offset {
     val newX = if (reverseX) {

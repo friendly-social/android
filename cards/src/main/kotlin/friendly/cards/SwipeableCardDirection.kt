@@ -3,7 +3,6 @@ package friendly.cards
 import friendly.cards.SwipeableCardDirection.Left
 import friendly.cards.SwipeableCardDirection.Right
 
-
 /**
  * Defines the possible swipe directions for SwipeableCards.
  *

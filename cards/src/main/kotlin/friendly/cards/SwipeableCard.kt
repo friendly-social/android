@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType.Companion.TextHandleMove
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -92,27 +92,34 @@ internal fun SwipeableCard(
                                 change.consume()
                                 val newOffset = internalOffset.consume(
                                     other = dragAmount.accelerateX(
-                                        acceleration = properties.draggingAcceleration,
+                                        acceleration =
+                                        properties.draggingAcceleration,
                                     ),
                                     reverseX = isRtl,
                                 )
                                 onDragOffsetChange(newOffset)
-                                if (properties.enableHapticFeedbackOnThreshold) {
-                                    if (internalOffset.x.absoluteValue > threshold) {
+                                val enableHapticFeedbackOnThreshold =
+                                    properties.enableHapticFeedbackOnThreshold
+                                if (enableHapticFeedbackOnThreshold) {
+                                    if (internalOffset.x.absoluteValue >
+                                        threshold
+                                    ) {
                                         if (firstHaptic) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            haptic.performHapticFeedback(
+                                                TextHandleMove,
+                                            )
                                             firstHaptic = false
                                         }
                                     } else {
                                         firstHaptic = true
                                     }
                                 }
-                            }
+                            },
                         )
                     }
                 } else {
                     Modifier
-                }
+                },
             ),
     ) {
         content(animatedOffset)
