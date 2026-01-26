@@ -140,11 +140,7 @@ private fun BoxScope.DislikeIndicator(size: Dp) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ProfileImage(
-    userId: UserId,
-    nickname: Nickname,
-    avatarUri: Uri?,
-) {
+private fun ProfileImage(userId: UserId, nickname: Nickname, avatarUri: Uri?) {
     SubcomposeAsyncImage(
         model = avatarUri,
         loading = {

@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import friendly.sdk.FriendlyClient
 import friendly.sdk.FriendlyFriendsClient
 import friendly.sdk.UserId
-import io.ktor.http.encodeURLPath
-import io.ktor.util.encodeBase64
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -15,7 +13,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.Charset
-import kotlin.io.encoding.Base64
 
 private data class ShareProfileScreenVmState(val shareUrl: String?) {
     fun toUiState(): ShareProfileScreenUiState {
@@ -56,17 +53,16 @@ class ShareProfileScreenViewModel(
         }
     }
 
+    // TODO
     private fun buildShareUrl(
         userId: UserId,
         friendToken: FriendlyFriendsClient.GenerateResult,
     ): String = buildString {
         append("https://friendly-social.github.io/landing/#/?reference=")
-        append(URLEncoder.encode("add/${userId.long}/${friendToken.orThrow().string}", Charset.defaultCharset()))
-//        append("add/${userId.long}/${friendToken.orThrow().string}".encodeBase64())
+        val encodedPart = URLEncoder.encode(
+            "add/${userId.long}/${friendToken.orThrow().string}",
+            Charset.defaultCharset(),
+        )
+        append(encodedPart)
     }
-
-//    private fun buildShareUrl(
-//        userId: UserId,
-//        friendToken: FriendlyFriendsClient.GenerateResult,
-//    ): String = "friendly://add/${userId.long}/${friendToken.orThrow().string}"
 }

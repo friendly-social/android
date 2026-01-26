@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
 
         val context = this
         val client = FriendlyClient.meetacy(
-            HttpClient(CIO) { install(Logging) }
+            HttpClient(CIO) { install(Logging) },
         )
         val authStorage = AuthStorage(context)
         val selfProfileStorage = SelfProfileStorage(context)
