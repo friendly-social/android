@@ -30,7 +30,14 @@ import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
+import com.google.zxing.qrcode.encoder.ByteMatrix
+import com.google.zxing.qrcode.encoder.Encoder
+import com.lightspark.composeqr.DotShape
 import com.lightspark.composeqr.QrCodeView
+import com.lightspark.composeqr.QrEncoder
+import com.lightspark.composeqr.ZxingQrEncoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -38,6 +45,21 @@ sealed interface ShareProfileScreenUiState {
     data object Generating : ShareProfileScreenUiState
 
     data class Share(val shareUrl: String) : ShareProfileScreenUiState
+}
+
+private object BasicQrEncoder : QrEncoder {
+    override fun encode(qrData: String): ByteMatrix? {
+        val errorCorrectionLevel = ErrorCorrectionLevel.L
+        return Encoder.encode(
+            qrData,
+            errorCorrectionLevel,
+            mapOf(
+                EncodeHintType.CHARACTER_SET to "ASCII",
+                EncodeHintType.MARGIN to 16,
+                EncodeHintType.ERROR_CORRECTION to errorCorrectionLevel,
+            ),
+        ).matrix
+    }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -81,6 +103,8 @@ fun ShareProfileScreen(
                 is ShareProfileScreenUiState.Share -> {
                     QrCodeView(
                         data = state.shareUrl,
+                        dotShape = DotShape.Square,
+                        encoder = BasicQrEncoder,
                         modifier = Modifier.size(300.dp),
                     )
                 }
