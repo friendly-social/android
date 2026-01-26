@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "665338758593",
+    "project_id": "friendly-e8071",
+    "storage_bucket": "friendly-e8071.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:665338758593:android:b6803c07b4d8c6c5921b40",
+        "android_client_info": {
+          "package_name": "friendly.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBs6_unwP7qux-PZKNkVz0s5JVRehgZtF0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

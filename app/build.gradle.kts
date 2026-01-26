@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.serialization)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -53,7 +54,9 @@ kotlin {
 dependencies {
     // Will use alpha version till the material3-expressive release
 //    implementation(platform(libs.androidx.compose.bom))
+    implementation(platform(libs.firebase.bom))
     implementation(platform(libs.androidx.compose.bom.alpha))
+    implementation(libs.firebase.messaging)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
