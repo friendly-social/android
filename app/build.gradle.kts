@@ -27,10 +27,6 @@ android {
         }
     }
 
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -78,5 +74,4 @@ dependencies {
     implementation(libs.slf4j.android)
     implementation(projects.cards)
     implementation(libs.androidx.lifecycle.viewmodel)
-    coreLibraryDesugaring(libs.android.tools.desugaring)
 }

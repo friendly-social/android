@@ -37,7 +37,6 @@ import com.google.zxing.qrcode.encoder.Encoder
 import com.lightspark.composeqr.DotShape
 import com.lightspark.composeqr.QrCodeView
 import com.lightspark.composeqr.QrEncoder
-import com.lightspark.composeqr.ZxingQrEncoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
