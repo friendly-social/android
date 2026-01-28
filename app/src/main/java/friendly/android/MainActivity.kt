@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val context = this
-        val client = FriendlyClient.meetacy(
+        val client = FriendlyClient.production(
             HttpClient(CIO) { install(Logging) },
         )
         val authStorage = AuthStorage(context)
