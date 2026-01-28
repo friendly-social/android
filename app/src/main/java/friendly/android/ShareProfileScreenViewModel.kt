@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import friendly.sdk.FriendlyClient
 import friendly.sdk.FriendlyFriendsClient
 import friendly.sdk.UserId
+import io.ktor.utils.io.charsets.name
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -53,7 +54,7 @@ class ShareProfileScreenViewModel(
         }
     }
 
-    // TODO
+    // TODO: use kotlinx encoding
     private fun buildShareUrl(
         userId: UserId,
         friendToken: FriendlyFriendsClient.GenerateResult,
@@ -61,7 +62,7 @@ class ShareProfileScreenViewModel(
         append("https://friendly-social.github.io/landing/#/?reference=")
         val encodedPart = URLEncoder.encode(
             "add/${userId.long}/${friendToken.orThrow().string}",
-            Charset.defaultCharset(),
+            Charset.defaultCharset().name,
         )
         append(encodedPart)
     }
