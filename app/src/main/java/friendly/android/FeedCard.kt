@@ -1,7 +1,10 @@
 package friendly.android
 
 import android.net.Uri
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,18 +30,26 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.SubcomposeAsyncImage
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
+import friendly.sdk.UserDescription
 import friendly.sdk.UserId
 
 @Composable
@@ -96,16 +107,21 @@ private fun FeedCardContent(
                 Text(
                     text = entry.nickname.string,
                     style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                Text(
-                    text = entry.description.string,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier.fillMaxWidth(),
+                ExpandableDescription(
+                    description = entry.description,
+                    collapsedMaxLine = 7,
+                    expandText = stringResource(R.string.expand),
+                    modifier = Modifier
+                        .fillMaxWidth(),
                 )
+
+                Spacer(Modifier.height(96.dp))
             }
         }
 
@@ -140,7 +156,8 @@ private fun FeedCardContent(
                 onClick = { like(entry) },
                 modifier = Modifier.size(
                     IconButtonDefaults.mediumContainerSize(
-                        widthOption = IconButtonDefaults.IconButtonWidthOption.Wide,
+                        widthOption =
+                        IconButtonDefaults.IconButtonWidthOption.Wide,
                     ),
                 ),
             ) {
@@ -150,6 +167,67 @@ private fun FeedCardContent(
                     modifier = Modifier.size(IconButtonDefaults.largeIconSize),
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun ExpandableDescription(
+    description: UserDescription,
+    collapsedMaxLine: Int = 7,
+    expandText: String,
+    modifier: Modifier = Modifier,
+) {
+    val text = description.string
+    var isExpanded by remember { mutableStateOf(false) }
+    var isClickable by remember { mutableStateOf(false) }
+    var lastCharacterIndex by remember { mutableStateOf(0) }
+
+    Column(
+        modifier = modifier
+            .clickable(
+                onClick = { isExpanded = true },
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ),
+    ) {
+        val annotatedText = buildAnnotatedString {
+            if (isClickable) {
+                if (isExpanded) {
+                    append(text)
+                } else {
+                    val adjustText = text
+                        .take(lastCharacterIndex)
+                        .dropLast(expandText.length)
+                        .dropLastWhile { it.isWhitespace() || it == '.' }
+
+                    append(adjustText)
+                }
+            } else {
+                append(text)
+            }
+        }
+
+        Text(
+            text = annotatedText,
+            maxLines = if (isExpanded) Int.MAX_VALUE else collapsedMaxLine,
+            onTextLayout = { textLayoutResult ->
+                if (!isExpanded && textLayoutResult.hasVisualOverflow) {
+                    isClickable = true
+                    lastCharacterIndex = textLayoutResult
+                        .getLineEnd(collapsedMaxLine - 1)
+                }
+            },
+            modifier = Modifier.animateContentSize(),
+        )
+        if (isClickable) {
+            Text(
+                text = expandText,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.End,
+                modifier = Modifier
+                    .fillMaxWidth(),
+            )
         }
     }
 }
