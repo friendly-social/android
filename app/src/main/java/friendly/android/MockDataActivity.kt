@@ -31,6 +31,23 @@ import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
 import kotlinx.coroutines.launch
 
+private val longDescriptionText =
+    """ Так получилось, что у меня есть опыт в очень разных
+сферах, которые не связаны с программированием. Из
+главных и актуальных — музыка и автоматизация в общем
+смысле.
+
+Так получилось, что у меня есть опыт в очень разных
+сферах, которые не связаны с программированием. Из
+главных и актуальных — музыка и автоматизация в общем
+смысле.
+
+Так получилось, что у меня есть опыт в очень разных
+сферах, которые не связаны с программированием. Из
+главных и актуальных — музыка и автоматизация в общем
+смысле.
+    """.trimMargin().trim()
+
 class MockDataActivity : ComponentActivity() {
     private val client = FriendlyClient.production()
 
@@ -75,7 +92,7 @@ class MockDataActivity : ComponentActivity() {
         lifecycleScope.launch {
             val randomNumber = (1..1_000_000).random()
             val nickname = Nickname.orThrow("random-person-$randomNumber")
-            val description = UserDescription.orThrow("Phronology Evangelist")
+            val description = UserDescription.orThrow(longDescriptionText)
             val interests = listOf(Interest.orThrow("phronology"))
             val socialLink = SocialLink.orThrow("https://github.com/demndevel")
             val authorization1 = client.auth.generate(
@@ -93,19 +110,17 @@ class MockDataActivity : ComponentActivity() {
                 description = UserDescription.orThrow("Zed Enjoyer"),
                 interests = listOf(Interest.orThrow("zed")),
                 avatar = null,
-                socialLink = SocialLink.orThrow("TODO()"),
+                socialLink = null,
             ).orThrow()
             println("=== Authorization 2 ===")
             println(authorization2)
             println()
             val authorization3 = client.auth.generate(
                 nickname = Nickname.orThrow("y9kap"),
-                description = UserDescription.orThrow(
-                    "Senior Python Developer",
-                ),
+                description = UserDescription.orThrow(longDescriptionText),
                 interests = listOf(Interest.orThrow("python3+")),
                 avatar = null,
-                socialLink = SocialLink.orThrow("TODO()"),
+                socialLink = null,
             ).orThrow()
             println("=== Authorization 3 ===")
             println(authorization3)
@@ -115,7 +130,7 @@ class MockDataActivity : ComponentActivity() {
                 description = UserDescription.orThrow("Webring Master"),
                 interests = listOf(Interest.orThrow("webring")),
                 avatar = null,
-                socialLink = SocialLink.orThrow("TODO()"),
+                socialLink = null,
             ).orThrow()
             println("=== Authorization 4 ===")
             println(authorization4)

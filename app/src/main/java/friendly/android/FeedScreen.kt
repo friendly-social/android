@@ -50,7 +50,6 @@ sealed interface FeedScreenUiState {
 @Composable
 fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
     val state by vm.state.collectAsState()
-    val pullToRefreshState = rememberPullToRefreshState()
     val isRefreshing = (state as? FeedScreenUiState.EmptyFeed)
         ?.isRefreshing
         ?: false
@@ -62,90 +61,63 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            state = pullToRefreshState,
-            onRefresh = vm::refresh,
-            indicator = {
-                PullToRefreshDefaults.LoadingIndicator(
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    isRefreshing = isRefreshing,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    state = pullToRefreshState,
-                )
-            },
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .padding(16.dp),
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-            ) {
-                when (val state = state) {
-                    is FeedScreenUiState.Idle -> {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .fillMaxSize(),
-                        ) {
-                            EmptyFeed(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(rememberScrollState()),
-                            )
-                            IndicatedCardFeed(
-                                currentItems = state.currentFeedItems,
-                                like = vm::like,
-                                dislike = vm::dislike,
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        }
-                    }
-
-                    is FeedScreenUiState.NetworkError -> {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState()),
-                        ) {
-                            Text("Network error")
-                        }
-                    }
-
-                    is FeedScreenUiState.EmptyFeed -> {
+            when (val state = state) {
+                is FeedScreenUiState.Idle -> {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxSize(),
+                    ) {
                         EmptyFeed(
+                            isRefreshing = false,
+                            onRefresh = vm::refresh,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState()),
+                                .padding(innerPadding)
+                                .fillMaxSize(),
+                        )
+
+                        IndicatedCardFeed(
+                            currentItems = state.currentFeedItems,
+                            like = vm::like,
+                            dislike = vm::dislike,
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
+                }
 
-                    is FeedScreenUiState.ServerError -> {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState()),
-                        ) {
-                            Text("server err")
-                        }
-                    }
+                is FeedScreenUiState.NetworkError -> {
+                    NetworkError(
+                        onRefresh = vm::refresh,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
 
-                    is FeedScreenUiState.Loading -> {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .fillMaxSize(),
-                        ) {
-                            ContainedLoadingIndicator(Modifier.size(64.dp))
-                        }
-                    }
+                is FeedScreenUiState.EmptyFeed -> {
+                    EmptyFeed(
+                        isRefreshing = isRefreshing,
+                        onRefresh = vm::refresh,
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .fillMaxSize(),
+                    )
+                }
+
+                is FeedScreenUiState.ServerError -> {
+                    ServerError(
+                        onRefresh = vm::refresh,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                is FeedScreenUiState.Loading -> {
+                    LoadingState()
                 }
             }
         }
@@ -153,32 +125,112 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun EmptyFeed(modifier: Modifier = Modifier) {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun LoadingState() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        ContainedLoadingIndicator(Modifier.size(64.dp))
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun EmptyFeed(
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val pullToRefreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        state = pullToRefreshState,
+        onRefresh = onRefresh,
+        indicator = {
+            PullToRefreshDefaults.LoadingIndicator(
+                modifier = Modifier.align(Alignment.TopCenter),
+                isRefreshing = isRefreshing,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                state = pullToRefreshState,
+            )
+        },
         modifier = modifier,
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_inbox),
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.outline,
-        )
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_inbox),
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.outline,
+            )
 
-        Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
-        Text(
-            text = stringResource(R.string.you_re_all_caught_up),
-            style = MaterialTheme.typography.headlineSmall,
-        )
+            Text(
+                text = stringResource(R.string.you_re_all_caught_up),
+                style = MaterialTheme.typography.headlineSmall,
+            )
 
-        Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
-        Text(
-            text = stringResource(R.string.add_more_friends_feed_text),
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.outline,
-        )
+            Text(
+                text = stringResource(R.string.add_more_friends_feed_text),
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.outline,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ServerError(onRefresh: () -> Unit, modifier: Modifier = Modifier) {
+    val pullToRefreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = false,
+        state = pullToRefreshState,
+        onRefresh = onRefresh,
+        modifier = modifier,
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+        ) {
+            Text("Server error")
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun NetworkError(
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val pullToRefreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = false,
+        state = pullToRefreshState,
+        onRefresh = onRefresh,
+        modifier = modifier,
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+        ) {
+            Text("Network error")
+        }
     }
 }

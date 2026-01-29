@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,8 +17,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -59,43 +62,56 @@ fun FeedCard(
         }
 
         OutlinedCard(
-            modifier = modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
         ) {
-            ProfileImage(
-                nickname = entry.nickname,
-                userId = entry.id,
-                avatarUri = entry.avatarUri,
+            FeedCardContent(
+                entry = entry,
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .height(IntrinsicSize.Min)
+                    .fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun FeedCardContent(entry: FeedEntry, modifier: Modifier = Modifier) {
+    Column(modifier) {
+        ProfileImage(
+            nickname = entry.nickname,
+            userId = entry.id,
+            avatarUri = entry.avatarUri,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+        ) {
+            Text(
+                text = entry.nickname.string,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.fillMaxWidth(),
             )
 
             Spacer(Modifier.height(8.dp))
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp),
-            ) {
-                Text(
-                    text = entry.nickname.string,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            FeedCardInterests(
+                interests = entry.interests,
+                modifier = Modifier.fillMaxWidth(),
+            )
 
-                Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
-                FeedCardInterests(
-                    interests = entry.interests,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                Text(
-                    text = entry.description.string,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            Text(
+                text = entry.description.string,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
