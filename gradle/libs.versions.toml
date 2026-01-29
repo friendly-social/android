@@ -19,7 +19,6 @@ exifinterface = "1.4.2"
 composeBom = "2026.01.00"
 lightsparkJetpackQr = "1.0.1"
 ktorVersion = "3.4.0"
-slf4jAndroid = "1.7.36"
 desugaring = "2.0.3"
 google-services = "4.4.4"
 firebase-bom = "34.8.0"
@@ -42,7 +41,6 @@ lightspark-compose-qr-code = { module = "com.lightspark:compose-qr-code", versio
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 ktor-logging =  { module = "io.ktor:ktor-client-logging", version.ref = "ktorVersion" }
-slf4j-android = { module = "org.slf4j:slf4j-android", version.ref = "slf4jAndroid" }
 
 smartword-compose-swipeable-cards = { module = "com.github.smartword-app:compose-swipeable-cards", version.ref = "composeSwipeableCards" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }

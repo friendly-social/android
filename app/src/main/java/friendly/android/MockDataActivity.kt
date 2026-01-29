@@ -29,6 +29,12 @@ import friendly.sdk.Interest
 import friendly.sdk.Nickname
 import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.logging.ANDROID
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
 import kotlinx.coroutines.launch
 
 private val longDescriptionText =
@@ -49,7 +55,14 @@ private val longDescriptionText =
     """.trimMargin().trim()
 
 class MockDataActivity : ComponentActivity() {
-    private val client = FriendlyClient.production()
+    private val client = FriendlyClient.production(
+        HttpClient(CIO) {
+            install(Logging) {
+                logger = Logger.ANDROID
+                level = LogLevel.ALL
+            }
+        },
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -107,7 +120,7 @@ class MockDataActivity : ComponentActivity() {
             println()
             val authorization2 = client.auth.generate(
                 nickname = Nickname.orThrow("y9demn"),
-                description = UserDescription.orThrow("Zed Enjoyer"),
+                description = UserDescription.orThrow(longDescriptionText),
                 interests = listOf(Interest.orThrow("zed")),
                 avatar = null,
                 socialLink = null,
@@ -116,9 +129,20 @@ class MockDataActivity : ComponentActivity() {
             println(authorization2)
             println()
             val authorization3 = client.auth.generate(
-                nickname = Nickname.orThrow("y9kap"),
-                description = UserDescription.orThrow(longDescriptionText),
-                interests = listOf(Interest.orThrow("python3+")),
+                nickname = Nickname.orThrow("other shit"),
+                description = UserDescription.orThrow(
+                    "longDescriptionText kek",
+                ),
+                interests = listOf(
+                    Interest.orThrow("meow"),
+                    Interest.orThrow("ahaha"),
+                    Interest.orThrow("ahahasajkdh"),
+                    Interest.orThrow("thinkpads"),
+                    Interest.orThrow("choir"),
+                    Interest.orThrow("saint-peteresburg"),
+                    Interest.orThrow("moscowgate"),
+                    Interest.orThrow("etc"),
+                ),
                 avatar = null,
                 socialLink = null,
             ).orThrow()
@@ -127,8 +151,12 @@ class MockDataActivity : ComponentActivity() {
             println()
             val authorization4 = client.auth.generate(
                 nickname = Nickname.orThrow("otomir23"),
-                description = UserDescription.orThrow("Webring Master"),
-                interests = listOf(Interest.orThrow("webring")),
+                description = UserDescription.orThrow(longDescriptionText),
+                interests = listOf(
+                    Interest.orThrow("webring"),
+                    Interest.orThrow("webring1"),
+                    Interest.orThrow("webring2"),
+                ),
                 avatar = null,
                 socialLink = null,
             ).orThrow()

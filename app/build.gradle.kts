@@ -74,7 +74,6 @@ dependencies {
     implementation(libs.zxing.core)
     implementation(libs.lightspark.compose.qr.code)
     implementation(libs.ktor.logging)
-    implementation(libs.slf4j.android)
     implementation(projects.cards)
     implementation(libs.androidx.lifecycle.viewmodel)
 }

@@ -7,6 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import friendly.sdk.FriendlyClient
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.logging.ANDROID
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 
 class MainActivity : ComponentActivity() {
@@ -16,7 +19,12 @@ class MainActivity : ComponentActivity() {
 
         val context = this
         val client = FriendlyClient.production(
-            HttpClient(CIO) { install(Logging) },
+            HttpClient(CIO) {
+                install(Logging) {
+                    logger = Logger.ANDROID
+                    level = LogLevel.ALL
+                }
+            },
         )
         val authStorage = AuthStorage(context)
         val selfProfileStorage = SelfProfileStorage(context)
