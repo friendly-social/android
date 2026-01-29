@@ -1,5 +1,7 @@
 package friendly.android
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -66,6 +68,8 @@ fun FriendlyNavGraph(
     NavHost(
         navController = navController,
         startDestination = firstDestination,
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
         modifier = modifier,
     ) {
         composable<Welcome> {
@@ -103,6 +107,9 @@ fun FriendlyNavGraph(
                     vm = viewModel<NetworkScreenViewModel>(
                         factory = viewModelFactory,
                     ),
+                    onShare = {
+                        navController.navigate(Home.ShareProfile)
+                    },
                     onProfile = { id: UserId, accessHash: UserAccessHash ->
                         navController.navigate(
                             Home.Profile(
@@ -119,9 +126,6 @@ fun FriendlyNavGraph(
             composable<Home.HomeProfile> { backStackEntry ->
                 ProfileScreen(
                     source = ProfileScreenSource.SelfProfile,
-                    onShare = {
-                        navController.navigate(Home.ShareProfile)
-                    },
                     vm = viewModel<ProfileScreenViewModel>(
                         factory = viewModelFactory,
                     ),
@@ -156,7 +160,6 @@ fun FriendlyNavGraph(
                         id = UserId(route.id),
                         accessHash = UserAccessHash.orThrow(route.accessHash),
                     ),
-                    onShare = {},
                     onHome = { navController.navigate(Home.Network) },
                     onSignOut = {},
                     modifier = Modifier,

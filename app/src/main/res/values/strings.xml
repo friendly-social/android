@@ -35,4 +35,8 @@
     <string name="no_friends_text">Add them via QR code to extend your network</string>
     <string name="you_re_all_caught_up">You\'re all caught up</string>
     <string name="expand">Expand</string>
+    <string name="cancel">Cancel</string>
+    <string name="log_out">Log out</string>
+    <string name="log_out_alert_text">Are you sure you want to log out? Currently app doesn\'t support account tokens saving</string>
+    <string name="attention">Attention</string>
 </resources>

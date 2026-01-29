@@ -23,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -84,6 +85,7 @@ sealed interface NetworkScreenUiState {
 fun NetworkScreen(
     vm: NetworkScreenViewModel,
     onProfile: (UserId, UserAccessHash) -> Unit,
+    onShare: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LaunchedEffect(Unit) {
@@ -103,6 +105,14 @@ fun NetworkScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.network)) },
+                actions = {
+                    IconButton(onClick = onShare) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_share),
+                            contentDescription = null,
+                        )
+                    }
+                },
             )
         },
         modifier = modifier.fillMaxSize(),

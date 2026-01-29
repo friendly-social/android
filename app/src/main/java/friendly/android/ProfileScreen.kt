@@ -1,5 +1,9 @@
 package friendly.android
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -26,10 +31,14 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,13 +71,13 @@ sealed interface ProfileScreenSource {
 @Composable
 fun ProfileScreen(
     source: ProfileScreenSource,
-    onShare: () -> Unit,
     onHome: () -> Unit,
     onSignOut: () -> Unit,
     vm: ProfileScreenViewModel,
     modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsState()
+    var signOutDialogVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         vm.load(source)
@@ -91,14 +100,8 @@ fun ProfileScreen(
                 },
                 actions = {
                     if (source is ProfileScreenSource.SelfProfile) {
-                        IconButton(onClick = onShare) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_share),
-                                contentDescription = null,
-                            )
-                        }
                         IconButton(
-                            onClick = { vm.logout(onSignOut) },
+                            onClick = { signOutDialogVisible = true },
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_logout),
@@ -111,33 +114,89 @@ fun ProfileScreen(
         },
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
-        when (val state = state) {
-            is ProfileScreenUiState.Loading -> {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                ) {
-                    LoadingIndicator(Modifier.size(48.dp))
+        Box(
+            modifier = Modifier
+                .consumeWindowInsets(innerPadding)
+                .fillMaxSize(),
+        ) {
+            SignOutAlertDialog(
+                visible = signOutDialogVisible,
+                onAlertVisibility = { newValue ->
+                    signOutDialogVisible = newValue
+                },
+                vm = vm,
+                onSignOut = onSignOut,
+            )
+
+            when (val state = state) {
+                is ProfileScreenUiState.Loading -> {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxSize(),
+                    ) {
+                        LoadingIndicator(Modifier.size(48.dp))
+                    }
                 }
-            }
 
-            is ProfileScreenUiState.Present -> {
-                LoadedProfileState(
-                    state = state,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .consumeWindowInsets(innerPadding),
-                )
-            }
+                is ProfileScreenUiState.Present -> {
+                    LoadedProfileState(
+                        state = state,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
 
-            is ProfileScreenUiState.Error ->
-                Text(
-                    text = stringResource(R.string.profile_screen_error_text),
-                    modifier = Modifier.padding(innerPadding),
-                )
+                is ProfileScreenUiState.Error ->
+                    Text(
+                        text = stringResource(
+                            R.string.profile_screen_error_text,
+                        ),
+                        modifier = Modifier.padding(innerPadding),
+                    )
+            }
         }
+    }
+}
+
+@Composable
+private fun SignOutAlertDialog(
+    visible: Boolean,
+    vm: ProfileScreenViewModel,
+    onAlertVisibility: (Boolean) -> Unit,
+    onSignOut: () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + expandIn(),
+        exit = ExitTransition.None,
+    ) {
+        AlertDialog(
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_error),
+                    contentDescription = null,
+                )
+            },
+            title = {
+                Text(stringResource(R.string.attention))
+            },
+            text = {
+                Text(stringResource(R.string.log_out_alert_text))
+            },
+            onDismissRequest = {
+                onAlertVisibility(false)
+            },
+            confirmButton = {
+                TextButton(onClick = { vm.logout(onSignOut) }) {
+                    Text(stringResource(R.string.log_out))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onAlertVisibility(false) }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
     }
 }
 
