@@ -32,7 +32,7 @@ import friendly.sdk.UserDescription
 import kotlinx.coroutines.launch
 
 class MockDataActivity : ComponentActivity() {
-    private val client = FriendlyClient.meetacy()
+    private val client = FriendlyClient.production()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
