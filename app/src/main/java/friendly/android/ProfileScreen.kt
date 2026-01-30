@@ -1,5 +1,9 @@
 package friendly.android
 
+import android.content.ClipData
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.expandIn
@@ -23,10 +27,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -38,17 +45,25 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import friendly.android.ProfileScreenViewModel.UserProfile
+import friendly.sdk.SocialLink
 import friendly.sdk.UserAccessHash
 import friendly.sdk.UserId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 sealed interface ProfileScreenUiState {
     data class Present(val profile: UserProfile) : ProfileScreenUiState
@@ -57,6 +72,13 @@ sealed interface ProfileScreenUiState {
 
     data object Error : ProfileScreenUiState
 }
+
+val ProfileScreenUiState.socialLink: SocialLink?
+    get() = when (val state = this) {
+        is ProfileScreenUiState.Error -> null
+        is ProfileScreenUiState.Loading -> null
+        is ProfileScreenUiState.Present -> state.profile.socialLink
+    }
 
 sealed interface ProfileScreenSource {
     data object SelfProfile : ProfileScreenSource
@@ -78,6 +100,9 @@ fun ProfileScreen(
 ) {
     val state by vm.state.collectAsState()
     var signOutDialogVisible by remember { mutableStateOf(false) }
+    var removeFriendDialogVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val socialLink = state.socialLink
 
     LaunchedEffect(Unit) {
         vm.load(source)
@@ -109,6 +134,21 @@ fun ProfileScreen(
                             )
                         }
                     }
+                    if (source is ProfileScreenSource.FriendProfile) {
+                        if (socialLink != null) {
+                            SocialLinkIcon(
+                                socialLink = socialLink,
+                                context = context,
+                            )
+                        }
+
+                        FriendProfileDropdownMenu(
+                            socialLink = socialLink,
+                            onRemoveFriendDialogShow = {
+                                removeFriendDialogVisible = true
+                            },
+                        )
+                    }
                 },
             )
         },
@@ -126,6 +166,14 @@ fun ProfileScreen(
                 },
                 vm = vm,
                 onSignOut = onSignOut,
+            )
+            RemoveFriendAlertDialog(
+                visible = removeFriendDialogVisible,
+                onAlertVisibility = { newValue ->
+                    removeFriendDialogVisible = newValue
+                },
+                vm = vm,
+                onRemoveSuccess = onHome,
             )
 
             when (val state = state) {
@@ -155,6 +203,129 @@ fun ProfileScreen(
                     )
             }
         }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun SocialLinkIcon(socialLink: SocialLink, context: Context) {
+    IconButton(
+        onClick = {
+            openSocialLink(
+                context = context,
+                socialLink = socialLink,
+            )
+        },
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_link),
+            contentDescription = null,
+        )
+    }
+}
+
+private fun copyToClipboardIn(
+    scope: CoroutineScope,
+    socialLink: SocialLink,
+    clipboardManager: Clipboard,
+) {
+    scope.launch {
+        val entry = ClipEntry(
+            clipData = ClipData.newPlainText("social link", socialLink.string),
+        )
+        clipboardManager.setClipEntry(entry)
+    }
+}
+
+private fun openSocialLink(context: Context, socialLink: SocialLink) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(socialLink.string))
+    context.startActivity(intent)
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun FriendProfileDropdownMenu(
+    socialLink: SocialLink?,
+    onRemoveFriendDialogShow: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val clipboardManager = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+
+    Box {
+        IconButton(onClick = { expanded = !expanded }) {
+            Icon(
+                painter = painterResource(R.drawable.ic_more_vert),
+                contentDescription = null,
+                modifier = Modifier.size(IconButtonDefaults.extraSmallIconSize),
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            if (socialLink != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.copy_social_link)) },
+                    onClick = {
+                        copyToClipboardIn(
+                            scope = scope,
+                            socialLink = socialLink,
+                            clipboardManager = clipboardManager,
+                        )
+                        expanded = false
+                    },
+                )
+            }
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.remove_friend)) },
+                onClick = {
+                    onRemoveFriendDialogShow()
+                    expanded = false
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun RemoveFriendAlertDialog(
+    visible: Boolean,
+    vm: ProfileScreenViewModel,
+    onAlertVisibility: (Boolean) -> Unit,
+    onRemoveSuccess: () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + expandIn(),
+        exit = ExitTransition.None,
+    ) {
+        AlertDialog(
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_person_remove),
+                    contentDescription = null,
+                )
+            },
+            title = { Text(stringResource(R.string.remove_friend)) },
+            text = { Text(stringResource(R.string.remove_friend_text)) },
+            onDismissRequest = { onAlertVisibility(false) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onAlertVisibility(false)
+                        vm.removeFriend(onRemoveSuccess)
+                    },
+                ) {
+                    Text(stringResource(R.string.remove_friend))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onAlertVisibility(false) }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
     }
 }
 
@@ -200,6 +371,7 @@ private fun SignOutAlertDialog(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LoadedProfileState(
     state: ProfileScreenUiState.Present,

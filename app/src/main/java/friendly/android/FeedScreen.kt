@@ -125,14 +125,12 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
     }
 }
 
-private fun isRefreshing(state: FeedScreenUiState): Boolean {
-    return when (state) {
-        is FeedScreenUiState.EmptyFeed -> state.isRefreshing
-        is FeedScreenUiState.Idle -> false
-        is FeedScreenUiState.Loading -> false
-        is FeedScreenUiState.NetworkError -> state.isRefreshing
-        is FeedScreenUiState.ServerError -> state.isRefreshing
-    }
+private fun isRefreshing(state: FeedScreenUiState): Boolean = when (state) {
+    is FeedScreenUiState.EmptyFeed -> state.isRefreshing
+    is FeedScreenUiState.Idle -> false
+    is FeedScreenUiState.Loading -> false
+    is FeedScreenUiState.NetworkError -> state.isRefreshing
+    is FeedScreenUiState.ServerError -> state.isRefreshing
 }
 
 @Composable

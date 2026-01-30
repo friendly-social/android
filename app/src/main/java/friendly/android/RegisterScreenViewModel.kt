@@ -10,6 +10,7 @@ import friendly.android.RegisterScreenUiState.AvatarState.Uploaded
 import friendly.sdk.FileDescriptor
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
+import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 private data class RegisterState(
     val nickname: String,
     val description: String,
+    val socialLink: String,
     val availableInterests: List<Interest>,
     val pickedInterests: List<Interest>,
     val isGenerating: Boolean,
@@ -35,6 +37,7 @@ private data class RegisterState(
             availableInterests = availableInterests,
             pickedInterests = pickedInterests,
             avatar = avatar,
+            socialLink = socialLink,
         )
     }
 }
@@ -50,8 +53,9 @@ class RegisterScreenViewModel(
             availableInterests = interests,
             pickedInterests = listOf(),
             isGenerating = false,
-            avatar = AvatarState.None,
+            avatar = None,
             avatarFileDescriptor = null,
+            socialLink = "",
         ),
     )
     val state = _state
@@ -64,23 +68,26 @@ class RegisterScreenViewModel(
                 description = "",
                 availableInterests = interests,
                 pickedInterests = listOf(),
-                avatar = AvatarState.None,
+                avatar = None,
+                socialLink = "",
             ),
         )
 
     fun updateNickname(new: String) {
         _state.update {
-            it.copy(
-                nickname = new,
-            )
+            it.copy(nickname = new)
         }
     }
 
     fun updateDescription(new: String) {
         _state.update {
-            it.copy(
-                description = new,
-            )
+            it.copy(description = new)
+        }
+    }
+
+    fun updateSocialLink(new: String) {
+        _state.update {
+            it.copy(socialLink = new)
         }
     }
 
@@ -105,13 +112,14 @@ class RegisterScreenViewModel(
         val nicknameIsValid = Nickname.validate(_state.value.nickname)
         val descriptionIsValid =
             UserDescription.validate(_state.value.description)
-        val avatarIsValid = _state.value.avatar is AvatarState.Uploaded
         val interestsAreValid = _state.value.pickedInterests.isNotEmpty()
+        // TODO: use sdk validation for socialLink
+        val socialLinkIsValid = _state.value.socialLink.isNotEmpty()
 
         return nicknameIsValid &&
             descriptionIsValid &&
-            avatarIsValid &&
-            interestsAreValid
+            interestsAreValid &&
+            socialLinkIsValid
     }
 
     fun register(onSuccess: () -> Unit) {
@@ -122,10 +130,16 @@ class RegisterScreenViewModel(
 
             val nickname = Nickname.orThrow(_state.value.nickname)
             val description = UserDescription.orThrow(_state.value.description)
+            val socialLink = SocialLink.orThrow(_state.value.socialLink)
             val interests = _state.value.pickedInterests
             val avatarFileDescriptor = _state.value.avatarFileDescriptor
-                ?: error("avatar file descriptor should not be null")
-            register(nickname, description, interests, avatarFileDescriptor)
+            register(
+                nickname = nickname,
+                description = description,
+                interests = interests,
+                socialLink = socialLink,
+                avatar = avatarFileDescriptor,
+            )
             onSuccess()
         }
     }

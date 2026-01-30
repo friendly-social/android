@@ -46,7 +46,8 @@ private val longDescriptionText =
         |remaining essentially unchanged. It was popularised in the 1960s
         |with the release of Letraset sheets containing Lorem Ipsum passages,
         |and more recently with desktop publishing software like Aldus
-        |PageMaker including versions of Lorem Ipsum.""".trimMargin()
+        |PageMaker including versions of Lorem Ipsum.
+    """.trimMargin()
 
 class MockDataActivity : ComponentActivity() {
     private val client = FriendlyClient.production(
@@ -195,6 +196,7 @@ class MockDataActivity : ComponentActivity() {
                 avatar = null,
                 interests = interests,
                 userId = authorization1.id,
+                socialLink = SocialLink.orThrow("https://google.com"),
             )
             authStorage.store(authorization1)
 

@@ -7,6 +7,7 @@ import friendly.sdk.FileDescriptor
 import friendly.sdk.FileId
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
+import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
 import friendly.sdk.UserId
 
@@ -20,13 +21,15 @@ class SelfProfileStorage(context: Context) {
         private const val AVATAR_ID = "AVATAR_ID"
         private const val USER_ID = "USER_ID"
         private const val INTERESTS = "INTERESTS"
+        private const val SOCIAL_LINK = "SOCIAL_LINK"
     }
 
     data class Cache(
         val nickname: Nickname,
         val description: UserDescription,
         val avatar: FileDescriptor?,
-        val interest: List<Interest>,
+        val interests: List<Interest>,
+        val socialLink: SocialLink?,
         val userId: UserId,
     )
 
@@ -41,6 +44,7 @@ class SelfProfileStorage(context: Context) {
         description: UserDescription,
         avatar: FileDescriptor?,
         interests: List<Interest>,
+        socialLink: SocialLink,
     ) {
         preferences.edit {
             putString(NICKNAME, nickname.string)
@@ -56,6 +60,7 @@ class SelfProfileStorage(context: Context) {
                 putLong(AVATAR_ID, long)
             }
             putLong(USER_ID, userId.long)
+            putString(SOCIAL_LINK, socialLink.string)
             commit()
         }
     }
@@ -63,6 +68,11 @@ class SelfProfileStorage(context: Context) {
     fun getNickname(): Nickname? {
         val string = preferences.getString(NICKNAME, null)
         return string?.let { string -> Nickname.orThrow(string) }
+    }
+
+    fun getSocialLink(): SocialLink? {
+        val string = preferences.getString(SOCIAL_LINK, null)
+        return string?.let { string -> SocialLink.orThrow(string) }
     }
 
     fun getUserId(): UserId {
@@ -103,7 +113,8 @@ class SelfProfileStorage(context: Context) {
             nickname = getNickname() ?: return null,
             description = getDescription() ?: return null,
             avatar = getAvatar(),
-            interest = getInterests() ?: return null,
+            interests = getInterests() ?: return null,
+            socialLink = getSocialLink(),
             userId = getUserId(),
         )
     }

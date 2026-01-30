@@ -84,6 +84,7 @@ fun RegisterScreen(
                         state = state,
                         onNickname = vm::updateNickname,
                         onDescription = vm::updateDescription,
+                        onSocialLink = vm::updateSocialLink,
                         onAvatarResult = vm::pickAvatar,
                         onProceed = {
                             if (state.isFirstPageValid) {
@@ -102,9 +103,7 @@ fun RegisterScreen(
                             vm.register(onSuccess = onHome)
                         },
                         onBack = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(0)
-                            }
+                            scope.launch { pagerState.animateScrollToPage(0) }
                         },
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -119,6 +118,7 @@ private fun NicknameAndDescriptionPage(
     onProceed: () -> Unit,
     modifier: Modifier = Modifier,
     onNickname: (String) -> Unit,
+    onSocialLink: (String) -> Unit,
     onDescription: (String) -> Unit,
     onAvatarResult: (Uri?) -> Unit,
     state: RegisterScreenUiState.Editing,
@@ -172,6 +172,26 @@ private fun NicknameAndDescriptionPage(
                 value = state.nickname,
                 onValueChange = onNickname,
                 placeholder = { Text(stringResource(R.string.your_nickname)) },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth(),
+            )
+        }
+
+        Row {
+            Icon(
+                painter = painterResource(R.drawable.ic_link),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            OutlinedTextField(
+                value = state.socialLink,
+                onValueChange = onSocialLink,
+                placeholder = {
+                    Text(stringResource(R.string.your_social_link))
+                },
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth(),

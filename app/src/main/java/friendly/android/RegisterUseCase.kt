@@ -4,6 +4,7 @@ import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
+import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
 
 class RegisterUseCase(
@@ -15,14 +16,15 @@ class RegisterUseCase(
         nickname: Nickname,
         description: UserDescription,
         interests: List<Interest>,
-        avatar: FileDescriptor,
+        socialLink: SocialLink,
+        avatar: FileDescriptor?,
     ) {
         val authorization = client.auth.generate(
             nickname = nickname,
             description = description,
             interests = interests,
             avatar = avatar,
-            socialLink = null,
+            socialLink = socialLink,
         )
         val authorizationSuccess = authorization.orThrow()
         authStorage.store(authorizationSuccess)
@@ -32,6 +34,7 @@ class RegisterUseCase(
             description = description,
             avatar = avatar,
             interests = interests,
+            socialLink = socialLink,
         )
     }
 }

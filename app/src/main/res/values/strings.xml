@@ -16,6 +16,7 @@
     <string name="network">Network</string>
     <string name="profile">Profile</string>
     <string name="copy">Copy</string>
+    <string name="copy_social_link">Copy social link</string>
     <string name="back">Back</string>
     <string name="friend_token_expired_text">Friend token has been expired. Try generating new QR code</string>
     <string name="network_error_occurred">Network error occurred.</string>
@@ -41,4 +42,7 @@
     <string name="attention">Attention</string>
     <string name="share_profile_qr_code_description">Your friend should scan this QR code. The QR code is only available once.</string>
     <string name="hold_to_copy">Hold to copy</string>
+    <string name="your_social_link">Your social link (https://...)</string>
+    <string name="remove_friend">Remove friend</string>
+    <string name="remove_friend_text">Are you sure you want to remove this friend?</string>
 </resources>

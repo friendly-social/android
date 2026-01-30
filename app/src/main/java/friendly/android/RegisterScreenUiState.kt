@@ -14,8 +14,8 @@ val RegisterScreenUiState.isFirstPageValid: Boolean
         is RegisterScreenUiState.Editing -> {
             val nicknameIsValid = Nickname.validate(nickname)
             val descriptionIsValid = UserDescription.validate(description)
-            val avatarIsValid = avatar is AvatarState.Uploaded
-            nicknameIsValid && descriptionIsValid && avatarIsValid
+            val socialLinkIsValid = socialLink.isNotEmpty()
+            nicknameIsValid && descriptionIsValid && socialLinkIsValid
         }
     }
 
@@ -24,6 +24,7 @@ sealed interface RegisterScreenUiState {
         val availableInterests: List<Interest>,
         val pickedInterests: List<Interest>,
         val nickname: String,
+        val socialLink: String,
         val description: String,
         val avatar: AvatarState,
     ) : RegisterScreenUiState

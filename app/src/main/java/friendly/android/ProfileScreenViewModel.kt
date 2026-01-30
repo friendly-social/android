@@ -6,9 +6,12 @@ import androidx.lifecycle.viewModelScope
 import friendly.android.ProfileScreenViewModel.UserProfile
 import friendly.sdk.Authorization
 import friendly.sdk.FriendlyFilesClient
+import friendly.sdk.FriendlyFriendsClient
 import friendly.sdk.FriendlyUsersClient
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
+import friendly.sdk.SocialLink
+import friendly.sdk.UserAccessHash
 import friendly.sdk.UserDescription
 import friendly.sdk.UserId
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +25,7 @@ import kotlinx.coroutines.launch
 private data class ProfileScreenVmState(
     val profile: UserProfile? = null,
     val isError: Boolean = false,
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
 ) {
     fun toUiState(): ProfileScreenUiState {
         if (isLoading) return ProfileScreenUiState.Loading
@@ -42,6 +45,7 @@ class ProfileScreenViewModel(
     private val logout: LogoutUseCase,
     private val filesClient: FriendlyFilesClient,
     private val usersClient: FriendlyUsersClient,
+    private val friendsClient: FriendlyFriendsClient,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ProfileScreenVmState())
     val state: StateFlow<ProfileScreenUiState> = _state
@@ -55,9 +59,11 @@ class ProfileScreenViewModel(
     data class UserProfile(
         val nickname: Nickname,
         val userId: UserId,
+        val userAccessHash: UserAccessHash?,
         val description: UserDescription,
         val avatar: Uri?,
         val interests: List<Interest>,
+        val socialLink: SocialLink?,
     )
 
     fun load(source: ProfileScreenSource) {
@@ -66,9 +72,7 @@ class ProfileScreenViewModel(
         val auth = authStorage.getAuthOrNull()
 
         if (auth == null) {
-            _state.update { old ->
-                old.copy(isError = true)
-            }
+            _state.update { old -> old.copy(isError = true) }
             return
         }
         viewModelScope.launch {
@@ -95,25 +99,48 @@ class ProfileScreenViewModel(
         onSignOut()
     }
 
+    fun removeFriend(onSuccess: () -> Unit) {
+        val authorization = authStorage.getAuthOrNull() ?: return
+        val userId = _state.value.profile?.userId ?: return
+        val userAccessHash = _state.value.profile?.userAccessHash ?: return
+
+        _state.update { it.copy(isLoading = true) }
+
+        viewModelScope.launch {
+            val result = friendsClient.decline(
+                authorization = authorization,
+                userId = userId,
+                userAccessHash = userAccessHash,
+            )
+
+            _state.update { it.copy(isLoading = false) }
+
+            if (result is FriendlyFriendsClient.DeclineResult.Success) {
+                onSuccess()
+            }
+        }
+    }
+
     private suspend fun getUserProfile(
         auth: Authorization,
         source: ProfileScreenSource,
     ): UserProfile? {
         when (source) {
             is ProfileScreenSource.SelfProfile -> {
-                val (nickname, description, avatar, interests, userId) =
-                    selfProfileStorage.getCache() ?: return null
+                val cache = selfProfileStorage.getCache() ?: return null
 
-                val avatarUrl = avatar?.let { avatar ->
+                val avatarUrl = cache.avatar?.let { avatar ->
                     Uri.parse(filesClient.getEndpoint(avatar).string)
                 }
 
                 return UserProfile(
-                    nickname,
-                    userId,
-                    description,
-                    avatarUrl,
-                    interests,
+                    nickname = cache.nickname,
+                    userId = cache.userId,
+                    description = cache.description,
+                    avatar = avatarUrl,
+                    interests = cache.interests,
+                    socialLink = cache.socialLink,
+                    userAccessHash = null,
                 )
             }
 
@@ -133,12 +160,14 @@ class ProfileScreenViewModel(
 
                 return UserProfile(
                     nickname = details.nickname,
+                    userId = details.id,
                     description = details.description,
                     avatar = details.avatar?.let { avatar ->
                         Uri.parse(filesClient.getEndpoint(avatar).string)
                     },
                     interests = details.interests,
-                    userId = details.id,
+                    socialLink = details.socialLink,
+                    userAccessHash = details.accessHash,
                 )
             }
         }

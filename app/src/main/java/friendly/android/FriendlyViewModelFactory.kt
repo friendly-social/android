@@ -25,6 +25,7 @@ class FriendlyViewModelFactory(
                 selfProfileStorage = selfProfileStorage,
                 filesClient = client.files,
                 usersClient = client.users,
+                friendsClient = client.friends,
                 logout = LogoutUseCase(
                     authStorage = authStorage,
                     selfProfileStorage = selfProfileStorage,
