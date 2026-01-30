@@ -9,6 +9,7 @@ import friendly.android.RegisterScreenUiState.AvatarState.None
 import friendly.android.RegisterScreenUiState.AvatarState.Uploaded
 import friendly.sdk.FileDescriptor
 import friendly.sdk.Interest
+import friendly.sdk.InterestList
 import friendly.sdk.Nickname
 import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
@@ -131,7 +132,7 @@ class RegisterScreenViewModel(
             val nickname = Nickname.orThrow(_state.value.nickname)
             val description = UserDescription.orThrow(_state.value.description)
             val socialLink = SocialLink.orThrow(_state.value.socialLink)
-            val interests = _state.value.pickedInterests
+            val interests = InterestList.orThrow(_state.value.pickedInterests)
             val avatarFileDescriptor = _state.value.avatarFileDescriptor
             register(
                 nickname = nickname,

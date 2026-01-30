@@ -419,7 +419,7 @@ fun LoadedProfileState(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            state.profile.interests.forEach { interest ->
+            state.profile.interests.raw.forEach { interest ->
                 Text(
                     text = interest.string,
                     modifier = Modifier

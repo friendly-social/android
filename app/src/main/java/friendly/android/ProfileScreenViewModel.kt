@@ -9,6 +9,7 @@ import friendly.sdk.FriendlyFilesClient
 import friendly.sdk.FriendlyFriendsClient
 import friendly.sdk.FriendlyUsersClient
 import friendly.sdk.Interest
+import friendly.sdk.InterestList
 import friendly.sdk.Nickname
 import friendly.sdk.SocialLink
 import friendly.sdk.UserAccessHash
@@ -62,7 +63,7 @@ class ProfileScreenViewModel(
         val userAccessHash: UserAccessHash?,
         val description: UserDescription,
         val avatar: Uri?,
-        val interests: List<Interest>,
+        val interests: InterestList,
         val socialLink: SocialLink?,
     )
 

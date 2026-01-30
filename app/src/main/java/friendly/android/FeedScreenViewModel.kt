@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import friendly.sdk.FeedQueue
 import friendly.sdk.FriendlyFeedClient.QueueResult
 import friendly.sdk.FriendlyFilesClient
+import friendly.sdk.InterestList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -243,7 +244,7 @@ private fun FeedQueue.Entry.toFeedEntry(
         accessHash = details.accessHash,
         nickname = details.nickname,
         description = details.description,
-        interests = details.interests,
+        interests = details.interests.raw,
         avatarUri = avatarEndpoint?.string?.toUri(),
         isRequest = entry.isRequest,
         isExtendedNetwork = entry.isExtendedNetwork,

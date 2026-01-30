@@ -26,6 +26,7 @@ import androidx.lifecycle.lifecycleScope
 import friendly.android.ui.theme.FriendlyandroidTheme
 import friendly.sdk.FriendlyClient
 import friendly.sdk.Interest
+import friendly.sdk.InterestList
 import friendly.sdk.Nickname
 import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
@@ -106,7 +107,7 @@ class MockDataActivity : ComponentActivity() {
             val authorization1 = client.auth.generate(
                 nickname = nickname,
                 description = description,
-                interests = interests,
+                interests = InterestList.orThrow(interests),
                 avatar = null,
                 socialLink = socialLink,
             ).orThrow()
@@ -116,7 +117,7 @@ class MockDataActivity : ComponentActivity() {
             val authorization2 = client.auth.generate(
                 nickname = Nickname.orThrow("y9demn"),
                 description = UserDescription.orThrow(longDescriptionText),
-                interests = listOf(Interest.orThrow("zed")),
+                interests = InterestList.orThrow(Interest.orThrow("zed")),
                 avatar = null,
                 socialLink = null,
             ).orThrow()
@@ -126,8 +127,9 @@ class MockDataActivity : ComponentActivity() {
             val authorization3 = client.auth.generate(
                 nickname = Nickname.orThrow("y9kap"),
                 description = UserDescription.orThrow("Senior Python Engineer"),
-                interests = listOf(
+                interests = InterestList.orThrow(
                     Interest.orThrow("Proficient Python3"),
+                    Interest.orThrow("Music"),
                     Interest.orThrow("Music"),
                     Interest.orThrow("Kotlin"),
                 ),
@@ -140,7 +142,7 @@ class MockDataActivity : ComponentActivity() {
             val authorization4 = client.auth.generate(
                 nickname = Nickname.orThrow("otomir23"),
                 description = UserDescription.orThrow(longDescriptionText),
-                interests = listOf(
+                interests = InterestList.orThrow(
                     Interest.orThrow("webring"),
                     Interest.orThrow("webring1"),
                     Interest.orThrow("webring2"),
@@ -194,7 +196,7 @@ class MockDataActivity : ComponentActivity() {
                 nickname = nickname,
                 description = description,
                 avatar = null,
-                interests = interests,
+                interests = InterestList.orThrow(interests),
                 userId = authorization1.id,
                 socialLink = SocialLink.orThrow("https://google.com"),
             )

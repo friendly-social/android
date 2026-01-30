@@ -3,6 +3,7 @@ package friendly.android
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
 import friendly.sdk.Interest
+import friendly.sdk.InterestList
 import friendly.sdk.Nickname
 import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
@@ -15,7 +16,7 @@ class RegisterUseCase(
     suspend operator fun invoke(
         nickname: Nickname,
         description: UserDescription,
-        interests: List<Interest>,
+        interests: InterestList,
         socialLink: SocialLink,
         avatar: FileDescriptor?,
     ) {

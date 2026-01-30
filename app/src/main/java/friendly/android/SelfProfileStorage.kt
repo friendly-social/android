@@ -6,6 +6,7 @@ import friendly.sdk.FileAccessHash
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FileId
 import friendly.sdk.Interest
+import friendly.sdk.InterestList
 import friendly.sdk.Nickname
 import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
@@ -28,7 +29,7 @@ class SelfProfileStorage(context: Context) {
         val nickname: Nickname,
         val description: UserDescription,
         val avatar: FileDescriptor?,
-        val interests: List<Interest>,
+        val interests: InterestList,
         val socialLink: SocialLink?,
         val userId: UserId,
     )
@@ -43,7 +44,7 @@ class SelfProfileStorage(context: Context) {
         userId: UserId,
         description: UserDescription,
         avatar: FileDescriptor?,
-        interests: List<Interest>,
+        interests: InterestList,
         socialLink: SocialLink,
     ) {
         preferences.edit {
@@ -52,7 +53,7 @@ class SelfProfileStorage(context: Context) {
             avatar?.accessHash?.string?.let { avatarAccessHash ->
                 putString(AVATAR_ACCESS_HASH, avatarAccessHash)
             }
-            val interestsSet = interests
+            val interestsSet = interests.raw
                 .map { interest -> interest.string }
                 .toSet()
             putStringSet(INTERESTS, interestsSet)
@@ -85,9 +86,13 @@ class SelfProfileStorage(context: Context) {
         return string?.let { string -> UserDescription.orThrow(string) }
     }
 
-    fun getInterests(): List<Interest>? {
+    fun getInterests(): InterestList? {
         val set = preferences.getStringSet(INTERESTS, null)
-        return set?.map { string -> Interest.orThrow(string) }
+        return set?.let { interestsSet ->
+            InterestList.orThrow(
+                raw = interestsSet.map { string -> Interest.orThrow(string) },
+            )
+        }
     }
 
     fun getAvatar(): FileDescriptor? {
