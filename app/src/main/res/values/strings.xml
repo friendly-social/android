@@ -45,4 +45,6 @@
     <string name="your_social_link">Your social link (https://...)</string>
     <string name="remove_friend">Remove friend</string>
     <string name="remove_friend_text">Are you sure you want to remove this friend?</string>
+    <string name="friend_request">Friend request</string>
+    <string name="extended_network">Extended network</string>
 </resources>

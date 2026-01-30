@@ -14,6 +14,8 @@ data class FeedEntry(
     val description: UserDescription,
     val interests: List<Interest>,
     val avatarUri: Uri?,
+    val isRequest: Boolean,
+    val isExtendedNetwork: Boolean,
     // TODO: commonFriends
     // TODO: isExtendedNetwork
 )

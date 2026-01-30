@@ -245,5 +245,7 @@ private fun FeedQueue.Entry.toFeedEntry(
         description = details.description,
         interests = details.interests,
         avatarUri = avatarEndpoint?.string?.toUri(),
+        isRequest = entry.isRequest,
+        isExtendedNetwork = entry.isExtendedNetwork,
     )
 }

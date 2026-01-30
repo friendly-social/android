@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -166,6 +168,32 @@ private fun FeedCardContent(
                     contentDescription = null,
                     modifier = Modifier.size(IconButtonDefaults.largeIconSize),
                 )
+            }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier
+                .padding(8.dp)
+                .align(Alignment.TopStart),
+        ) {
+            if (entry.isRequest) {
+                Surface(modifier = Modifier.clip(RoundedCornerShape(16.dp))) {
+                    Text(
+                        text = stringResource(R.string.friend_request),
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                    )
+                }
+            }
+            if (entry.isExtendedNetwork) {
+                Surface(modifier = Modifier.clip(RoundedCornerShape(16.dp))) {
+                    Text(
+                        text = stringResource(R.string.extended_network),
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                    )
+                }
             }
         }
     }
