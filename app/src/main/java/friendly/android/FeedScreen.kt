@@ -50,9 +50,7 @@ sealed interface FeedScreenUiState {
 @Composable
 fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
     val state by vm.state.collectAsState()
-    val isRefreshing = (state as? FeedScreenUiState.EmptyFeed)
-        ?.isRefreshing
-        ?: false
+    val isRefreshing = isRefreshing(state)
 
     LaunchedEffect(Unit) {
         vm.loadInitial()
@@ -95,6 +93,8 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
                 is FeedScreenUiState.NetworkError -> {
                     NetworkError(
                         onRefresh = vm::refresh,
+                        onRetry = vm::retry,
+                        isRefreshing = isRefreshing,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -112,6 +112,7 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
                 is FeedScreenUiState.ServerError -> {
                     ServerError(
                         onRefresh = vm::refresh,
+                        isRefreshing = isRefreshing,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -121,6 +122,16 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
                 }
             }
         }
+    }
+}
+
+private fun isRefreshing(state: FeedScreenUiState): Boolean {
+    return when (state) {
+        is FeedScreenUiState.EmptyFeed -> state.isRefreshing
+        is FeedScreenUiState.Idle -> false
+        is FeedScreenUiState.Loading -> false
+        is FeedScreenUiState.NetworkError -> state.isRefreshing
+        is FeedScreenUiState.ServerError -> state.isRefreshing
     }
 }
 
@@ -168,19 +179,14 @@ private fun EmptyFeed(
             Icon(
                 painter = painterResource(R.drawable.ic_inbox),
                 contentDescription = null,
-                modifier = Modifier.size(48.dp),
                 tint = MaterialTheme.colorScheme.outline,
             )
-
             Spacer(Modifier.height(8.dp))
-
             Text(
                 text = stringResource(R.string.you_re_all_caught_up),
                 style = MaterialTheme.typography.headlineSmall,
             )
-
             Spacer(Modifier.height(8.dp))
-
             Text(
                 text = stringResource(R.string.add_more_friends_feed_text),
                 textAlign = TextAlign.Center,
@@ -192,12 +198,25 @@ private fun EmptyFeed(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ServerError(onRefresh: () -> Unit, modifier: Modifier = Modifier) {
+private fun ServerError(
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val pullToRefreshState = rememberPullToRefreshState()
     PullToRefreshBox(
-        isRefreshing = false,
+        isRefreshing = isRefreshing,
         state = pullToRefreshState,
         onRefresh = onRefresh,
+        indicator = {
+            PullToRefreshDefaults.LoadingIndicator(
+                modifier = Modifier.align(Alignment.TopCenter),
+                isRefreshing = isRefreshing,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                state = pullToRefreshState,
+            )
+        },
         modifier = modifier,
     ) {
         Box(
@@ -215,22 +234,31 @@ private fun ServerError(onRefresh: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 private fun NetworkError(
     onRefresh: () -> Unit,
+    onRetry: () -> Unit,
+    isRefreshing: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     PullToRefreshBox(
-        isRefreshing = false,
+        isRefreshing = isRefreshing,
         state = pullToRefreshState,
         onRefresh = onRefresh,
+        indicator = {
+            PullToRefreshDefaults.LoadingIndicator(
+                modifier = Modifier.align(Alignment.TopCenter),
+                isRefreshing = isRefreshing,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                state = pullToRefreshState,
+            )
+        },
         modifier = modifier,
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
+        NetworkErrorBox(
+            onRetry = onRetry,
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
-        ) {
-            Text("Network error")
-        }
+        )
     }
 }

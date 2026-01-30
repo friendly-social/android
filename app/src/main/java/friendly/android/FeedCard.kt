@@ -220,7 +220,7 @@ fun ExpandableDescription(
             },
             modifier = Modifier.animateContentSize(),
         )
-        if (isClickable) {
+        if (isClickable && !isExpanded) {
             Text(
                 text = expandText,
                 fontWeight = FontWeight.Black,

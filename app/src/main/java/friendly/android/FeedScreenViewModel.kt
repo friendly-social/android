@@ -31,12 +31,20 @@ private data class FeedScreenVmState(
             isRefreshing = false,
         )
 
-        val Refreshing = FeedScreenVmState(
+        val NetworkError = FeedScreenVmState(
             currentFeedItems = emptyList(),
-            isNetworkError = false,
+            isNetworkError = true,
             isServerError = false,
             isLoading = false,
-            isRefreshing = true,
+            isRefreshing = false,
+        )
+
+        val ServerError = FeedScreenVmState(
+            currentFeedItems = emptyList(),
+            isNetworkError = false,
+            isServerError = true,
+            isLoading = false,
+            isRefreshing = false,
         )
     }
 
@@ -91,8 +99,28 @@ class FeedScreenViewModel(
         }
     }
 
+    /**
+     * Reloads feed from completely new state
+     */
+    fun retry() {
+        _state.update { FeedScreenVmState.Initial }
+
+        Log.d("Feed", "retry start")
+
+        viewModelScope.launch {
+            val feedQueueResult = loadFeedQueue()
+            _state.setLoadFeedQueueState(
+                filesClient = filesClient,
+                result = feedQueueResult,
+                onAuthError = {
+                    TODO("Unhandled Authorization error")
+                },
+            )
+        }
+    }
+
     fun refresh() {
-        require(_state.value.isLoading.not())
+        if (_state.value.isLoading) return
 
         _state.setRefreshing()
 
@@ -147,6 +175,8 @@ private fun MutableVmStateFlow.setRefreshFeedState(
             this.update { old ->
                 old.copy(
                     isRefreshing = false,
+                    isNetworkError = false,
+                    isServerError = false,
                     currentFeedItems = result.queue.entries.map { entry ->
                         entry.toFeedEntry(filesClient)
                     },
@@ -184,19 +214,20 @@ private fun MutableVmStateFlow.setLoadFeedQueueState(
 private typealias MutableVmStateFlow = MutableStateFlow<FeedScreenVmState>
 
 private fun MutableVmStateFlow.setNetworkError() {
-    this.update { old ->
-        old.copy(isNetworkError = true)
-    }
+    this.update { FeedScreenVmState.NetworkError }
 }
 
 private fun MutableVmStateFlow.setServerError() {
-    this.update { old ->
-        old.copy(isServerError = true)
-    }
+    this.update { FeedScreenVmState.ServerError }
 }
 
 private fun MutableVmStateFlow.setRefreshing() {
-    this.value = FeedScreenVmState.Refreshing
+    this.update { old ->
+        old.copy(
+            currentFeedItems = emptyList(),
+            isRefreshing = true,
+        )
+    }
 }
 
 private fun FeedQueue.Entry.toFeedEntry(

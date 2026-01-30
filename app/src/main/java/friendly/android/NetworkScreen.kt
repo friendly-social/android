@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -160,20 +161,12 @@ fun NetworkScreen(
                 }
 
                 is NetworkScreenUiState.NetworkFailure -> {
-                    Box(
-                        contentAlignment = Alignment.Center,
+                    NetworkErrorBox(
+                        onRetry = vm::retry,
                         modifier = Modifier
-                            .verticalScroll(rememberScrollState())
-                            .fillMaxSize(),
-                    ) {
-                        Text(stringResource(R.string.network_error_occurred))
-
-                        Spacer(Modifier.height(16.dp))
-
-                        FilledTonalButton(onClick = vm::retry) {
-                            Text(stringResource(R.string.retry))
-                        }
-                    }
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                    )
                 }
 
                 is NetworkScreenUiState.Other -> {
@@ -185,7 +178,7 @@ fun NetworkScreen(
                     ) {
                         Text(
                             text =
-                            stringResource(R.string.unknown_error_occurred),
+                                stringResource(R.string.unknown_error_occurred),
                             modifier = Modifier,
                         )
                     }

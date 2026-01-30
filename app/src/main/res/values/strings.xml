@@ -39,4 +39,6 @@
     <string name="log_out">Log out</string>
     <string name="log_out_alert_text">Are you sure you want to log out? Currently app doesn\'t support account tokens saving</string>
     <string name="attention">Attention</string>
+    <string name="share_profile_qr_code_description">Your friend should scan this QR code. The QR code is only available once.</string>
+    <string name="hold_to_copy">Hold to copy</string>
 </resources>

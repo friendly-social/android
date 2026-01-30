@@ -38,21 +38,15 @@ import io.ktor.client.plugins.logging.Logging
 import kotlinx.coroutines.launch
 
 private val longDescriptionText =
-    """ Так получилось, что у меня есть опыт в очень разных
-сферах, которые не связаны с программированием. Из
-главных и актуальных — музыка и автоматизация в общем
-смысле.
-
-Так получилось, что у меня есть опыт в очень разных
-сферах, которые не связаны с программированием. Из
-главных и актуальных — музыка и автоматизация в общем
-смысле.
-
-Так получилось, что у меня есть опыт в очень разных
-сферах, которые не связаны с программированием. Из
-главных и актуальных — музыка и автоматизация в общем
-смысле.
-    """.trimMargin().trim()
+    """Lorem Ipsum is simply dummy text of the printing and typesetting
+        |industry. Lorem Ipsum has been the industry's standard dummy text
+        |ever since the 1500s, when an unknown printer took a galley of type
+        |and scrambled it to make a type specimen book. It has survived not
+        |only five centuries, but also the leap into electronic typesetting,
+        |remaining essentially unchanged. It was popularised in the 1960s
+        |with the release of Letraset sheets containing Lorem Ipsum passages,
+        |and more recently with desktop publishing software like Aldus
+        |PageMaker including versions of Lorem Ipsum.""".trimMargin()
 
 class MockDataActivity : ComponentActivity() {
     private val client = FriendlyClient.production(
@@ -129,19 +123,12 @@ class MockDataActivity : ComponentActivity() {
             println(authorization2)
             println()
             val authorization3 = client.auth.generate(
-                nickname = Nickname.orThrow("other shit"),
-                description = UserDescription.orThrow(
-                    "longDescriptionText kek",
-                ),
+                nickname = Nickname.orThrow("y9kap"),
+                description = UserDescription.orThrow("Senior Python Engineer"),
                 interests = listOf(
-                    Interest.orThrow("meow"),
-                    Interest.orThrow("ahaha"),
-                    Interest.orThrow("ahahasajkdh"),
-                    Interest.orThrow("thinkpads"),
-                    Interest.orThrow("choir"),
-                    Interest.orThrow("saint-peteresburg"),
-                    Interest.orThrow("moscowgate"),
-                    Interest.orThrow("etc"),
+                    Interest.orThrow("Proficient Python3"),
+                    Interest.orThrow("Music"),
+                    Interest.orThrow("Kotlin"),
                 ),
                 avatar = null,
                 socialLink = null,
