@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
             },
         )
         val authStorage = AuthStorage(context)
+        FirebaseKit.onAppCreate(context, client, authStorage)
         val selfProfileStorage = SelfProfileStorage(context)
 
         val viewModelFactory = FriendlyViewModelFactory(

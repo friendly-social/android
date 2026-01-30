@@ -141,6 +141,7 @@ class RegisterScreenViewModel(
                 socialLink = socialLink,
                 avatar = avatarFileDescriptor,
             )
+            FirebaseKit.onLogin()
             onSuccess()
         }
     }
