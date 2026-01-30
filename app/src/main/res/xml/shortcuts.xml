@@ -3,7 +3,7 @@
     <shortcut
         android:shortcutId="compose"
         android:enabled="true"
-        android:icon="@drawable/ic_cards_star"
+        android:icon="@drawable/ic_cards_star_unfilled"
         android:shortcutShortLabel="@string/generate"
         android:shortcutLongLabel="@string/generate"
         android:shortcutDisabledMessage="@string/generating">

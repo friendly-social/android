@@ -23,24 +23,28 @@ import friendly.sdk.Authorization
 
 data class HomeNavigationItem(
     val titleResource: Int,
-    val iconResource: Int = R.drawable.ic_photo_camera,
+    val selectedIconResource: Int = R.drawable.ic_photo_camera,
+    val unselectedIconResource: Int = R.drawable.ic_photo_camera,
     val destination: FriendlyNavGraph.Home,
 )
 
 val homeNavigationItems = listOf(
     HomeNavigationItem(
         titleResource = R.string.feed,
-        iconResource = R.drawable.ic_cards_star,
+        selectedIconResource = R.drawable.ic_cards_star_filled,
+        unselectedIconResource = R.drawable.ic_cards_star_unfilled,
         destination = FriendlyNavGraph.Home.Feed,
     ),
     HomeNavigationItem(
         titleResource = R.string.network,
-        iconResource = R.drawable.ic_group,
+        selectedIconResource = R.drawable.ic_group_filled,
+        unselectedIconResource = R.drawable.ic_group_unfilled,
         destination = FriendlyNavGraph.Home.Network,
     ),
     HomeNavigationItem(
         titleResource = R.string.profile,
-        iconResource = R.drawable.ic_person,
+        selectedIconResource = R.drawable.ic_person_filled,
+        unselectedIconResource = R.drawable.ic_person_unfilled,
         destination = FriendlyNavGraph.Home.HomeProfile,
     ),
 )
@@ -116,7 +120,11 @@ fun BottomNavigationBar(
                     label = { Text(stringResource(item.titleResource)) },
                     icon = {
                         Icon(
-                            painter = painterResource(item.iconResource),
+                            painter = if (selected) {
+                                painterResource(item.selectedIconResource)
+                            } else {
+                                painterResource(item.unselectedIconResource)
+                            },
                             contentDescription = null,
                         )
                     },
