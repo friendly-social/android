@@ -2,7 +2,6 @@ package friendly.android
 
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
-import friendly.sdk.Interest
 import friendly.sdk.InterestList
 import friendly.sdk.Nickname
 import friendly.sdk.SocialLink

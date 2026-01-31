@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import friendly.sdk.FeedQueue
 import friendly.sdk.FriendlyFeedClient.QueueResult
 import friendly.sdk.FriendlyFilesClient
-import friendly.sdk.InterestList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

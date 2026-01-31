@@ -8,7 +8,6 @@ import friendly.sdk.Authorization
 import friendly.sdk.FriendlyFilesClient
 import friendly.sdk.FriendlyFriendsClient
 import friendly.sdk.FriendlyUsersClient
-import friendly.sdk.Interest
 import friendly.sdk.InterestList
 import friendly.sdk.Nickname
 import friendly.sdk.SocialLink
@@ -96,8 +95,11 @@ class ProfileScreenViewModel(
     }
 
     fun logout(onSignOut: () -> Unit) {
-        logout()
-        onSignOut()
+        viewModelScope.launch {
+            if (logout()) {
+                onSignOut()
+            }
+        }
     }
 
     fun removeFriend(onSuccess: () -> Unit) {

@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- DO NOT FORGET: Before turning allowBackup back to 'true',
+         scan prefs usage and setup backup_rules.xml properly -->
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
