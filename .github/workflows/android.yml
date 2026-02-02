@@ -41,7 +41,7 @@ jobs:
                   upload_url: https://uploads.github.com/repos/friendly-social/android/releases/280899065/assets{?name,label}
                   release_id: 280899065
                   asset_path: app/build/outputs/apk/debug/app-debug.apk
-                  asset_name: friendly-$$.apk
+                  asset_name: friendly-latest.apk
                   asset_content_type: application/zip
                   max_releases: 1
                   ignore_hash: true
