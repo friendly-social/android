@@ -47,4 +47,9 @@
     <string name="remove_friend_text">Are you sure you want to remove this friend?</string>
     <string name="friend_request">Friend request</string>
     <string name="extended_network">Extended network</string>
+    <string name="notification_request_channel_name">Friend Request</string>
+    <string name="notification_request_title">%1$s wants to be friends!</string>
+    <string name="notification_mutual_request_title">%1$s is your friend now!</string>
+    <string name="notification_request_text">Click to check out the new friend request.</string>
+    <string name="notification_mutual_request_text">Click to write something in response.</string>
 </resources>

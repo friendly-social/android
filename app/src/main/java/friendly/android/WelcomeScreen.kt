@@ -1,5 +1,8 @@
 package friendly.android
 
+import android.Manifest.permission.POST_NOTIFICATIONS
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,6 +24,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun WelcomeScreen(onSignUp: () -> Unit, modifier: Modifier = Modifier) {
+    RequestNotificationsPermission()
     Column(
         modifier = modifier
             .fillMaxSize(),
@@ -67,6 +72,14 @@ fun WelcomeScreen(onSignUp: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RequestNotificationsPermission() {
+    val launcher = rememberLauncherForActivityResult(RequestPermission()) {}
+    LaunchedEffect(Unit) {
+        launcher.launch(POST_NOTIFICATIONS)
     }
 }
 
