@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- DO NOT FORGET: Before turning allowBackup back to 'true',
          scan prefs usage and setup backup_rules.xml properly -->
