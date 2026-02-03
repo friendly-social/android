@@ -58,6 +58,8 @@ class UserAvatarStyle(
     }
 }
 
+private val knuthHashConstant = 2654435761L
+
 @Composable
 fun UserAvatar(
     nickname: Nickname,
@@ -66,7 +68,8 @@ fun UserAvatar(
     style: UserAvatarStyle,
     modifier: Modifier = Modifier,
 ) {
-    val shapeIndex = (userId.long % avatarShapes.size).toInt()
+    val hash = (userId.long * knuthHashConstant) and 0x7FFFFFFF
+    val shapeIndex = (hash % avatarShapes.size).toInt()
     val shape = avatarShapes[shapeIndex].toShape()
     SubcomposeAsyncImage(
         model = uri,

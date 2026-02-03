@@ -19,16 +19,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ElevatedSuggestionChip
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -279,28 +281,29 @@ private fun AvatarWithInterests(
         LazyRow(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(vertical = 8.dp)
                 .fillMaxWidth(),
         ) {
-            item { Spacer(Modifier.width(8.dp)) }
-
-            items(interests) { interest ->
-                Text(
-                    text = interest.string,
-                    modifier = Modifier
-                        .padding(horizontal = 3.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(
-                            color = Color.pastelFromString(
-                                string = interest.string,
-                                useDark = isSystemInDarkTheme(),
-                            ),
-                        )
-                        .padding(4.dp),
+            itemsIndexed(interests) { i, interest ->
+                val useDark = isSystemInDarkTheme()
+                val color = remember(interest.string, useDark) {
+                    Color.pastelFromString(
+                        string = interest.string,
+                        useDark = useDark,
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                ElevatedSuggestionChip(
+                    onClick = {},
+                    label = { Text(interest.string) },
+                    colors = SuggestionChipDefaults.suggestionChipColors(
+                        containerColor = color,
+                        labelColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 )
+                if (i == interests.lastIndex) {
+                    Spacer(Modifier.width(8.dp))
+                }
             }
-
-            item { Spacer(Modifier.width(8.dp)) }
         }
     }
 }
