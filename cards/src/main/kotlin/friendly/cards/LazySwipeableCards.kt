@@ -98,10 +98,7 @@ fun <T> LazySwipeableCards(
             .onGloballyPositioned {
                 state.onSizeChange(it.size)
             }
-            .padding(
-                end = properties.padding,
-                top = properties.padding.div(2),
-            ),
+            .padding(properties.padding),
         itemProvider = { itemProvider },
     ) { constraints ->
 

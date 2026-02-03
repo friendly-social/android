@@ -2,7 +2,7 @@
 
 > Make new friends!
 
-Private social network to make meeting friends easier. You can learn more on our page: [getfriend.ly](https://github.com/friendly-social/android).
+Private social network to make meeting friends easier. You can learn more on our page: [getfriend.ly](https://getfriend.ly).
 
 ## Download
 

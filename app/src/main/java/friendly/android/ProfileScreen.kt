@@ -26,7 +26,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,6 +38,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -110,8 +111,8 @@ fun ProfileScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.profile)) },
+            TopAppBar(
+                title = {},
                 navigationIcon = {
                     if (source is ProfileScreenSource.FriendProfile) {
                         IconButton(onClick = onHome) {
@@ -150,6 +151,10 @@ fun ProfileScreen(
                         )
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    scrolledContainerColor =
+                    MaterialTheme.colorScheme.surfaceContainer,
+                ),
             )
         },
         modifier = modifier.fillMaxSize(),
@@ -397,7 +402,7 @@ fun LoadedProfileState(
                     nickname = state.profile.nickname,
                     userId = state.profile.userId,
                     uri = state.profile.avatar,
-                    modifier = Modifier.size(128.dp),
+                    style = Large,
                 )
 
                 Spacer(Modifier.height(24.dp))
