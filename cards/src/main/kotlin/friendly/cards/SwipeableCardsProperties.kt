@@ -1,5 +1,6 @@
 package friendly.cards
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -11,7 +12,7 @@ object SwipeableCardsDefaults {
     const val DRAGGING_ACCELERATION = 1f
     val STACKED_CARDS_OFFSET = 30.dp
     val SWIPE_THRESHOLD = 100.dp
-    val PADDING = 10.dp
+    val PADDING = PaddingValues(16.dp)
 }
 
 /**
@@ -26,7 +27,7 @@ object SwipeableCardsDefaults {
  * @property draggingAcceleration Multiplier for drag gesture sensitivity. Higher values make cards more responsive to drag gestures. Defaults to [SwipeableCardsDefaults.DRAGGING_ACCELERATION].
  */
 data class SwipeableCardsProperties(
-    val padding: Dp = SwipeableCardsDefaults.PADDING,
+    val padding: PaddingValues = SwipeableCardsDefaults.PADDING,
     val swipeThreshold: Dp = SwipeableCardsDefaults.SWIPE_THRESHOLD,
     val lockBelowCardDragging: Boolean =
         SwipeableCardsDefaults.LOCK_BELOW_CARD_DRAGGING,

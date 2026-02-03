@@ -96,13 +96,10 @@ private fun NetworkError(
     friendToken: FriendToken,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier) {
-        Text(text = stringResource(R.string.network_error_occurred))
-        Spacer(Modifier.height(16.dp))
-        OutlinedButton(onClick = { vm.add(userId, friendToken) }) {
-            Text(text = "Retry")
-        }
-    }
+    NetworkErrorBox(
+        onRetry = { vm.add(userId, friendToken) },
+        modifier = modifier,
+    )
 }
 
 @Composable
