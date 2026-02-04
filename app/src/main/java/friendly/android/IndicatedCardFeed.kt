@@ -5,6 +5,11 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -14,8 +19,6 @@ import friendly.cards.SwipeableCardsAnimations
 import friendly.cards.SwipeableCardsProperties
 import friendly.cards.items
 import friendly.cards.rememberSwipeableCardsState
-
-private const val MAX_CARD_OFFSET = 500
 
 private val cardsProperties = SwipeableCardsProperties(
     stackedCardsOffset = 0.dp,
@@ -49,7 +52,6 @@ fun IndicatedCardFeed(
             onSwipe = { item, direction ->
                 when (direction) {
                     SwipeableCardDirection.Right -> like(item)
-
                     SwipeableCardDirection.Left -> dislike(item)
                 }
             },

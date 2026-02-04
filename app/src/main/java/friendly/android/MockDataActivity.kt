@@ -130,7 +130,7 @@ class MockDataActivity : ComponentActivity() {
                 interests = InterestList.orThrow(
                     Interest.orThrow("Proficient Python3"),
                     Interest.orThrow("Music"),
-                    Interest.orThrow("Music"),
+                    Interest.orThrow("Non"),
                     Interest.orThrow("Kotlin"),
                 ),
                 avatar = null,

@@ -105,8 +105,6 @@ class FeedScreenViewModel(
     fun retry() {
         _state.update { FeedScreenVmState.Initial }
 
-        Log.d("Feed", "retry start")
-
         viewModelScope.launch {
             val feedQueueResult = loadFeedQueue()
             _state.setLoadFeedQueueState(

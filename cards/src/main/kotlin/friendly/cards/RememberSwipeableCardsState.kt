@@ -1,7 +1,9 @@
 package friendly.cards
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.SaverScope
+import androidx.compose.runtime.saveable.rememberSaveable
 
 /**
  * Creates and remembers a [SwipeableCardsState] instance across recompositions.
@@ -26,7 +28,7 @@ fun rememberSwipeableCardsState(
     initialCardIndex: Int = 0,
     itemCount: () -> Int,
 ): SwipeableCardsState {
-    val state = remember {
+    val state = rememberSaveable(saver = SwipeableCardsStateSaver(itemCount)) {
         SwipeableCardsState(
             visibleCardsInStack = visibleCardsInStack,
             initialCardIndex = initialCardIndex,
@@ -34,4 +36,17 @@ fun rememberSwipeableCardsState(
         )
     }
     return state
+}
+
+private class SwipeableCardsStateSaver(
+    private val itemCount: () -> Int,
+) : Saver<SwipeableCardsState, Int> {
+    override fun SaverScope.save(
+        value: SwipeableCardsState,
+    ): Int = value.currentCardIndex
+
+    override fun restore(value: Int) = SwipeableCardsState(
+        initialCardIndex = value,
+        itemCount = itemCount,
+    )
 }
