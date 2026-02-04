@@ -35,12 +35,12 @@ class LazySwipeableCardsScopeImpl<T> : LazySwipeableCardsScope<T> {
     }
 }
 
-inline fun <reified T> LazySwipeableCardsScope<T>.items(
+fun <T> LazySwipeableCardsScope<T>.items(
     items: List<T>,
-    noinline itemContent: @Composable (T, Int, Offset) -> Unit,
+    itemContent: @Composable (T, Int, Offset) -> Unit,
 ) = addItems(items, itemContent)
 
-inline fun <reified T> LazySwipeableCardsScope<T>.item(
+fun <T> LazySwipeableCardsScope<T>.item(
     item: T,
-    noinline itemContent: @Composable (T, Int, Offset) -> Unit,
+    itemContent: @Composable (T, Int, Offset) -> Unit,
 ) = addItem(item, itemContent)

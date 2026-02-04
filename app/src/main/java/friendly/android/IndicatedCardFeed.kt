@@ -29,6 +29,7 @@ fun IndicatedCardFeed(
     modifier: Modifier = Modifier,
 ) {
     val swipeCardsState = rememberSwipeableCardsState(
+        visibleCardsInStack = 2,
         itemCount = { currentItems.size },
     )
 
@@ -54,7 +55,7 @@ fun IndicatedCardFeed(
             },
             modifier = Modifier.fillMaxSize(),
         ) {
-            items(currentItems) { item, _, _ ->
+            items(currentItems) { item, index, offset ->
                 FeedCard(
                     entry = item,
                     like = { entry ->

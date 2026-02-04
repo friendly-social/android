@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -418,7 +417,10 @@ fun LoadedProfileState(
         Spacer(Modifier.height(16.dp))
 
         FlowRow(
-            horizontalArrangement = Arrangement.Center,
+            horizontalArrangement = Arrangement.spacedBy(
+                space = 8.dp,
+                alignment = Alignment.CenterHorizontally,
+            ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -432,23 +434,17 @@ fun LoadedProfileState(
                 }
                 val label = MaterialTheme.colorScheme.onSurface
                 key(interest.string) {
-                    Row {
-                        Spacer(Modifier.width(8.dp))
-                        SuggestionChip(
-                            onClick = {},
-                            label = { Text(interest.string) },
-                            colors = SuggestionChipDefaults
-                                .suggestionChipColors(
-                                    containerColor = color,
-                                    labelColor = label,
-                                ),
-                            border = null,
-                            modifier = Modifier.height(32.dp),
-                        )
-                        if (i == interests.size) {
-                            Spacer(Modifier.width(8.dp))
-                        }
-                    }
+                    SuggestionChip(
+                        onClick = {},
+                        label = { Text(interest.string) },
+                        colors = SuggestionChipDefaults
+                            .suggestionChipColors(
+                                containerColor = color,
+                                labelColor = label,
+                            ),
+                        border = null,
+                        modifier = Modifier.height(32.dp),
+                    )
                 }
             }
         }
