@@ -22,11 +22,13 @@ import androidx.compose.runtime.remember
  */
 @Composable
 fun rememberSwipeableCardsState(
+    visibleCardsInStack: Int = SwipeableCardsDefaults.VISIBLE_CARDS_IN_STACK,
     initialCardIndex: Int = 0,
     itemCount: () -> Int,
 ): SwipeableCardsState {
     val state = remember {
         SwipeableCardsState(
+            visibleCardsInStack = visibleCardsInStack,
             initialCardIndex = initialCardIndex,
             itemCount = itemCount,
         )
