@@ -12,19 +12,17 @@ import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
 import friendly.sdk.UserId
 
-class SelfProfileStorage(context: Context) {
-    companion object {
-        private const val SELF_PROFILE_CACHE_PREFERENCES =
-            "SELF_PROFILE_CACHE_PREFERENCES"
-        private const val NICKNAME = "NICKNAME"
-        private const val DESCRIPTION = "DESCRIPTION"
-        private const val AVATAR_ACCESS_HASH = "AVATAR_ACCESS_HASH"
-        private const val AVATAR_ID = "AVATAR_ID"
-        private const val USER_ID = "USER_ID"
-        private const val INTERESTS = "INTERESTS"
-        private const val SOCIAL_LINK = "SOCIAL_LINK"
-    }
+private const val SelfProfileCachePreferences =
+    "SELF_PROFILE_CACHE_PREFERENCES"
+private const val NicknamePreference = "NICKNAME"
+private const val DescriptionPreference = "DESCRIPTION"
+private const val AvatarAccessHashPreference = "AVATAR_ACCESS_HASH"
+private const val AvatarIdPreference = "AVATAR_ID"
+private const val UserIdPreference = "USER_ID"
+private const val InterestsPreference = "INTERESTS"
+private const val SocialLinkPreference = "SOCIAL_LINK"
 
+class SelfProfileStorage(context: Context) {
     data class Cache(
         val nickname: Nickname,
         val description: UserDescription,
@@ -35,7 +33,7 @@ class SelfProfileStorage(context: Context) {
     )
 
     private val preferences = context.getSharedPreferences(
-        SELF_PROFILE_CACHE_PREFERENCES,
+        SelfProfileCachePreferences,
         Context.MODE_PRIVATE,
     )
 
@@ -48,46 +46,46 @@ class SelfProfileStorage(context: Context) {
         socialLink: SocialLink,
     ) {
         preferences.edit {
-            putString(NICKNAME, nickname.string)
-            putString(DESCRIPTION, description.string)
+            putString(NicknamePreference, nickname.string)
+            putString(DescriptionPreference, description.string)
             avatar?.accessHash?.string?.let { avatarAccessHash ->
-                putString(AVATAR_ACCESS_HASH, avatarAccessHash)
+                putString(AvatarAccessHashPreference, avatarAccessHash)
             }
             val interestsSet = interests.raw
                 .map { interest -> interest.string }
                 .toSet()
-            putStringSet(INTERESTS, interestsSet)
+            putStringSet(InterestsPreference, interestsSet)
             avatar?.id?.long?.let { long ->
-                putLong(AVATAR_ID, long)
+                putLong(AvatarIdPreference, long)
             }
-            putLong(USER_ID, userId.long)
-            putString(SOCIAL_LINK, socialLink.string)
+            putLong(UserIdPreference, userId.long)
+            putString(SocialLinkPreference, socialLink.string)
             commit()
         }
     }
 
     fun getNickname(): Nickname? {
-        val string = preferences.getString(NICKNAME, null)
+        val string = preferences.getString(NicknamePreference, null)
         return string?.let { string -> Nickname.orThrow(string) }
     }
 
     fun getSocialLink(): SocialLink? {
-        val string = preferences.getString(SOCIAL_LINK, null)
+        val string = preferences.getString(SocialLinkPreference, null)
         return string?.let { string -> SocialLink.orThrow(string) }
     }
 
     fun getUserId(): UserId {
-        val long = preferences.getLong(USER_ID, 0L)
+        val long = preferences.getLong(UserIdPreference, 0L)
         return UserId(long)
     }
 
     fun getDescription(): UserDescription? {
-        val string = preferences.getString(DESCRIPTION, null)
+        val string = preferences.getString(DescriptionPreference, null)
         return string?.let { string -> UserDescription.orThrow(string) }
     }
 
     fun getInterests(): InterestList? {
-        val set = preferences.getStringSet(INTERESTS, null)
+        val set = preferences.getStringSet(InterestsPreference, null)
         return set?.let { interestsSet ->
             InterestList.orThrow(
                 raw = interestsSet.map { string -> Interest.orThrow(string) },
@@ -96,8 +94,8 @@ class SelfProfileStorage(context: Context) {
     }
 
     fun getAvatar(): FileDescriptor? {
-        val accessHash = preferences.getString(AVATAR_ACCESS_HASH, null)
-        val id = preferences.getLong(AVATAR_ID, 0)
+        val accessHash = preferences.getString(AvatarAccessHashPreference, null)
+        val id = preferences.getLong(AvatarIdPreference, 0)
         return accessHash?.let { accessHash ->
             FileDescriptor(
                 id = FileId(id),

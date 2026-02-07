@@ -38,12 +38,10 @@ fun rememberSwipeableCardsState(
     return state
 }
 
-private class SwipeableCardsStateSaver(
-    private val itemCount: () -> Int,
-) : Saver<SwipeableCardsState, Int> {
-    override fun SaverScope.save(
-        value: SwipeableCardsState,
-    ): Int = value.currentCardIndex
+private class SwipeableCardsStateSaver(private val itemCount: () -> Int) :
+    Saver<SwipeableCardsState, Int> {
+    override fun SaverScope.save(value: SwipeableCardsState): Int =
+        value.currentCardIndex
 
     override fun restore(value: Int) = SwipeableCardsState(
         initialCardIndex = value,

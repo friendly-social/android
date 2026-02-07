@@ -9,11 +9,11 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
-private const val newAvatarDimension = 500
-private const val maxAvatarSize = 16_384L
-private const val startQuality = 80
-private const val qualityStep = 10
-private const val minQuality = 40
+private const val NewAvatarDimension = 500
+private const val MaxAvatarSize = 16_384L
+private const val StartQuality = 80
+private const val QualityStep = 10
+private const val MinQuality = 40
 
 class AvatarAdjuster(
     private val uri: Uri,
@@ -37,10 +37,10 @@ class AvatarAdjuster(
         val croppedBitmap = Bitmap
             .createBitmap(bitmap, 0, 0, croppedDimension, croppedDimension)
         val scaledBitmap = croppedBitmap
-            .scale(newAvatarDimension, newAvatarDimension)
+            .scale(NewAvatarDimension, NewAvatarDimension)
 
         val outputStream = ByteArrayOutputStream()
-        var quality = startQuality
+        var quality = StartQuality
         do {
             outputStream.reset()
             scaledBitmap.compress(
@@ -48,8 +48,8 @@ class AvatarAdjuster(
                 quality,
                 outputStream,
             )
-            quality -= qualityStep
-        } while (outputStream.size() > maxAvatarSize && quality > minQuality)
+            quality -= QualityStep
+        } while (outputStream.size() > MaxAvatarSize && quality > MinQuality)
 
         val byteArray = outputStream.toByteArray()
 
