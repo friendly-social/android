@@ -21,12 +21,6 @@ class AvatarUploadUseCase(
     private val client: FriendlyClient,
     private val context: Context,
 ) {
-    companion object {
-        private const val MAX_IMAGE_SIZE = 2048L
-        private const val COMPRESSION_QUALITY = 75
-        private const val MAX_FILE_SIZE_BYTES = 2L * 1024L
-    }
-
     @JvmInline
     value class UploadingPercentage(val double: Double)
 
@@ -49,18 +43,16 @@ class AvatarUploadUseCase(
         val inputStream = contentResolver
             .openInputStream(avatarUri)
             ?: error("Couldn't read $avatarUri from the storage")
+
         val fileName = getFileName(avatarUri)
         val fileDescriptorUploadResult = CompletableDeferred<UploadFileResult>()
-        val compressor = ImageCompressor(
+        val compressor = AvatarAdjuster(
             uri = avatarUri,
             inputStream = inputStream,
-            maxImageSize = MAX_IMAGE_SIZE,
-            compressionQuality = COMPRESSION_QUALITY,
-            maxFileSizeBytes = MAX_FILE_SIZE_BYTES,
             context = context,
         )
 
-        val (compressedInputStream, compressedSize) = compressor.compress()
+        val (compressedInputStream, compressedSize) = compressor.adjust()
 
         compressedInputStream.use { inputStream ->
             val flow = channelFlow {
@@ -79,7 +71,9 @@ class AvatarUploadUseCase(
                 UploadingResult.IOError(result.cause)
             }
 
-            is UploadFileResult.ServerError -> UploadingResult.ServerError
+            is UploadFileResult.ServerError -> {
+                UploadingResult.ServerError
+            }
 
             is UploadFileResult.Success -> {
                 UploadingResult.Success(result.descriptor)
