@@ -35,7 +35,7 @@ class AuthStorage(context: Context) {
     }
 
     fun getToken(): Token? {
-        val tokenString = preferences.getString(Token, null)
+        val tokenString = preferences.getString(TokenPreference, null)
         return tokenString?.let { string -> Token.orThrow(string) }
     }
 

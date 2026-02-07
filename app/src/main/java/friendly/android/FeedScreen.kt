@@ -99,6 +99,7 @@ private fun ScaffoldContent(
 ) {
     AnimatedContent(
         targetState = state,
+        contentKey = { state -> state::class },
     ) { state ->
         when (val state = state) {
             is FeedScreenUiState.Idle -> {
@@ -107,7 +108,9 @@ private fun ScaffoldContent(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     EmptyFeed(
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
                     )
 
                     IndicatedCardFeed(
@@ -122,19 +125,25 @@ private fun ScaffoldContent(
             is FeedScreenUiState.NetworkError -> {
                 NetworkError(
                     onRetry = vm::retry,
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
                 )
             }
 
             is FeedScreenUiState.EmptyFeed -> {
                 EmptyFeed(
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
                 )
             }
 
             is FeedScreenUiState.ServerError -> {
                 ServerError(
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
                 )
             }
 
@@ -169,7 +178,7 @@ private fun EmptyFeed(modifier: Modifier = Modifier) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier,
+        modifier = modifier.verticalScroll(rememberScrollState()),
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_inbox),
