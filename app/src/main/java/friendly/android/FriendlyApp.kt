@@ -1,5 +1,10 @@
 package friendly.android
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -67,7 +73,6 @@ fun FriendlyApp(
                 BottomNavigationBar(
                     navController = navController,
                     navigationItems = homeNavigationItems,
-
                 )
             },
             modifier = modifier.fillMaxSize(),
@@ -101,15 +106,23 @@ fun BottomNavigationBar(
         }
     } ?: false
 
-    if (isHome) {
+    AnimatedVisibility(
+        visible = isHome,
+        enter = slideInVertically(
+            initialOffsetY = { it },
+            animationSpec = tween(300, easing = EaseInOutCubic),
+        ),
+        exit = slideOutVertically(
+            targetOffsetY = { it },
+            animationSpec = tween(300, easing = EaseInOutCubic),
+        ),
+    ) {
         NavigationBar(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
             modifier = modifier,
         ) {
             for (item in navigationItems) {
-                val selected = currentDestinationHierarchy.any { destination ->
-                    destination.hasRoute(item.destination::class)
-                }
+                val selected = currentDestinationHierarchy.isSelected(item)
                 NavigationBarItem(
                     selected = selected,
                     onClick = {
@@ -149,3 +162,9 @@ fun BottomNavigationBar(
         }
     }
 }
+
+private fun Sequence<NavDestination>?.isSelected(
+    item: HomeNavigationItem,
+): Boolean = this?.any { destination ->
+    destination.hasRoute(item.destination::class)
+} ?: false

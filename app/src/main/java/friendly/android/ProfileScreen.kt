@@ -4,16 +4,17 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,8 +35,6 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -44,14 +43,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
@@ -59,7 +56,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import friendly.android.ProfileScreenViewModel.UserProfile
+import friendly.sdk.Nickname
 import friendly.sdk.SocialLink
 import friendly.sdk.UserAccessHash
 import friendly.sdk.UserId
@@ -81,11 +80,12 @@ val ProfileScreenUiState.socialLink: SocialLink?
         is ProfileScreenUiState.Present -> state.profile.socialLink
     }
 
-sealed interface ProfileScreenSource {
-    data object SelfProfile : ProfileScreenSource
-    data class FriendProfile(val id: UserId, val accessHash: UserAccessHash) :
-        ProfileScreenSource
-}
+data class ProfileScreenSource(
+    val nickname: Nickname,
+    val userId: UserId,
+    val avatar: Uri?,
+    val accessHash: UserAccessHash,
+)
 
 @OptIn(
     ExperimentalMaterial3Api::class,
@@ -95,119 +95,254 @@ sealed interface ProfileScreenSource {
 fun ProfileScreen(
     source: ProfileScreenSource,
     onHome: () -> Unit,
-    onSignOut: () -> Unit,
     vm: ProfileScreenViewModel,
     modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
 ) {
     val state by vm.state.collectAsState()
-    var signOutDialogVisible by remember { mutableStateOf(false) }
     var removeFriendDialogVisible by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val socialLink = state.socialLink
 
-    LaunchedEffect(Unit) {
-        vm.load(source)
-    }
+    LaunchedEffect(Unit) { vm.load(source) }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    if (source is ProfileScreenSource.FriendProfile) {
-                        IconButton(onClick = onHome) {
-                            Icon(
-                                painter =
-                                painterResource(R.drawable.ic_arrow_back),
-                                contentDescription = null,
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    if (source is ProfileScreenSource.SelfProfile) {
-                        IconButton(
-                            onClick = { signOutDialogVisible = true },
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_logout),
-                                contentDescription = null,
-                            )
-                        }
-                    }
-                    if (source is ProfileScreenSource.FriendProfile) {
-                        if (socialLink != null) {
-                            SocialLinkIcon(
-                                socialLink = socialLink,
-                                context = context,
-                            )
-                        }
-
-                        FriendProfileDropdownMenu(
-                            socialLink = socialLink,
-                            onRemoveFriendDialogShow = {
-                                removeFriendDialogVisible = true
-                            },
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    scrolledContainerColor =
-                    MaterialTheme.colorScheme.surfaceContainer,
-                ),
+            TopBar(
+                onHome = onHome,
+                socialLink = socialLink,
+                context = context,
+                onRemoveFriend = { removeFriendDialogVisible = true },
             )
         },
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .consumeWindowInsets(innerPadding)
-                .fillMaxSize(),
+        ScaffoldContent(
+            removeFriendDialogVisible = removeFriendDialogVisible,
+            onDismissRemoveFriendDialog = { removeFriendDialogVisible = false },
+            vm = vm,
+            onHome = onHome,
+            profileSource = source,
+            state = state,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedContentScope = animatedContentScope,
+            modifier = Modifier.consumeWindowInsets(innerPadding),
+        )
+    }
+}
+
+@Composable
+private fun ScaffoldContent(
+    removeFriendDialogVisible: Boolean,
+    vm: ProfileScreenViewModel,
+    onHome: () -> Unit,
+    profileSource: ProfileScreenSource,
+    state: ProfileScreenUiState,
+    onDismissRemoveFriendDialog: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier.fillMaxSize()) {
+        RemoveFriendAlertDialog(
+            visible = removeFriendDialogVisible,
+            onDismiss = onDismissRemoveFriendDialog,
+            vm = vm,
+            onRemoveSuccess = onHome,
+        )
+
+        SharedAvatarNicknameContent(
+            nickname = profileSource.nickname,
+            userId = profileSource.userId,
+            avatar = profileSource.avatar,
+            state = state,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedContentScope = animatedContentScope,
+            modifier = Modifier,
+            /**/
+        )
+    }
+}
+
+@Composable
+private fun TopBar(
+    onHome: () -> Unit,
+    socialLink: SocialLink?,
+    context: Context,
+    onRemoveFriend: () -> Unit,
+) {
+    TopAppBar(
+        title = {},
+        navigationIcon = {
+            IconButton(onClick = onHome) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrow_back),
+                    contentDescription = null,
+                )
+            }
+        },
+        actions = {
+            if (socialLink != null) {
+                SocialLinkIcon(
+                    socialLink = socialLink,
+                    context = context,
+                )
+            }
+
+            FriendProfileDropdownMenu(
+                socialLink = socialLink,
+                onRemoveFriendDialogShow = onRemoveFriend,
+            )
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+        ),
+    )
+}
+
+@Composable
+fun SharedAvatarNicknameContent(
+    nickname: Nickname,
+    userId: UserId,
+    avatar: Uri?,
+    state: ProfileScreenUiState,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
+    modifier: Modifier = Modifier,
+): Unit = with(sharedTransitionScope) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 32.dp)
+            .verticalScroll(rememberScrollState()),
+    ) {
+        Spacer(Modifier.height(128.dp))
+
+        PreloadedContent(
+            nickname = nickname,
+            userId = userId,
+            avatar = avatar,
+            animatedContentScope = animatedContentScope,
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        AnimatedStateContent(state = state)
+    }
+}
+
+@Composable
+private fun AnimatedStateContent(
+    state: ProfileScreenUiState,
+    modifier: Modifier = Modifier,
+) {
+    AnimatedContent(targetState = state) { state ->
+        when (val state = state) {
+            is ProfileScreenUiState.Loading -> LoadingState(modifier)
+
+            is ProfileScreenUiState.Present -> PresentState(
+                state = state,
+                modifier = modifier,
+            )
+
+            is ProfileScreenUiState.Error -> ErrorState(modifier)
+        }
+    }
+}
+
+@Composable
+private fun PresentState(
+    state: ProfileScreenUiState.Present,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .padding(top = 16.dp, bottom = 32.dp)
+            .fillMaxWidth(),
+    ) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(
+                space = 8.dp,
+                alignment = Alignment.CenterHorizontally,
+            ),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            SignOutAlertDialog(
-                visible = signOutDialogVisible,
-                onAlertVisibility = { newValue ->
-                    signOutDialogVisible = newValue
-                },
-                vm = vm,
-                onSignOut = onSignOut,
-            )
-            RemoveFriendAlertDialog(
-                visible = removeFriendDialogVisible,
-                onAlertVisibility = { newValue ->
-                    removeFriendDialogVisible = newValue
-                },
-                vm = vm,
-                onRemoveSuccess = onHome,
-            )
-
-            when (val state = state) {
-                is ProfileScreenUiState.Loading -> {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxSize(),
-                    ) {
-                        LoadingIndicator(Modifier.size(48.dp))
-                    }
-                }
-
-                is ProfileScreenUiState.Present -> {
-                    LoadedProfileState(
-                        state = state,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-
-                is ProfileScreenUiState.Error ->
-                    Text(
-                        text = stringResource(
-                            R.string.profile_screen_error_text,
-                        ),
-                        modifier = Modifier.padding(innerPadding),
-                    )
+            state.profile.interests.raw.forEachIndexed { _, interest ->
+                InterestChip(interest)
             }
         }
+
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+            text = state.profile.description.string,
+            style = MaterialTheme.typography.bodyLarge,
+        )
+    }
+}
+
+@Composable
+private fun LoadingState(modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier.fillMaxSize(),
+    ) {
+        LoadingIndicator(Modifier.size(48.dp))
+    }
+}
+
+@Composable
+private fun ErrorState(modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(R.string.profile_screen_error_text),
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun SharedTransitionScope.PreloadedContent(
+    nickname: Nickname,
+    userId: UserId,
+    avatar: Uri?,
+    animatedContentScope: AnimatedContentScope,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        UserAvatar(
+            nickname = nickname,
+            userId = userId,
+            uri = avatar,
+            style = Large,
+            modifier = Modifier
+                .sharedBounds(
+                    sharedContentState = rememberSharedContentState(
+                        key = sharedProfileAvatarKey(userId),
+                    ),
+                    animatedVisibilityScope = animatedContentScope,
+                )
+                .skipToLookaheadSize(),
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+            text = nickname.string,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier
+                .sharedBounds(
+                    sharedContentState = rememberSharedContentState(
+                        key = sharedProfileNicknameKey(userId),
+                    ),
+                    animatedVisibilityScope = animatedContentScope,
+                )
+                .skipToLookaheadSize(),
+        )
     }
 }
 
@@ -243,7 +378,7 @@ private fun copyToClipboardIn(
 }
 
 private fun openSocialLink(context: Context, socialLink: SocialLink) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(socialLink.string))
+    val intent = Intent(Intent.ACTION_VIEW, socialLink.string.toUri())
     context.startActivity(intent)
 }
 
@@ -297,7 +432,7 @@ private fun FriendProfileDropdownMenu(
 private fun RemoveFriendAlertDialog(
     visible: Boolean,
     vm: ProfileScreenViewModel,
-    onAlertVisibility: (Boolean) -> Unit,
+    onDismiss: () -> Unit,
     onRemoveSuccess: () -> Unit,
 ) {
     AnimatedVisibility(
@@ -314,11 +449,11 @@ private fun RemoveFriendAlertDialog(
             },
             title = { Text(stringResource(R.string.remove_friend)) },
             text = { Text(stringResource(R.string.remove_friend_text)) },
-            onDismissRequest = { onAlertVisibility(false) },
+            onDismissRequest = onDismiss,
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onAlertVisibility(false)
+                        onDismiss()
                         vm.removeFriend(onRemoveSuccess)
                     },
                 ) {
@@ -326,136 +461,10 @@ private fun RemoveFriendAlertDialog(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { onAlertVisibility(false) }) {
+                TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.cancel))
                 }
             },
         )
-    }
-}
-
-@Composable
-private fun SignOutAlertDialog(
-    visible: Boolean,
-    vm: ProfileScreenViewModel,
-    onAlertVisibility: (Boolean) -> Unit,
-    onSignOut: () -> Unit,
-) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn() + expandIn(),
-        exit = ExitTransition.None,
-    ) {
-        AlertDialog(
-            icon = {
-                Icon(
-                    painter = painterResource(R.drawable.ic_error),
-                    contentDescription = null,
-                )
-            },
-            title = {
-                Text(stringResource(R.string.attention))
-            },
-            text = {
-                Text(stringResource(R.string.log_out_alert_text))
-            },
-            onDismissRequest = {
-                onAlertVisibility(false)
-            },
-            confirmButton = {
-                TextButton(onClick = { vm.logout(onSignOut) }) {
-                    Text(stringResource(R.string.log_out))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onAlertVisibility(false) }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun LoadedProfileState(
-    state: ProfileScreenUiState.Present,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 32.dp)
-            .verticalScroll(rememberScrollState()),
-    ) {
-        Spacer(Modifier.height(128.dp))
-
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                UserAvatar(
-                    nickname = state.profile.nickname,
-                    userId = state.profile.userId,
-                    uri = state.profile.avatar,
-                    style = Large,
-                )
-
-                Spacer(Modifier.height(24.dp))
-
-                Text(
-                    text = state.profile.nickname.string,
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(
-                space = 8.dp,
-                alignment = Alignment.CenterHorizontally,
-            ),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            state.profile.interests.raw.forEachIndexed { i, interest ->
-                val useDark = isSystemInDarkTheme()
-                val color = remember(interest.string, useDark) {
-                    Color.pastelFromString(
-                        string = interest.string,
-                        useDark = useDark,
-                    )
-                }
-                val label = MaterialTheme.colorScheme.onSurface
-                key(interest.string) {
-                    SuggestionChip(
-                        onClick = {},
-                        label = { Text(interest.string) },
-                        colors = SuggestionChipDefaults
-                            .suggestionChipColors(
-                                containerColor = color,
-                                labelColor = label,
-                            ),
-                        border = null,
-                        modifier = Modifier.height(32.dp),
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        Text(
-            text = state.profile.description.string,
-            style = MaterialTheme.typography.bodyLarge,
-        )
-
-        Spacer(Modifier.height(32.dp))
     }
 }

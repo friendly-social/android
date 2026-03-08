@@ -31,7 +31,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -324,28 +323,12 @@ private fun Interests(interests: List<Interest>) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         itemsIndexed(interests) { i, interest ->
-            val useDark = isSystemInDarkTheme()
-            val color = remember(interest.string, useDark) {
-                Color.pastelFromString(
-                    string = interest.string,
-                    useDark = useDark,
-                )
-            }
             if (i == 0) {
                 Spacer(Modifier.width(20.dp))
             } else {
                 Spacer(Modifier.width(8.dp))
             }
-            SuggestionChip(
-                onClick = {},
-                label = { Text(interest.string) },
-                colors = SuggestionChipDefaults.suggestionChipColors(
-                    containerColor = color,
-                    labelColor = MaterialTheme.colorScheme.onSurface,
-                ),
-                border = null,
-                modifier = Modifier.height(28.dp),
-            )
+            InterestChip(interest)
             if (i == interests.lastIndex) {
                 Spacer(Modifier.width(20.dp))
             }

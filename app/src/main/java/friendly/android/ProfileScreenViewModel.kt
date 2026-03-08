@@ -1,6 +1,7 @@
 package friendly.android
 
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import friendly.android.ProfileScreenViewModel.UserProfile
@@ -41,8 +42,6 @@ private data class ProfileScreenVmState(
 
 class ProfileScreenViewModel(
     private val authStorage: AuthStorage,
-    private val selfProfileStorage: SelfProfileStorage,
-    private val logout: LogoutUseCase,
     private val filesClient: FriendlyFilesClient,
     private val usersClient: FriendlyUsersClient,
     private val friendsClient: FriendlyFriendsClient,
@@ -94,14 +93,6 @@ class ProfileScreenViewModel(
         }
     }
 
-    fun logout(onSignOut: () -> Unit) {
-        viewModelScope.launch {
-            if (logout()) {
-                onSignOut()
-            }
-        }
-    }
-
     fun removeFriend(onSuccess: () -> Unit) {
         val authorization = authStorage.getAuthOrNull() ?: return
         val userId = _state.value.profile?.userId ?: return
@@ -128,51 +119,29 @@ class ProfileScreenViewModel(
         auth: Authorization,
         source: ProfileScreenSource,
     ): UserProfile? {
-        when (source) {
-            is ProfileScreenSource.SelfProfile -> {
-                val cache = selfProfileStorage.getCache() ?: return null
+        val result = usersClient
+            .details(auth, source.userId, source.accessHash)
 
-                val avatarUrl = cache.avatar?.let { avatar ->
-                    Uri.parse(filesClient.getEndpoint(avatar).string)
-                }
+        val details = when (result) {
+            is FriendlyUsersClient.DetailsResult.IOError,
+            is FriendlyUsersClient.DetailsResult.ServerError,
+            is FriendlyUsersClient.DetailsResult.Unauthorized,
+            -> return null
 
-                return UserProfile(
-                    nickname = cache.nickname,
-                    userId = cache.userId,
-                    description = cache.description,
-                    avatar = avatarUrl,
-                    interests = cache.interests,
-                    socialLink = cache.socialLink,
-                    userAccessHash = null,
-                )
-            }
-
-            is ProfileScreenSource.FriendProfile -> {
-                val result = usersClient
-                    .details(auth, source.id, source.accessHash)
-
-                val details = when (result) {
-                    is FriendlyUsersClient.DetailsResult.IOError,
-                    is FriendlyUsersClient.DetailsResult.ServerError,
-                    is FriendlyUsersClient.DetailsResult.Unauthorized,
-                    -> return null
-
-                    is FriendlyUsersClient.DetailsResult.Success ->
-                        result.details
-                }
-
-                return UserProfile(
-                    nickname = details.nickname,
-                    userId = details.id,
-                    description = details.description,
-                    avatar = details.avatar?.let { avatar ->
-                        Uri.parse(filesClient.getEndpoint(avatar).string)
-                    },
-                    interests = details.interests,
-                    socialLink = details.socialLink,
-                    userAccessHash = details.accessHash,
-                )
-            }
+            is FriendlyUsersClient.DetailsResult.Success ->
+                result.details
         }
+
+        return UserProfile(
+            nickname = details.nickname,
+            userId = details.id,
+            description = details.description,
+            avatar = details.avatar?.let { avatar ->
+                filesClient.getEndpoint(avatar).string.toUri()
+            },
+            interests = details.interests,
+            socialLink = details.socialLink,
+            userAccessHash = details.accessHash,
+        )
     }
 }

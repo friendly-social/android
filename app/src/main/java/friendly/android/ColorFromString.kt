@@ -36,11 +36,9 @@ fun Color.Companion.pastelFromString(string: String, useDark: Boolean): Color {
     return pastels[hash % pastels.size]
 }
 
-private val knuthHashConstant = 2654435761L
-
 fun Color.Companion.pastelFromLong(long: Long, useDark: Boolean): Color {
     val pastels = if (useDark) darkPastels else lightPastels
-    val hash = (long * knuthHashConstant) and 0x7FFFFFF
+    val hash = (long * KnuthHashConstant) and 0x7FFFFFF
     val index = hash.toInt() % pastels.size
     return pastels[index]
 }

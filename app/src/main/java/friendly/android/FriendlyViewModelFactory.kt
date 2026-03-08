@@ -22,10 +22,18 @@ class FriendlyViewModelFactory(
         if (modelClass.isAssignableFrom(ProfileScreenViewModel::class.java)) {
             return ProfileScreenViewModel(
                 authStorage = authStorage,
-                selfProfileStorage = selfProfileStorage,
                 filesClient = client.files,
                 usersClient = client.users,
                 friendsClient = client.friends,
+            ) as T
+        }
+        val isSelfProfileVm = modelClass
+            .isAssignableFrom(SelfProfileScreenViewModel::class.java)
+        if (isSelfProfileVm) {
+            return SelfProfileScreenViewModel(
+                authStorage = authStorage,
+                selfProfileStorage = selfProfileStorage,
+                filesClient = client.files,
                 logout = LogoutUseCase(
                     authStorage = authStorage,
                     selfProfileStorage = selfProfileStorage,

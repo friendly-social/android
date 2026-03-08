@@ -6,9 +6,10 @@
 package friendly.android
 
 import android.net.Uri
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +53,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import friendly.android.FriendlyNavGraph.Home
 import friendly.android.NetworkScreenUiState.Success.FriendItem
 import friendly.sdk.Nickname
 import friendly.sdk.UserAccessHash
@@ -91,12 +93,13 @@ sealed interface NetworkScreenUiState {
 @Composable
 fun NetworkScreen(
     vm: NetworkScreenViewModel,
-    onProfile: (UserId, UserAccessHash) -> Unit,
+    onProfile: (Home.Profile) -> Unit,
     onShare: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
     modifier: Modifier = Modifier,
 ) {
     LaunchedEffect(Unit) {
-        Log.d("navigation", "network screen displayed")
         vm.initialize()
     }
 
@@ -132,7 +135,8 @@ fun NetworkScreen(
                     onShare = onShare,
                 )
             },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
                 .nestedScroll(topAppBar.nestedScrollConnection),
         ) { innerPadding ->
             ScaffoldContent(
@@ -140,7 +144,8 @@ fun NetworkScreen(
                 state = state,
                 padding = innerPadding,
                 onProfile = onProfile,
-                onShare = onShare,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedContentScope = animatedContentScope,
             )
         }
     }
@@ -189,8 +194,9 @@ private fun ScaffoldContent(
     vm: NetworkScreenViewModel,
     state: NetworkScreenUiState,
     padding: PaddingValues,
-    onProfile: (UserId, UserAccessHash) -> Unit,
-    onShare: () -> Unit,
+    onProfile: (Home.Profile) -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
 ) {
     Box(
         modifier = Modifier
@@ -293,8 +299,16 @@ private fun ScaffoldContent(
                     Success(
                         state = state,
                         onFriendClick = { friend ->
-                            onProfile(friend.id, friend.accessHash)
+                            val route = Home.Profile(
+                                userId = friend.id.long,
+                                accessHash = friend.accessHash.string,
+                                nickname = friend.nickname.string,
+                                avatarUri = friend.avatar?.toString(),
+                            )
+                            onProfile(route)
                         },
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedContentScope = animatedContentScope,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -307,10 +321,12 @@ private fun ScaffoldContent(
 private fun Success(
     state: NetworkScreenUiState.Success,
     onFriendClick: (FriendItem) -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
     ) {
@@ -330,6 +346,8 @@ private fun Success(
                 nickname = friend.nickname,
                 userId = friend.id,
                 onClick = { onFriendClick(friend) },
+                sharedTransitionScope = sharedTransitionScope,
+                animatedContentScope = animatedContentScope,
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateItem(),
@@ -349,8 +367,10 @@ private fun FriendItem(
     nickname: Nickname,
     userId: UserId,
     onClick: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
     modifier: Modifier = Modifier,
-) {
+): Unit = with(sharedTransitionScope) {
     SegmentedListItem(
         onClick = onClick,
         shapes = ListItemDefaults.segmentedShapes(index, count),
@@ -364,9 +384,36 @@ private fun FriendItem(
                 userId = userId,
                 uri = avatarUri,
                 style = Small,
+                modifier = Modifier
+                    .sharedBounds(
+                        sharedContentState = sharedTransitionScope
+                            .rememberSharedContentState(
+                                key = sharedProfileAvatarKey(userId),
+                            ),
+                        animatedVisibilityScope = animatedContentScope,
+                    ),
             )
         },
+        modifier = modifier,
     ) {
-        Text(nickname.string)
+        Text(
+            text = nickname.string,
+            modifier = Modifier
+                .sharedBounds(
+                    sharedContentState = sharedTransitionScope
+                        .rememberSharedContentState(
+                            key = sharedProfileNicknameKey(userId),
+                        ),
+                    animatedVisibilityScope = animatedContentScope,
+                ),
+        )
     }
 }
+
+@Composable
+fun sharedProfileNicknameKey(userId: UserId): String =
+    "network-nickname-${userId.long}"
+
+@Composable
+fun sharedProfileAvatarKey(userId: UserId): String =
+    "network-avatar-${userId.long}"

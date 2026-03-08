@@ -40,13 +40,15 @@ class ShareProfileScreenViewModel(
         )
 
     fun generateUrl() {
+        _state.update { it.copy(shareUrl = null) }
+
         viewModelScope.launch {
             val auth = authStorage.getAuthOrNull() ?: return@launch // TODO
             val friendToken = client.friends.generate(auth)
             val userId = authStorage.getUserId() ?: return@launch
 
             _state.update { old ->
-                val shareUrl = buildShareUrl(userId, friendToken)
+                val shareUrl = buildShareUrlOrNull(userId, friendToken)
                 println(friendToken)
                 println(shareUrl)
                 old.copy(shareUrl = shareUrl)
@@ -55,13 +57,14 @@ class ShareProfileScreenViewModel(
     }
 
     // TODO: use kotlinx encoding
-    private fun buildShareUrl(
+    private fun buildShareUrlOrNull(
         userId: UserId,
         friendToken: FriendlyFriendsClient.GenerateResult,
-    ): String = buildString {
+    ): String? = buildString {
         append("https://friendly-social.github.io/landing/#/?reference=")
+        val tokenString = (friendToken as? Success)?.token ?: return null
         val encodedPart = URLEncoder.encode(
-            "add/${userId.long}/${friendToken.orThrow().string}",
+            "add/${userId.long}/$tokenString",
             Charset.defaultCharset().name,
         )
         append(encodedPart)

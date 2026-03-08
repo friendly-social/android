@@ -5,17 +5,16 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,7 +28,6 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
@@ -65,26 +63,35 @@ private object BasicQrEncoder : QrEncoder {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ShareProfileScreen(
+    onDone: () -> Unit,
     vm: ShareProfileScreenViewModel,
-    onHome: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsState()
     val clipboardManager = LocalClipboard.current
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        vm.generateUrl()
-    }
+    LaunchedEffect(Unit) { vm.generateUrl() }
 
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp),
     ) {
         Text(
             text = stringResource(R.string.share_your_profile),
             style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.Start),
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            text = stringResource(R.string.share_profile_qr_code_description),
         )
 
         Spacer(Modifier.height(16.dp))
@@ -92,9 +99,7 @@ fun ShareProfileScreen(
         Crossfade(state) { state ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Spacer(Modifier.height(16.dp))
 
@@ -102,29 +107,25 @@ fun ShareProfileScreen(
                     is ShareProfileScreenUiState.Generating -> {
                         LoadingIndicator(
                             color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(300.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f),
                         )
                     }
 
                     is ShareProfileScreenUiState.Share -> {
                         QrCodeView(
                             data = state.shareUrl,
-                            dotShape = DotShape.Circle,
+                            dotShape = DotShape.Square,
                             encoder = BasicQrEncoder,
                             modifier = Modifier
-                                .size(300.dp)
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = {
-                                            copyToClipboardIn(
-                                                scope = scope,
-                                                state = state,
-                                                clipboardManager =
-                                                clipboardManager,
-                                            )
-                                        },
-                                    )
-                                },
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                                .holdToCopy(
+                                    string = state.shareUrl,
+                                    clipboardManager = clipboardManager,
+                                    scope = scope,
+                                ),
                         )
                     }
                 }
@@ -135,43 +136,38 @@ fun ShareProfileScreen(
                     style = MaterialTheme.typography.labelLargeEmphasized,
                     text = stringResource(R.string.hold_to_copy),
                 )
-
-                Spacer(Modifier.height(16.dp))
-
-                Text(
-                    text = stringResource(
-                        R.string.share_profile_qr_code_description,
-                    ),
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    OutlinedButton(onClick = onHome) {
-                        Text(
-                            text = stringResource(R.string.back),
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
             }
         }
+
+        Spacer(Modifier.height(16.dp))
+
+        Button(
+            contentPadding = ButtonDefaults.MediumContentPadding,
+            shape = ButtonDefaults.squareShape,
+            onClick = onDone,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(text = stringResource(R.string.done))
+        }
+
+        Spacer(Modifier.height(16.dp))
     }
 }
 
-private fun copyToClipboardIn(
-    scope: CoroutineScope,
-    state: ShareProfileScreenUiState,
+private fun Modifier.holdToCopy(
+    string: String,
     clipboardManager: Clipboard,
-) {
-    val shareUrl = (state as? ShareProfileScreenUiState.Share)
-        ?.shareUrl
-        ?: return
-    scope.launch {
-        val entry = ClipEntry(ClipData.newPlainText("share url", shareUrl))
-        clipboardManager.setClipEntry(entry)
+    scope: CoroutineScope,
+): Modifier = this then Modifier
+    .pointerInput(Unit) {
+        detectTapGestures(
+            onLongPress = {
+                scope.launch {
+                    val entry = ClipEntry(
+                        ClipData.newPlainText("share url", string),
+                    )
+                    clipboardManager.setClipEntry(entry)
+                }
+            },
+        )
     }
-}

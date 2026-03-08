@@ -1,14 +1,19 @@
 package friendly.android
 
+import android.net.Uri
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.navigation
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
@@ -17,6 +22,7 @@ import friendly.android.FriendlyNavGraph.Registration
 import friendly.android.FriendlyNavGraph.Welcome
 import friendly.sdk.Authorization
 import friendly.sdk.FriendToken
+import friendly.sdk.Nickname
 import friendly.sdk.UserAccessHash
 import friendly.sdk.UserId
 import kotlinx.serialization.Serializable
@@ -44,10 +50,15 @@ object FriendlyNavGraph {
         data object HomeProfile : Home()
 
         @Serializable
-        data class Profile(val id: Long, val accessHash: String) : Home()
+        data object ShareProfile : Home()
 
         @Serializable
-        data object ShareProfile : Home()
+        data class Profile(
+            val userId: Long,
+            val accessHash: String,
+            val nickname: String,
+            val avatarUri: String?,
+        ) : Home()
     }
 
     @Serializable
@@ -66,126 +77,129 @@ fun FriendlyNavGraph(
         else -> Home()
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = firstDestination,
-        enterTransition = { fadeIn(animationSpec = tween(150)) },
-        exitTransition = { fadeOut(animationSpec = tween(150)) },
-        modifier = modifier,
-    ) {
-        composable<Welcome> {
-            WelcomeScreen(
-                onSignUp = { navController.navigate(Registration) },
-                modifier = Modifier,
-            )
-        }
-
-        composable<Registration> {
-            val vm = viewModel<RegisterScreenViewModel>(
-                factory = viewModelFactory,
-            )
-            RegisterScreen(
-                vm = vm,
-                onHome = {
-                    navController.navigate(Home.HomeProfile)
-                },
-                modifier = Modifier,
-            )
-        }
-
-        navigation<Home>(startDestination = Home.Feed) {
-            composable<Home.Feed> {
-                FeedScreen(
-                    vm = viewModel<FeedScreenViewModel>(
-                        factory = viewModelFactory,
-                    ),
+    SharedTransitionLayout {
+        NavHost(
+            navController = navController,
+            startDestination = firstDestination,
+            enterTransition = { fadeIn(animationSpec = tween(150)) },
+            exitTransition = { fadeOut(animationSpec = tween(150)) },
+            modifier = modifier,
+        ) {
+            composable<Welcome> {
+                WelcomeScreen(
+                    onSignUp = { navController.navigate(Registration) },
                     modifier = Modifier,
                 )
             }
 
-            composable<Home.Network> {
-                NetworkScreen(
-                    vm = viewModel<NetworkScreenViewModel>(
-                        factory = viewModelFactory,
-                    ),
-                    onShare = {
-                        navController.navigate(Home.ShareProfile)
+            composable<Registration> {
+                val vm = viewModel<RegisterScreenViewModel>(
+                    factory = viewModelFactory,
+                )
+                RegisterScreen(
+                    vm = vm,
+                    onHome = {
+                        navController.navigate(Home.HomeProfile)
                     },
-                    onProfile = { id: UserId, accessHash: UserAccessHash ->
-                        navController.navigate(
-                            Home.Profile(
-                                id = id.long,
-                                accessHash = accessHash.string,
+                    modifier = Modifier,
+                )
+            }
+
+            navigation<Home>(startDestination = Home.Feed) {
+                composable<Home.Feed> {
+                    FeedScreen(
+                        vm = viewModel<FeedScreenViewModel>(
+                            factory = viewModelFactory,
+                        ),
+                        modifier = Modifier,
+                    )
+                }
+
+                composable<Home.Network> {
+                    NetworkScreen(
+                        vm = viewModel<NetworkScreenViewModel>(
+                            factory = viewModelFactory,
+                        ),
+                        onProfile = { route ->
+                            navController.navigate(route)
+                        },
+                        onShare = { navController.navigate(Home.ShareProfile) },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedContentScope = this@composable,
+                        modifier = Modifier,
+                    )
+                }
+
+                dialog<Home.ShareProfile> {
+                    ModalBottomSheet(
+                        sheetState = rememberModalBottomSheetState(
+                            skipPartiallyExpanded = true,
+                        ),
+                        onDismissRequest = { navController.popBackStack() },
+                        modifier = Modifier,
+                    ) {
+                        ShareProfileScreen(
+                            onDone = { navController.popBackStack() },
+                            vm = viewModel<ShareProfileScreenViewModel>(
+                                factory = viewModelFactory,
                             ),
                         )
-                    },
-                    modifier = Modifier,
-                )
+                    }
+                }
+
+                composable<Home.HomeProfile> {
+                    SelfProfileScreen(
+                        vm = viewModel<SelfProfileScreenViewModel>(
+                            factory = viewModelFactory,
+                        ),
+                        onSignOut = {
+                            navController.navigate(Welcome) { popUpTo(0) }
+                        },
+                        modifier = Modifier,
+                    )
+                }
+
+                composable<Home.Profile> { backStackEntry ->
+                    val route: Home.Profile = backStackEntry.toRoute()
+                    ProfileScreen(
+                        source = ProfileScreenSource(
+                            userId = UserId(route.userId),
+                            accessHash = UserAccessHash
+                                .orThrow(route.accessHash),
+                            nickname = Nickname.orThrow(route.nickname),
+                            avatar = route.avatarUri?.let(Uri::parse),
+                        ),
+                        onHome = {
+                            navController.popBackStack()
+                        },
+                        vm = viewModel<ProfileScreenViewModel>(
+                            factory = viewModelFactory,
+                        ),
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedContentScope = this@composable,
+                    )
+                }
             }
 
-            // TODO: make separate composables for both profile screens
-            composable<Home.HomeProfile> { backStackEntry ->
-                ProfileScreen(
-                    source = ProfileScreenSource.SelfProfile,
-                    vm = viewModel<ProfileScreenViewModel>(
+            composable<FriendlyNavGraph.AddFriendByToken>(
+                deepLinks = listOf(addFriendDeepLink),
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments
+                    ?.getString("userId") ?: error("no userId")
+                val friendToken = backStackEntry.arguments
+                    ?.getString("friendToken") ?: error("no friendToken")
+
+                AddFriendByTokenScreen(
+                    goToSignUp = { navController.navigate(Welcome) },
+                    goHome = { navController.navigate(Home()) },
+                    friendToken = FriendToken.orThrow(friendToken),
+                    userId = UserId(userId.toLong()),
+                    vm = viewModel<AddFriendByTokenScreenViewModel>(
                         factory = viewModelFactory,
                     ),
-                    onHome = {},
-                    onSignOut = {
-                        navController.navigate(Welcome) {
-                            popUpTo(0)
-                        }
-                    },
                     modifier = Modifier,
                 )
             }
-
-            composable<Home.ShareProfile> { backStackEntry ->
-                ShareProfileScreen(
-                    vm = viewModel<ShareProfileScreenViewModel>(
-                        factory = viewModelFactory,
-                    ),
-                    onHome = navController::popBackStack,
-                    modifier = Modifier,
-                )
-            }
-
-            // TODO: make separate composables for both profile screens
-            composable<Home.Profile> { backStackEntry ->
-                val route: Home.Profile = backStackEntry.toRoute()
-                ProfileScreen(
-                    vm = viewModel<ProfileScreenViewModel>(
-                        factory = viewModelFactory,
-                    ),
-                    source = ProfileScreenSource.FriendProfile(
-                        id = UserId(route.id),
-                        accessHash = UserAccessHash.orThrow(route.accessHash),
-                    ),
-                    onHome = { navController.navigate(Home.Network) },
-                    onSignOut = {},
-                    modifier = Modifier,
-                )
-            }
-        }
-
-        composable<FriendlyNavGraph.AddFriendByToken>(
-            deepLinks = listOf(addFriendDeepLink),
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments
-                ?.getString("userId") ?: error("no userId")
-            val friendToken = backStackEntry.arguments
-                ?.getString("friendToken") ?: error("no friendToken")
-
-            AddFriendByTokenScreen(
-                goToSignUp = { navController.navigate(Welcome) },
-                goHome = { navController.navigate(Home()) },
-                friendToken = FriendToken.orThrow(friendToken),
-                userId = UserId(userId.toLong()),
-                vm = viewModel<AddFriendByTokenScreenViewModel>(
-                    factory = viewModelFactory,
-                ),
-                modifier = Modifier,
-            )
         }
     }
 }
