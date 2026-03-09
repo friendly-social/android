@@ -4,6 +4,8 @@
 
 Private social network to make meeting friends easier. You can learn more on our page: [getfriend.ly](https://getfriend.ly).
 
+[We are open for contributions!](CONTRIBUTING.md)
+
 ## Download
 
 Download APK from direct link: [friendly-latest.apk](https://github.com/friendly-social/android/releases/download/nightly/friendly-latest.apk).
