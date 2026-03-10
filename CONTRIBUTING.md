@@ -23,7 +23,7 @@ separate module), there is a
 
 You can chat with the maintainers in
 [Discussions](https://github.com/friendly-social/android/discussions) and
-suggest your help in any domain.
+suggest your help in any domain. First issues you can find in [backlog](https://github.com/friendly-social/android/milestone/1) milestone.
 
 Only use issues for already planned tasks.
 
