@@ -1,19 +1,17 @@
 package friendly.android
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import friendly.sdk.FriendlyClient
 import friendly.sdk.FriendlyFriendsClient
 import friendly.sdk.UserId
-import io.ktor.utils.io.charsets.name
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.net.URLEncoder
-import java.nio.charset.Charset
 
 private data class ShareProfileScreenVmState(val shareUrl: String?) {
     fun toUiState(): ShareProfileScreenUiState {
@@ -56,17 +54,15 @@ class ShareProfileScreenViewModel(
         }
     }
 
-    // TODO: use kotlinx encoding
     private fun buildShareUrlOrNull(
         userId: UserId,
-        friendToken: FriendlyFriendsClient.GenerateResult,
+        friendTokenResult: FriendlyFriendsClient.GenerateResult,
     ): String? = buildString {
+        val friendToken = (friendTokenResult as? Success)?.token ?: return null
+        val friendTokenString = friendToken.string
+        val userIdLong = userId.long
+        val encodedPart = Uri.encode("add/$userIdLong/$friendTokenString")
         append("https://friendly-social.github.io/landing/#/?reference=")
-        val tokenString = (friendToken as? Success)?.token ?: return null
-        val encodedPart = URLEncoder.encode(
-            "add/${userId.long}/$tokenString",
-            Charset.defaultCharset().name,
-        )
         append(encodedPart)
     }
 }
