@@ -77,7 +77,7 @@ dependencies {
     implementation(libs.coil.network.ktor)
     implementation(libs.androidx.exifinterface)
     implementation(libs.zxing.core)
-    implementation(libs.lightspark.compose.qr.code)
+    implementation(libs.alexzhirkevich.qrose)
     implementation(libs.ktor.logging)
     implementation(projects.cards)
     implementation(libs.androidx.lifecycle.viewmodel)

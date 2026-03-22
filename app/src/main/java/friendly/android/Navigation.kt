@@ -191,7 +191,10 @@ fun FriendlyNavGraph(
 
                 AddFriendByTokenScreen(
                     goToSignUp = { navController.navigate(Welcome) },
-                    goHome = { navController.navigate(Home()) },
+                    onGoBack = { navController.popBackStack() },
+                    onNetworkScreen = {
+                        navController.navigate(Home.Network)
+                    },
                     friendToken = FriendToken.orThrow(friendToken),
                     userId = UserId(userId.toLong()),
                     vm = viewModel<AddFriendByTokenScreenViewModel>(

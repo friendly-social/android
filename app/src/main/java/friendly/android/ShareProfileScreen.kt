@@ -2,6 +2,7 @@ package friendly.android
 
 import android.content.ClipData
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,13 +30,15 @@ import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.google.zxing.EncodeHintType
-import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
-import com.google.zxing.qrcode.encoder.ByteMatrix
-import com.google.zxing.qrcode.encoder.Encoder
-import com.lightspark.composeqr.DotShape
-import com.lightspark.composeqr.QrCodeView
-import com.lightspark.composeqr.QrEncoder
+import io.github.alexzhirkevich.qrose.options.QrBallShape
+import io.github.alexzhirkevich.qrose.options.QrBrush
+import io.github.alexzhirkevich.qrose.options.QrErrorCorrectionLevel
+import io.github.alexzhirkevich.qrose.options.QrFrameShape
+import io.github.alexzhirkevich.qrose.options.QrPixelShape
+import io.github.alexzhirkevich.qrose.options.circle
+import io.github.alexzhirkevich.qrose.options.roundCorners
+import io.github.alexzhirkevich.qrose.options.solid
+import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -43,21 +46,6 @@ sealed interface ShareProfileScreenUiState {
     data object Generating : ShareProfileScreenUiState
 
     data class Share(val shareUrl: String) : ShareProfileScreenUiState
-}
-
-private object BasicQrEncoder : QrEncoder {
-    override fun encode(qrData: String): ByteMatrix? {
-        val errorCorrectionLevel = ErrorCorrectionLevel.L
-        return Encoder.encode(
-            qrData,
-            errorCorrectionLevel,
-            mapOf(
-                EncodeHintType.CHARACTER_SET to "ASCII",
-                EncodeHintType.MARGIN to 16,
-                EncodeHintType.ERROR_CORRECTION to errorCorrectionLevel,
-            ),
-        ).matrix
-    }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -108,25 +96,13 @@ fun ShareProfileScreen(
                         LoadingIndicator(
                             color = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .fillMaxWidth(0.8f)
                                 .aspectRatio(1f),
                         )
                     }
 
                     is ShareProfileScreenUiState.Share -> {
-                        QrCodeView(
-                            data = state.shareUrl,
-                            dotShape = DotShape.Square,
-                            encoder = BasicQrEncoder,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .holdToCopy(
-                                    string = state.shareUrl,
-                                    clipboardManager = clipboardManager,
-                                    scope = scope,
-                                ),
-                        )
+                        QrCode(state, clipboardManager, scope)
                     }
                 }
 
@@ -152,6 +128,40 @@ fun ShareProfileScreen(
 
         Spacer(Modifier.height(16.dp))
     }
+}
+
+@Composable
+private fun QrCode(
+    state: ShareProfileScreenUiState.Share,
+    clipboardManager: Clipboard,
+    scope: CoroutineScope,
+) {
+    val onBackground =
+        MaterialTheme.colorScheme.onBackground
+    val painter = rememberQrCodePainter(state.shareUrl) {
+        shapes {
+            ball = QrBallShape.circle()
+            darkPixel = QrPixelShape.roundCorners()
+            frame = QrFrameShape.roundCorners(.25f)
+        }
+        errorCorrectionLevel = QrErrorCorrectionLevel.Low
+        colors {
+            dark = QrBrush.solid(onBackground)
+            frame = QrBrush.solid(onBackground)
+        }
+    }
+    Image(
+        painter = painter,
+        contentDescription = null,
+        modifier = Modifier
+            .fillMaxWidth(0.8f)
+            .aspectRatio(1f)
+            .holdToCopy(
+                string = state.shareUrl,
+                clipboardManager = clipboardManager,
+                scope = scope,
+            ),
+    )
 }
 
 private fun Modifier.holdToCopy(

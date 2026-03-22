@@ -37,7 +37,6 @@ class AddFriendByTokenScreenViewModel(
                 userId = userId,
             )
 
-            // todo add ability to fetch user info and to navigate to user account after add
             val finalState = when (result) {
                 is FriendlyFriendsClient.AddResult.FriendTokenExpired -> {
                     AddFriendByTokenScreenUiState.FriendTokenExpired
