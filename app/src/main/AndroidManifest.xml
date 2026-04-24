@@ -24,6 +24,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:windowSoftInputMode="adjustNothing"
             android:theme="@style/Theme.Friendlyandroid">
             <meta-data
                 android:name="android.app.shortcuts"

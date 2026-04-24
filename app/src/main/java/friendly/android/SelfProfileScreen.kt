@@ -8,9 +8,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,6 +42,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import friendly.android.SelfProfileScreenViewModel.UserProfile
+import friendly.sdk.Interest
+import friendly.android.FriendlyNavGraph.Home.EditProfile as EditProfileRoute
 
 sealed interface SelfProfileScreenUiState {
     data class Present(val profile: UserProfile) : SelfProfileScreenUiState
@@ -55,7 +57,9 @@ sealed interface SelfProfileScreenUiState {
 fun SelfProfileScreen(
     vm: SelfProfileScreenViewModel,
     onSignOut: () -> Unit,
+    onEditProfileClick: (EditProfileRoute) -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues.Zero, // todo exp
 ) {
     val state by vm.state.collectAsState()
     var signOutDialogVisible by remember { mutableStateOf(false) }
@@ -67,6 +71,22 @@ fun SelfProfileScreen(
             TopAppBar(
                 title = {},
                 actions = {
+                    val state = state
+                    if (state is Present) {
+                        IconButton(
+                            onClick = {
+                                onEditProfileClick(state.toEditRoute())
+                            },
+                        ) {
+                            Icon(
+                                painter =
+                                painterResource(
+                                    R.drawable.ic_edit_outlined,
+                                ),
+                                contentDescription = null,
+                            )
+                        }
+                    }
                     IconButton(
                         onClick = { signOutDialogVisible = true },
                     ) {
@@ -86,7 +106,7 @@ fun SelfProfileScreen(
     ) { innerPadding ->
         Box(
             modifier = Modifier
-                .consumeWindowInsets(innerPadding)
+                .padding(innerPadding)
                 .fillMaxSize(),
         ) {
             SignOutAlertDialog(
@@ -111,6 +131,7 @@ fun SelfProfileScreen(
                 is SelfProfileScreenUiState.Present -> {
                     LoadedSelfProfileState(
                         state = state,
+                        contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -120,7 +141,6 @@ fun SelfProfileScreen(
                         text = stringResource(
                             R.string.profile_screen_error_text,
                         ),
-                        modifier = Modifier.padding(innerPadding),
                     )
             }
         }
@@ -132,6 +152,7 @@ fun SelfProfileScreen(
 private fun LoadedSelfProfileState(
     state: SelfProfileScreenUiState.Present,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues.Zero,
 ) {
     Column(
         modifier = modifier
@@ -139,7 +160,7 @@ private fun LoadedSelfProfileState(
             .padding(horizontal = 32.dp)
             .verticalScroll(rememberScrollState()),
     ) {
-        Spacer(Modifier.height(128.dp))
+        Spacer(Modifier.height(24.dp))
 
         Row(
             horizontalArrangement = Arrangement.Center,
@@ -188,7 +209,7 @@ private fun LoadedSelfProfileState(
             style = MaterialTheme.typography.bodyLarge,
         )
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.padding(contentPadding.takeBottom()).height(32.dp))
     }
 }
 
@@ -232,4 +253,16 @@ private fun SignOutAlertDialog(
             },
         )
     }
+}
+
+private fun SelfProfileScreenUiState.Present.toEditRoute(): EditProfileRoute {
+    val state = this
+    return EditProfileRoute(
+        nickname = state.profile.nickname.serializable(),
+        description = state.profile.description.serializable(),
+        interests = state.profile.interests.raw.map(Interest::serializable),
+        socialLink = state.profile.socialLink?.serializable(),
+        userId = state.profile.userId.serializable(),
+        avatarUri = state.profile.avatar?.toString(),
+    )
 }

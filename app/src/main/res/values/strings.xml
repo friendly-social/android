@@ -58,4 +58,16 @@
     <string name="notification_request_text">Click to check out the new friend request.</string>
     <string name="notification_mutual_request_text">Click to write something in response.</string>
     <string name="done">Done</string>
+    <string name="edit_profile">Edit profile</string>
+    <string name="save">Save</string>
+    <string name="discard">Discard</string>
+    <string name="edit_interests">Edit interests</string>
+    <string name="unsaved_changes_alert_text">Your changes have not been saved</string>
+    <string name="pick_new_avatar">Pick new avatar</string>
+    <string name="remove_avatar">Remove avatar</string>
+    <string name="nickname_validation_text">Nickname length should be between 1 and 256 symbols</string>
+    <string name="social_link_validation_text">Social link should be a valid url</string>
+    <string name="description_validation_text">Description should not be empty</string>
+    <string name="profile_saving_error">An error occurred during saving</string>
+    <string name="avatar_uploading_error">An error occurred during avatar uploading</string>
 </resources>

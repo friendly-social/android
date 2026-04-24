@@ -3,6 +3,7 @@ package friendly.android
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,6 +48,7 @@ fun AddFriendByTokenScreen(
     userId: UserId,
     vm: AddFriendByTokenScreenViewModel,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
 ) {
     val state by vm.state.collectAsState()
 
@@ -94,6 +96,7 @@ fun AddFriendByTokenScreen(
                 AddFriendByTokenScreenUiState.Success -> {
                     Success(
                         onNetworkScreen = onNetworkScreen,
+                        modifier = Modifier.padding(contentPadding),
                     )
                 }
             }

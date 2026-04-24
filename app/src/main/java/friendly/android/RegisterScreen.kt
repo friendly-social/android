@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,8 +26,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -52,6 +51,7 @@ fun RegisterScreen(
     vm: RegisterScreenViewModel,
     onHome: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
 ) {
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
     val scope = rememberCoroutineScope()
@@ -77,7 +77,7 @@ fun RegisterScreen(
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = false,
-                modifier = modifier,
+                modifier = modifier.padding(contentPadding),
             ) { pageIndex ->
                 when (pageIndex) {
                     0 -> NicknameAndDescriptionPage(
@@ -344,7 +344,7 @@ private fun InterestsPage(
             maxItemsInEachRow = 4,
         ) {
             interests.forEach { interest ->
-                InterestChip(
+                ToggleableInterestChip(
                     interest = interest,
                     selected = interest in state.pickedInterests,
                     onToggle = onToggle,
@@ -376,30 +376,4 @@ private fun InterestsPage(
             }
         }
     }
-}
-
-@Composable
-private fun InterestChip(
-    interest: Interest,
-    selected: Boolean,
-    onToggle: (Interest) -> Unit,
-) {
-    FilterChip(
-        onClick = { onToggle(interest) },
-        label = {
-            Text(text = interest.string)
-        },
-        selected = selected,
-        leadingIcon = if (selected) {
-            {
-                Icon(
-                    painter = painterResource(R.drawable.ic_check),
-                    contentDescription = "Done icon",
-                    modifier = Modifier.size(FilterChipDefaults.IconSize),
-                )
-            }
-        } else {
-            null
-        },
-    )
 }

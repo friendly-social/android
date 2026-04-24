@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -66,9 +67,7 @@ fun UserAvatar(
     style: UserAvatarStyle,
     modifier: Modifier = Modifier,
 ) {
-    val hash = (userId.long * KnuthHashConstant) and 0x7FFFFFFF
-    val shapeIndex = (hash % avatarShapes.size).toInt()
-    val shape = avatarShapes[shapeIndex].toShape()
+    val shape = getShapeByUserId(userId)
     SubcomposeAsyncImage(
         model = uri,
         loading = { Box(Modifier.shimmer()) },
@@ -88,21 +87,20 @@ fun UserAvatar(
 }
 
 /**
- * Would display circle box with first letters of
+ * Displays circle box with first letters of
  * nickname and color based on userId
  */
 @Composable
-private fun EmptyAvatar(
-    nickname: Nickname,
+fun EmptyAvatar(
+    nickname: Nickname?,
     userId: UserId,
     style: UserAvatarStyle,
     modifier: Modifier = Modifier,
 ) {
-    val textColor = MaterialTheme.colorScheme.onBackground
-        .copy(alpha = 0.7f)
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
+            .clip(getShapeByUserId(userId)) // todo still looks strange tbh
             .background(
                 Color.pastelFromLong(
                     long = userId.long,
@@ -111,15 +109,31 @@ private fun EmptyAvatar(
             )
             .size(style.size),
     ) {
-        val fontSize = with(LocalDensity.current) {
-            style.noAvatarSize.toSp()
+        if (nickname != null) { // todo experiment
+            AvatarText(style, nickname)
         }
-        BasicText(
-            text = getLettersFromNickname(nickname),
-            color = { textColor },
-            style = TextStyle(fontSize = fontSize),
-        )
     }
+}
+
+@Composable
+private fun AvatarText(style: UserAvatarStyle, nickname: Nickname) {
+    val textColor = MaterialTheme.colorScheme.onBackground
+        .copy(alpha = 0.7f)
+    val fontSize = with(LocalDensity.current) {
+        style.noAvatarSize.toSp()
+    }
+    BasicText(
+        text = getLettersFromNickname(nickname),
+        color = { textColor },
+        style = TextStyle(fontSize = fontSize),
+    )
+}
+
+@Composable
+private fun getShapeByUserId(id: UserId): Shape {
+    val hash = (id.long * KnuthHashConstant) and 0x7FFFFFFF
+    val shapeIndex = (hash % avatarShapes.size).toInt()
+    return avatarShapes[shapeIndex].toShape()
 }
 
 private fun getLettersFromNickname(nickname: Nickname): String =

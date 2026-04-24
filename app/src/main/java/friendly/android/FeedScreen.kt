@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -50,7 +51,11 @@ sealed interface FeedScreenUiState {
     ExperimentalMaterial3ExpressiveApi::class,
 )
 @Composable
-fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
+fun FeedScreen(
+    vm: FeedScreenViewModel,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+) {
     val state by vm.state.collectAsState()
     val isRefreshing = isRefreshing(state)
     val pullToRefreshState = rememberPullToRefreshState()
@@ -74,7 +79,7 @@ fun FeedScreen(vm: FeedScreenViewModel, modifier: Modifier = Modifier) {
                 state = pullToRefreshState,
             )
         },
-        modifier = modifier,
+        modifier = modifier.padding(contentPadding),
     ) {
         Scaffold(
             modifier = modifier.fillMaxSize(),

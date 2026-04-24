@@ -5,11 +5,12 @@ import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.minus
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -29,13 +30,14 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import friendly.android.FriendlyNavGraph.Home
 import friendly.sdk.Authorization
 
 data class HomeNavigationItem(
     val titleResource: Int,
     val selectedIconResource: Int = R.drawable.ic_photo_camera,
     val unselectedIconResource: Int = R.drawable.ic_photo_camera,
-    val destination: FriendlyNavGraph.Home,
+    val destination: Home,
 )
 
 val homeNavigationItems = listOf(
@@ -43,19 +45,19 @@ val homeNavigationItems = listOf(
         titleResource = R.string.feed,
         selectedIconResource = R.drawable.ic_cards_star_filled,
         unselectedIconResource = R.drawable.ic_cards_star_unfilled,
-        destination = FriendlyNavGraph.Home.Feed,
+        destination = Home.Feed,
     ),
     HomeNavigationItem(
         titleResource = R.string.network,
         selectedIconResource = R.drawable.ic_group_filled,
         unselectedIconResource = R.drawable.ic_group_unfilled,
-        destination = FriendlyNavGraph.Home.Network,
+        destination = Home.Network,
     ),
     HomeNavigationItem(
         titleResource = R.string.profile,
         selectedIconResource = R.drawable.ic_person_filled,
         unselectedIconResource = R.drawable.ic_person_unfilled,
-        destination = FriendlyNavGraph.Home.HomeProfile,
+        destination = Home.SelfProfile,
     ),
 )
 
@@ -66,25 +68,50 @@ fun FriendlyApp(
     modifier: Modifier = Modifier,
 ) {
     val navController = rememberNavController()
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = currentBackStackEntry?.destination
+    val currentDestinationHierarchy = currentDestination?.hierarchy
+
+    val isHome = currentDestinationHierarchy?.any { destination ->
+        homeNavigationItems.any { item ->
+            destination.hasRoute(item.destination::class)
+        }
+    } ?: false
 
     FriendlyTheme {
         Scaffold(
             bottomBar = {
-                BottomNavigationBar(
-                    navController = navController,
-                    navigationItems = homeNavigationItems,
-                )
+                AnimatedVisibility(
+                    visible = isHome,
+                    enter = slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = tween(300, easing = EaseInOutCubic),
+                    ),
+                    exit = slideOutVertically(
+                        targetOffsetY = { it },
+                        animationSpec = tween(300, easing = EaseInOutCubic),
+                    ),
+                ) {
+                    BottomNavigationBar(
+                        navController = navController,
+                        navigationItems = homeNavigationItems,
+                    )
+                }
             },
             modifier = modifier.fillMaxSize(),
             contentWindowInsets = WindowInsets.navigationBars,
-        ) { innerPadding ->
+        ) { innerPadding: PaddingValues ->
             FriendlyNavGraph(
                 navController = navController,
                 viewModelFactory = viewModelFactory,
                 authorization = authorization,
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .consumeWindowInsets(innerPadding),
+                contentPadding = { destination ->
+                    when (destination) {
+                        is Home.EditProfile -> innerPadding.dropBottom()
+                        else -> innerPadding
+                    }
+                },
+                modifier = Modifier.consumeWindowInsets(innerPadding),
             )
         }
     }
@@ -100,65 +127,47 @@ fun BottomNavigationBar(
     val currentDestination = currentBackStackEntry?.destination
     val currentDestinationHierarchy = currentDestination?.hierarchy
 
-    val isHome = currentDestinationHierarchy?.any { destination ->
-        homeNavigationItems.any { item ->
-            destination.hasRoute(item.destination::class)
-        }
-    } ?: false
-
-    AnimatedVisibility(
-        visible = isHome,
-        enter = slideInVertically(
-            initialOffsetY = { it },
-            animationSpec = tween(300, easing = EaseInOutCubic),
-        ),
-        exit = slideOutVertically(
-            targetOffsetY = { it },
-            animationSpec = tween(300, easing = EaseInOutCubic),
-        ),
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = modifier,
     ) {
-        NavigationBar(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            modifier = modifier,
-        ) {
-            for (item in navigationItems) {
-                val selected = currentDestinationHierarchy.isSelected(item)
-                NavigationBarItem(
-                    selected = selected,
-                    onClick = {
-                        navController.navigate(item.destination) {
-                            popUpTo(
-                                navController.graph.findStartDestination().id,
-                            ) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
+        for (item in navigationItems) {
+            val selected = currentDestinationHierarchy.isSelected(item)
+            NavigationBarItem(
+                selected = selected,
+                onClick = {
+                    navController.navigate(item.destination) {
+                        popUpTo(
+                            navController.graph.findStartDestination().id,
+                        ) {
+                            saveState = true
                         }
-                    },
-                    label = {
-                        Text(
-                            text = stringResource(item.titleResource),
-                            fontWeight = if (selected) {
-                                FontWeight.Bold
-                            } else {
-                                FontWeight.Normal
-                            },
-                        )
-                    },
-                    icon = {
-                        Icon(
-                            painter = if (selected) {
-                                painterResource(item.selectedIconResource)
-                            } else {
-                                painterResource(item.unselectedIconResource)
-                            },
-                            contentDescription = null,
-                        )
-                    },
-                    modifier = Modifier,
-                )
-            }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                label = {
+                    Text(
+                        text = stringResource(item.titleResource),
+                        fontWeight = if (selected) {
+                            FontWeight.Bold
+                        } else {
+                            FontWeight.Normal
+                        },
+                    )
+                },
+                icon = {
+                    Icon(
+                        painter = if (selected) {
+                            painterResource(item.selectedIconResource)
+                        } else {
+                            painterResource(item.unselectedIconResource)
+                        },
+                        contentDescription = null,
+                    )
+                },
+                modifier = Modifier,
+            )
         }
     }
 }

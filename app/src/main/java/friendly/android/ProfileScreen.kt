@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -97,6 +97,7 @@ fun ProfileScreen(
     onHome: () -> Unit,
     vm: ProfileScreenViewModel,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues.Zero,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
 ) {
@@ -127,7 +128,8 @@ fun ProfileScreen(
             state = state,
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = animatedContentScope,
-            modifier = Modifier.consumeWindowInsets(innerPadding),
+            contentPadding = contentPadding,
+            modifier = Modifier.padding(innerPadding),
         )
     }
 }
@@ -143,6 +145,7 @@ private fun ScaffoldContent(
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues.Zero, // todo exp
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         RemoveFriendAlertDialog(
@@ -160,7 +163,7 @@ private fun ScaffoldContent(
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = animatedContentScope,
             modifier = Modifier,
-            /**/
+            contentPadding = contentPadding,
         )
     }
 }
@@ -209,15 +212,17 @@ fun SharedAvatarNicknameContent(
     state: ProfileScreenUiState,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ): Unit = with(sharedTransitionScope) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 32.dp)
+            .padding(contentPadding) // todo exp
             .verticalScroll(rememberScrollState()),
     ) {
-        Spacer(Modifier.height(128.dp))
+        Spacer(Modifier.height(24.dp))
 
         PreloadedContent(
             nickname = nickname,

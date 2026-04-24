@@ -22,7 +22,7 @@ class AvatarUploadUseCase(
     private val context: Context,
 ) {
     @JvmInline
-    value class UploadingPercentage(val double: Double)
+    value class UploadingPercentage(val float: Float)
 
     sealed interface UploadingResult {
         data class Success(val fileDescriptor: FileDescriptor) : UploadingResult
@@ -91,7 +91,7 @@ class AvatarUploadUseCase(
             contentType = ContentType.Image.Any,
             size = size,
             onUpload = { sent, total ->
-                val percent = sent.toDouble() / size * 100
+                val percent = sent.toFloat() / size * 100
                 send(UploadingPercentage(percent))
                 Log.d("avatar", "$sent of $total (${"%.0f".format(percent)}%)")
             },

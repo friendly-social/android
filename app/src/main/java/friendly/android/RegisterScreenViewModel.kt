@@ -152,7 +152,7 @@ class RegisterScreenViewModel(
         _state.update { old ->
             old.copy(
                 avatar = AvatarState.Uploading(
-                    progress = AvatarUploadUseCase.UploadingPercentage(0.0),
+                    progress = AvatarUploadUseCase.UploadingPercentage(0.0f),
                     uri = uri,
                 ),
             )

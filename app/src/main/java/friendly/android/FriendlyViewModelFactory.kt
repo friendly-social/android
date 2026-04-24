@@ -2,7 +2,10 @@ package friendly.android
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import friendly.sdk.FriendlyClient
+import kotlin.reflect.KClass
 
 class FriendlyViewModelFactory(
     private val registerUseCase: RegisterUseCase,
@@ -11,15 +14,20 @@ class FriendlyViewModelFactory(
     private val selfProfileStorage: SelfProfileStorage,
     private val client: FriendlyClient,
 ) : ViewModelProvider.Factory {
+
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(RegisterScreenViewModel::class.java)) {
+    override fun <T : ViewModel> create(
+        modelClass: KClass<T>,
+        extras: CreationExtras,
+    ): T {
+        // todo refactor this thing
+        if (modelClass == RegisterScreenViewModel::class) {
             return RegisterScreenViewModel(
                 register = registerUseCase,
                 uploadAvatar = avatarUploadUseCase,
             ) as T
         }
-        if (modelClass.isAssignableFrom(ProfileScreenViewModel::class.java)) {
+        if (modelClass == ProfileScreenViewModel::class) {
             return ProfileScreenViewModel(
                 authStorage = authStorage,
                 filesClient = client.files,
@@ -27,8 +35,7 @@ class FriendlyViewModelFactory(
                 friendsClient = client.friends,
             ) as T
         }
-        val isSelfProfileVm = modelClass
-            .isAssignableFrom(SelfProfileScreenViewModel::class.java)
+        val isSelfProfileVm = modelClass == SelfProfileScreenViewModel::class
         if (isSelfProfileVm) {
             return SelfProfileScreenViewModel(
                 authStorage = authStorage,
@@ -40,21 +47,34 @@ class FriendlyViewModelFactory(
                 ),
             ) as T
         }
-        if (modelClass.isAssignableFrom(NetworkScreenViewModel::class.java)) {
+        val isEditProfileVm = modelClass == EditProfileScreenViewModel::class
+        if (isEditProfileVm) {
+            val savedStateHandle = extras.createSavedStateHandle()
+            return EditProfileScreenViewModel(
+                filesClient = client.files,
+                savedStateHandle = savedStateHandle,
+                edit = EditProfileUseCase(
+                    authStorage = authStorage,
+                    client = client.users,
+                    selfProfileStorage = selfProfileStorage,
+                ),
+                uploadAvatar = avatarUploadUseCase,
+            ) as T
+        }
+        if (modelClass == NetworkScreenViewModel::class) {
             return NetworkScreenViewModel(
                 client = client,
                 authStorage = authStorage,
             ) as T
         }
-        val isShareProfileVm = modelClass
-            .isAssignableFrom(ShareProfileScreenViewModel::class.java)
+        val isShareProfileVm = modelClass == ShareProfileScreenViewModel::class
         if (isShareProfileVm) {
             return ShareProfileScreenViewModel(
                 authStorage = authStorage,
                 client = client,
             ) as T
         }
-        if (modelClass.isAssignableFrom(FeedScreenViewModel::class.java)) {
+        if (modelClass == FeedScreenViewModel::class) {
             return FeedScreenViewModel(
                 like = SendFriendshipRequestUseCase(
                     friendsClient = client.friends,
@@ -71,8 +91,8 @@ class FriendlyViewModelFactory(
                 filesClient = client.files,
             ) as T
         }
-        val isAddFriendByTokenVm = modelClass
-            .isAssignableFrom(AddFriendByTokenScreenViewModel::class.java)
+        val isAddFriendByTokenVm =
+            modelClass == AddFriendByTokenScreenViewModel::class
         if (isAddFriendByTokenVm) {
             return AddFriendByTokenScreenViewModel(
                 client = client,

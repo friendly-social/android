@@ -37,29 +37,73 @@ class SelfProfileStorage(context: Context) {
         Context.MODE_PRIVATE,
     )
 
+    fun storeNickname(nickname: Nickname) {
+        preferences.edit {
+            putString(NicknamePreference, nickname.string)
+            commit()
+        }
+    }
+
+    fun storeDescription(description: UserDescription) {
+        preferences.edit {
+            putString(DescriptionPreference, description.string)
+            commit()
+        }
+    }
+
+    fun storeSocialLink(socialLink: SocialLink?) {
+        preferences.edit {
+            putString(SocialLinkPreference, socialLink?.string)
+            commit()
+        }
+    }
+
+    fun storeInterests(interests: InterestList) {
+        preferences.edit {
+            val interestsSet = interests.raw
+                .map { interest -> interest.string }
+                .toSet()
+            putStringSet(InterestsPreference, interestsSet)
+            commit()
+        }
+    }
+
+    fun storeAvatar(avatar: FileDescriptor?) {
+        preferences.edit {
+            if (avatar != null) {
+                putLong(AvatarIdPreference, avatar.id.long)
+                putString(AvatarAccessHashPreference, avatar.accessHash.string)
+            } else {
+                putLong(AvatarIdPreference, -1)
+                putString(AvatarAccessHashPreference, null)
+            }
+            commit()
+        }
+    }
+
     fun store(
         nickname: Nickname,
         userId: UserId,
         description: UserDescription,
         avatar: FileDescriptor?,
         interests: InterestList,
-        socialLink: SocialLink,
+        socialLink: SocialLink?,
     ) {
         preferences.edit {
             putString(NicknamePreference, nickname.string)
             putString(DescriptionPreference, description.string)
-            avatar?.accessHash?.string?.let { avatarAccessHash ->
-                putString(AvatarAccessHashPreference, avatarAccessHash)
-            }
             val interestsSet = interests.raw
                 .map { interest -> interest.string }
                 .toSet()
             putStringSet(InterestsPreference, interestsSet)
+            avatar?.accessHash?.string?.let { avatarAccessHash ->
+                putString(AvatarAccessHashPreference, avatarAccessHash)
+            }
             avatar?.id?.long?.let { long ->
                 putLong(AvatarIdPreference, long)
             }
             putLong(UserIdPreference, userId.long)
-            putString(SocialLinkPreference, socialLink.string)
+            putString(SocialLinkPreference, socialLink?.string)
             commit()
         }
     }

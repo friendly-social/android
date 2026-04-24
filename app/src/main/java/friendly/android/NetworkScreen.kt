@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -98,6 +97,7 @@ fun NetworkScreen(
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
 ) {
     LaunchedEffect(Unit) {
         vm.initialize()
@@ -125,7 +125,7 @@ fun NetworkScreen(
                 state = pullToRefreshState,
             )
         },
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.padding(contentPadding).fillMaxSize(),
     ) {
         Scaffold(
             topBar = {
@@ -201,8 +201,7 @@ private fun ScaffoldContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(padding)
-            .consumeWindowInsets(padding),
+            .padding(padding),
     ) {
         AnimatedContent(
             targetState = state,
