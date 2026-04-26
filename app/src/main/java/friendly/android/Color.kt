@@ -1,4 +1,4 @@
-package friendly.android.ui.theme
+package friendly.android
 
 import androidx.compose.ui.graphics.Color
 

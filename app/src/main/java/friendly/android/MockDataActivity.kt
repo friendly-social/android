@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import friendly.android.ui.theme.FriendlyandroidTheme
 import friendly.sdk.FriendlyClient
 import friendly.sdk.Interest
 import friendly.sdk.InterestList
@@ -66,7 +65,7 @@ class MockDataActivity : ComponentActivity() {
         setContent {
             var isLoading by remember { mutableStateOf(false) }
 
-            FriendlyandroidTheme {
+            FriendlyTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
