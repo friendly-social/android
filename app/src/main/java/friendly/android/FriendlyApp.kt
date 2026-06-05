@@ -7,9 +7,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.minus
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -77,6 +77,7 @@ fun FriendlyApp(
             destination.hasRoute(item.destination::class)
         }
     } ?: false
+    val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues()
 
     FriendlyTheme {
         Scaffold(
@@ -107,7 +108,9 @@ fun FriendlyApp(
                 authorization = authorization,
                 contentPadding = { destination ->
                     when (destination) {
-                        is Home.EditProfile -> innerPadding.dropBottom()
+                        is Home.EditProfile -> innerPadding
+                            .dropBottom()
+                            .plusBottom(navigationBarsPadding)
                         else -> innerPadding
                     }
                 },
