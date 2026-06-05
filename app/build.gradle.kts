@@ -1,10 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.serialization)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.kotlin.parcelize)
 }
 
 android {
@@ -14,7 +14,7 @@ android {
         applicationId = "friendly.android"
         minSdk = 29
         targetSdk = 36
-        compileSdk = 36
+        compileSdk = 37
         versionCode = 1
         versionName = "1.0"
     }
@@ -58,7 +58,6 @@ kotlin {
 
 dependencies {
     // Will use alpha version till the material3-expressive release
-//    implementation(platform(libs.androidx.compose.bom))
     implementation(platform(libs.firebase.bom))
     implementation(platform(libs.androidx.compose.bom.alpha))
     implementation(libs.firebase.messaging)

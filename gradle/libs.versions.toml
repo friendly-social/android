@@ -1,28 +1,26 @@
 [versions]
-#noinspection AndroidGradlePluginVersion
-agp = "8.13.2"
+agp = "9.2.1"
 composeSwipeableCards = "1.1.4"
 zxing = "3.5.4"
-kotlin = "2.3.20"
-coreKtx = "1.18.0"
+kotlin = "2.4.0"
+coreKtx = "1.19.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.13.0"
 # Will use alpha version till the material3-expressive release
-# composeBom = "2025.11.01"
-composeBomAlpha = "2026.04.00"
+composeBomAlpha = "2026.05.02"
 ktlint = "14.2.0"
 friendlySdk = "0.0.1-dev036"
-navigation = "2.9.7"
+navigation = "2.9.8"
 molecule = "2.2.0"
 serialization = "1.11.0"
 coil = "3.4.0"
 exifinterface = "1.4.2"
-composeBom = "2026.03.01"
+# composeBom = "2026.05.01"
 alexzhirkevichQrose = "1.1.2"
-ktorVersion = "3.4.2"
+ktorVersion = "3.5.0"
 desugaring = "2.1.5"
 google-services = "4.4.4"
-firebase-bom = "34.12.0"
+firebase-bom = "34.14.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -51,7 +49,6 @@ friendly-sdk = { module = "me.y9san9.friendly:sdk", version.ref = "friendlySdk" 
 
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycleRuntimeKtx" }
@@ -61,9 +58,9 @@ firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+kotlin-parcelize = { id = "kotlin-parcelize" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
