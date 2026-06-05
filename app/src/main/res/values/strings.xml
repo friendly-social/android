@@ -47,7 +47,7 @@
     <string name="attention">Attention</string>
     <string name="share_profile_qr_code_description">Your friend should scan this QR code. The QR code is only available once.</string>
     <string name="hold_to_copy">Hold to copy</string>
-    <string name="your_social_link">Your social link (https://...)</string>
+    <string name="your_social_link">Your social link (https://…)</string>
     <string name="remove_friend">Remove friend</string>
     <string name="remove_friend_text">Are you sure you want to remove this friend?</string>
     <string name="friend_request">Friend request</string>
@@ -70,4 +70,22 @@
     <string name="description_validation_text">Description should not be empty</string>
     <string name="profile_saving_error">An error occurred during saving</string>
     <string name="avatar_uploading_error">An error occurred during avatar uploading</string>
+    <string name="your_email_address">Your email address</string>
+    <string name="email_validation_text">Email address is invalid</string>
+    <string name="other">Other</string>
+    <string name="add_account_email">Add account email</string>
+    <string name="go_to_profile_edit">Go to profile edit</string>
+    <string name="later">Later</string>
+    <string name="no_linked_email_text">You don\'t have a linked email address. Without linked email, you will not be able to sign back in to your account</string>
+    <string name="warning">Warning</string>
+    <string name="emailLinkingFailureText">Failed to link the email</string>
+    <string name="emailUnlinkedText">Unlinked the email address</string>
+    <string name="emailLinkedText">Successfully linked the email address</string>
+    <string name="emailUnlinkingFailureText">Failed to unlink the email address</string>
+    <string name="confirm_email">Confirm email</string>
+    <string name="we_sent_you_verification_code_text">We have sent you an 8-digit verification code to %1$s, you need to enter it below in order to verify your email address.</string>
+    <string name="verification_code">Verification code</string>
+    <string name="eight_digit_verification_code">8-digit verification code</string>
+    <string name="verify">Verify</string>
+    <string name="code_validation_failed">Confirmation code validation failed</string>
 </resources>

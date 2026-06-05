@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -20,6 +23,7 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.compose.navigation
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
+import androidx.savedstate.SavedState
 import friendly.android.FriendlyNavGraph.AddFriendByToken
 import friendly.android.FriendlyNavGraph.Home
 import friendly.android.FriendlyNavGraph.Home.EditProfile
@@ -27,6 +31,7 @@ import friendly.android.FriendlyNavGraph.NavDestination
 import friendly.android.FriendlyNavGraph.Registration
 import friendly.android.FriendlyNavGraph.Welcome
 import friendly.sdk.Authorization
+import friendly.sdk.EmailSerializable
 import friendly.sdk.FriendToken
 import friendly.sdk.InterestSerializable
 import friendly.sdk.Nickname
@@ -102,6 +107,46 @@ val InterestSerializableNavType =
         ) = bundle.putString(key, value.string)
     }
 
+val EmailSerializableNavType =
+    object : NavType<EmailSerializable>(isNullableAllowed = true) {
+        override fun put(
+            bundle: SavedState,
+            key: String,
+            value: EmailSerializable,
+        ) {
+            bundle.putString(key, value.string)
+        }
+
+        override fun get(bundle: SavedState, key: String): EmailSerializable? =
+            bundle.getString(key)?.let(::EmailSerializable)
+
+        override fun serializeAsValue(value: EmailSerializable): String =
+            value.string.let(Uri::encode)
+
+        override fun parseValue(value: String): EmailSerializable =
+            EmailSerializable(value)
+    }
+
+val NullableEmailSerializableNavType =
+    object : NavType<EmailSerializable?>(isNullableAllowed = true) {
+        override fun put(
+            bundle: SavedState,
+            key: String,
+            value: EmailSerializable?,
+        ) {
+            bundle.putString(key, value?.string)
+        }
+
+        override fun get(bundle: SavedState, key: String): EmailSerializable? =
+            bundle.getString(key)?.let(::EmailSerializable)
+
+        override fun serializeAsValue(value: EmailSerializable?): String =
+            value?.string?.let(Uri::encode) ?: "null"
+
+        override fun parseValue(value: String): EmailSerializable? =
+            if (value == "null") null else EmailSerializable(value)
+    }
+
 val SocialLinkSerializableNavType =
     object : NavType<SocialLinkSerializable>(isNullableAllowed = true) {
         override fun get(bundle: Bundle, key: String): SocialLinkSerializable? =
@@ -122,7 +167,7 @@ val SocialLinkSerializableNavType =
 
 val UserIdSerializableNavType =
     object : NavType<UserIdSerializable>(isNullableAllowed = false) {
-        override fun get(bundle: Bundle, key: String): UserIdSerializable? =
+        override fun get(bundle: Bundle, key: String): UserIdSerializable =
             bundle.getLong(key).let(::UserIdSerializable)
 
         override fun parseValue(value: String): UserIdSerializable =
@@ -189,12 +234,16 @@ object FriendlyNavGraph {
             val description: UserDescriptionSerializable,
             val interests: List<InterestSerializable>,
             val socialLink: SocialLinkSerializable?,
+            val email: EmailSerializable?,
             val userId: UserIdSerializable,
             val avatarUri: String?,
         ) : Home()
 
         @Serializable
-        data object ShareProfile : Home()
+        data object ShareProfileSheet : Home()
+
+        @Serializable
+        data class CodeVerificationSheet(val email: EmailSerializable) : Home()
 
         @Serializable
         data class Profile(
@@ -214,9 +263,16 @@ val EditProfileTypeMap = mapOf(
     typeOf<UserDescriptionSerializable>() to UserDescriptionSerializableNavType,
     typeOf<InterestSerializable>() to InterestSerializableNavType,
     typeOf<SocialLinkSerializable?>() to SocialLinkSerializableNavType,
+    typeOf<EmailSerializable?>() to NullableEmailSerializableNavType,
     typeOf<UserIdSerializable>() to UserIdSerializableNavType,
     typeOf<List<InterestSerializable>>() to InterestSerializableListNavType,
 )
+
+val CodeVerificationSheetTypeMap = mapOf(
+    typeOf<EmailSerializable>() to EmailSerializableNavType,
+)
+
+const val VerificationCodeStateKey = "verification_code_state"
 
 @Composable
 fun FriendlyNavGraph(
@@ -280,7 +336,9 @@ fun FriendlyNavGraph(
                         onProfile = { route ->
                             navController.navigate(route)
                         },
-                        onShare = { navController.navigate(Home.ShareProfile) },
+                        onShare = {
+                            navController.navigate(Home.ShareProfileSheet)
+                        },
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedContentScope = this@composable,
                         contentPadding = contentPadding(Home.Network),
@@ -288,7 +346,7 @@ fun FriendlyNavGraph(
                     )
                 }
 
-                dialog<Home.ShareProfile> {
+                dialog<Home.ShareProfileSheet> {
                     ModalBottomSheet(
                         sheetState = rememberModalBottomSheetState(
                             skipPartiallyExpanded = true,
@@ -303,6 +361,26 @@ fun FriendlyNavGraph(
                             ),
                         )
                     }
+                }
+
+                dialog<Home.CodeVerificationSheet>(
+                    typeMap = CodeVerificationSheetTypeMap,
+                ) {
+                    ConfirmEmailCodeSheet(
+                        vm = viewModel<ConfirmEmailCodeSheetViewModel>(
+                            factory = viewModelFactory,
+                        ),
+                        onDismiss = { navController.popBackStack() },
+                        onVerification = { verificationCodeState ->
+                            val entry = navController.previousBackStackEntry
+                            entry?.savedStateHandle?.set(
+                                key = VerificationCodeStateKey,
+                                value = verificationCodeState,
+                            )
+                            navController.popBackStack()
+                        },
+                        modifier = Modifier,
+                    )
                 }
 
                 composable<Home.SelfProfile> {
@@ -325,13 +403,38 @@ fun FriendlyNavGraph(
                     typeMap = EditProfileTypeMap,
                 ) { backStackEntry ->
                     val route: EditProfile = backStackEntry.toRoute()
+
+                    val vm = viewModel<EditProfileScreenViewModel>(
+                        factory = viewModelFactory,
+                    )
+
+                    val emailConfirmationState by backStackEntry
+                        .savedStateHandle
+                        .getStateFlow<EmailConfirmationState?>(
+                            key = VerificationCodeStateKey,
+                            initialValue = null,
+                        )
+                        .collectAsStateWithLifecycle()
+
+                    LaunchedEffect(emailConfirmationState) {
+                        emailConfirmationState?.let { state ->
+                            if (state.successful) {
+                                vm.onSuccessfulVerificationCodeState(state)
+                            }
+                        }
+                    }
+
                     EditProfileScreen(
-                        vm = viewModel<EditProfileScreenViewModel>(
-                            factory = viewModelFactory,
-                        ),
                         onBack = { navController.popBackStack() },
+                        onSendEmailCode = { email ->
+                            navController.navigate(
+                                Home.CodeVerificationSheet(
+                                    email = email.serializable(),
+                                ),
+                            )
+                        },
+                        vm = vm,
                         contentPadding = contentPadding(route),
-                        modifier = Modifier,
                     )
                 }
 

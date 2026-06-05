@@ -9,9 +9,12 @@ import androidx.navigation.toRoute
 import friendly.android.AvatarUploadUseCase.UploadingPercentage
 import friendly.android.EditProfileScreen.EditProfileScreenUiState
 import friendly.android.EditProfileScreen.EditProfileScreenUiState.AvatarUiState
-import friendly.android.EditProfileScreen.SnackbarEvent
+import friendly.android.EditProfileScreen.Event
+import friendly.android.EditProfileScreen.Event.SnackbarEvent
 import friendly.android.EditProfileScreenVmState.AvatarState
 import friendly.android.EditProfileScreenVmState.CurrentProfile
+import friendly.android.UnlinkEmailUseCase.UnlinkResult
+import friendly.sdk.Email
 import friendly.sdk.Field
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyFilesClient
@@ -68,6 +71,7 @@ private data class EditProfileScreenVmState(
                 },
                 interests = currentProfile.interests,
                 socialLink = currentProfile.socialLink,
+                email = currentProfile.email,
             ),
             isSavable = isSavable,
             hasChanges = hasChanges,
@@ -78,10 +82,32 @@ private data class EditProfileScreenVmState(
     data class CurrentProfile(
         val nickname: ValidatableField<String>,
         val description: ValidatableField<String>,
+        val email: EmailState,
         val avatar: AvatarState,
         val interests: List<Interest>,
         val socialLink: ValidatableField<String?>,
-    )
+    ) {
+        companion object {
+            fun initial(initialProfile: InitialProfile): CurrentProfile =
+                CurrentProfile(
+                    nickname = ValidatableField(initialProfile.nickname.string),
+                    description = ValidatableField(
+                        initialProfile.description.string,
+                    ),
+                    avatar = AvatarState.Initial(initialProfile.avatar),
+                    interests = initialProfile.interests.raw,
+                    socialLink = ValidatableField(
+                        initialProfile.socialLink?.string,
+                    ),
+                    email = EmailState(
+                        field = ValidatableField(
+                            value = initialProfile.email?.string,
+                        ),
+                        isUnlinkable = initialProfile.email != null,
+                    ),
+                )
+        }
+    }
 
     sealed interface AvatarState {
         data class Initial(val uri: Uri?) : AvatarState
@@ -99,12 +125,26 @@ private data class InitialProfile(
     val nickname: Nickname,
     val description: UserDescription,
     val socialLink: SocialLink?,
+    val email: Email?,
     val avatar: Uri?,
     val interests: InterestList,
-)
+) {
+    companion object {
+        fun fromRoute(route: EditProfileRoute): InitialProfile = InitialProfile(
+            nickname = route.nickname.typed(),
+            description = route.description.typed(),
+            socialLink = route.socialLink?.typed(),
+            email = route.email?.typed(),
+            interests = InterestList.orThrow(route.interests.typed()),
+            avatar = route.avatarUri?.toUri(),
+        )
+    }
+}
 
 class EditProfileScreenViewModel(
     savedStateHandle: SavedStateHandle,
+    private val link: LinkEmailUseCase,
+    private val unlink: UnlinkEmailUseCase,
     private val filesClient: FriendlyFilesClient,
     private val edit: EditProfileUseCase,
     private val uploadAvatar: AvatarUploadUseCase,
@@ -113,33 +153,13 @@ class EditProfileScreenViewModel(
         typeMap = EditProfileTypeMap,
     )
 
-    private val initialProfile = InitialProfile(
-        nickname = route.nickname.typed(),
-        description = route.description.typed(),
-        socialLink = route.socialLink?.typed(),
-        interests = InterestList.orThrow(route.interests.typed()),
-        avatar = route.avatarUri?.toUri(),
-    )
+    private val initialProfile = InitialProfile.fromRoute(route)
 
     private val _state = MutableStateFlow(
         EditProfileScreenVmState(
             userId = route.userId.typed(),
             initialNickname = initialProfile.nickname,
-            currentProfile = CurrentProfile(
-                nickname = ValidatableField(
-                    initialProfile.nickname.string,
-                ),
-                description = ValidatableField(
-                    initialProfile.description.string,
-                ),
-                avatar = AvatarState.Initial(
-                    initialProfile.avatar,
-                ),
-                interests = initialProfile.interests.raw,
-                socialLink = ValidatableField(
-                    initialProfile.socialLink?.string,
-                ),
-            ),
+            currentProfile = CurrentProfile.initial(initialProfile),
             availableInterests = interests,
             isSavable = false,
             isSaving = false,
@@ -158,50 +178,70 @@ class EditProfileScreenViewModel(
             ),
         )
 
-    private val _events = MutableSharedFlow<SnackbarEvent>()
+    private val _events = MutableSharedFlow<Event>()
 
-    val events: SharedFlow<SnackbarEvent> = _events.shareIn(
+    val events: SharedFlow<Event> = _events.shareIn(
         scope = viewModelScope,
         started = Eagerly,
     )
 
     fun toggleInterest(interest: Interest) {
-        val picked = interest in _state.value.currentProfile.interests
-        val currentProfile = _state.value.currentProfile
-        val newProfile = if (picked) {
-            currentProfile.copy(
-                interests = currentProfile.interests.minus(interest),
-            )
-        } else {
-            currentProfile.copy(
-                interests = currentProfile.interests.plus(interest),
-            )
-        }
-        _state.updateCurrentProfile(newProfile, initialProfile)
+        _state.toggleInterest(interest, initialProfile)
     }
 
     fun onNickname(string: String) {
-        val isValid = Nickname.validate(string)
-        val newProfile = _state.value.currentProfile.copy(
-            nickname = ValidatableField(string, isValid),
-        )
-        _state.updateCurrentProfile(newProfile, initialProfile)
+        _state.updateNickname(string, initialProfile)
     }
 
     fun onSocialLink(string: String) {
-        val isValid = SocialLink.validate(string)
-        val newProfile = _state.value.currentProfile.copy(
-            socialLink = ValidatableField(string.ifBlank { null }, isValid),
-        )
-        _state.updateCurrentProfile(newProfile, initialProfile)
+        _state.updateSocialLink(string, initialProfile)
     }
 
     fun onDescription(string: String) {
-        val isValid = UserDescription.validate(string)
-        val newProfile = _state.value.currentProfile.copy(
-            description = ValidatableField(string, isValid),
-        )
-        _state.updateCurrentProfile(newProfile, initialProfile)
+        _state.updateDescription(string, initialProfile)
+    }
+
+    fun sendEmailVerificationCode() {
+        viewModelScope.launch {
+            _state.updateEmailState { it.copy(isSending = true) }
+            val email = _state.value.currentProfile.email.field.value
+                ?.let(Email::orThrow)
+                ?: error("Email address can't be null")
+            link(email)
+            val event = Event.VerificationCodeSent(email)
+            _events.emit(event)
+            _state.updateEmailState { it.copy(isSending = false) }
+        }
+    }
+
+    fun unlinkEmailAddress() {
+        _state.updateEmailState { it.copy(isUnlinking = true) }
+        viewModelScope.launch {
+            val result = unlink()
+            when (result) {
+                UnlinkResult.Failure -> {
+                    _events.emit(SnackbarEvent.EmailUnlinkingFailure)
+                }
+
+                UnlinkResult.Success -> {
+                    _state.unlinkEmail()
+                    _events.emit(SnackbarEvent.EmailUnlinked)
+                }
+            }
+        }
+    }
+
+    fun onEmail(string: String) {
+        val isValid = Email.validate(string)
+        val differentFromInitial = initialProfile.email?.string != string
+        val isVerifiable = isValid && differentFromInitial
+        _state.updateEmailState {
+            EmailState(
+                ValidatableField(value = string, isValid = isValid),
+                isVerifiable = isVerifiable,
+                isUnlinkable = false,
+            )
+        }
     }
 
     fun pickAvatar(uri: Uri?) {
@@ -235,7 +275,7 @@ class EditProfileScreenViewModel(
 
                 else -> {
                     _state.resetToInitialAvatarState(initialProfile)
-                    _events.emit(SnackbarEvent.AvatarUploadingError)
+                    _events.emit(SnackbarEvent.AvatarUploadingFailure)
                 }
             }
         }
@@ -272,7 +312,6 @@ class EditProfileScreenViewModel(
             is None -> Field(null)
             else -> null
         }
-
         viewModelScope.launch {
             _state.update { old -> old.copy(isSaving = true) }
 
@@ -289,13 +328,72 @@ class EditProfileScreenViewModel(
                 is ServerError,
                 is Unauthorized,
                 -> {
-                    _events.emit(SnackbarEvent.SavingError)
+                    _events.emit(SnackbarEvent.SavingFailure)
                     _state.update { old -> old.copy(isSaving = false) }
                 }
 
                 is FriendlyUsersClient.EditResult.Success -> onSuccess()
             }
         }
+    }
+
+    fun onSuccessfulVerificationCodeState(
+        emailConfirmationState: EmailConfirmationState,
+    ) {
+        viewModelScope.launch {
+            if (emailConfirmationState.successful) {
+                _events.emit(SnackbarEvent.EmailLinked)
+                _state.confirmEmail()
+            } else {
+                _events.emit(SnackbarEvent.EmailLinkingFailure)
+            }
+        }
+    }
+}
+
+private fun EditProfileScreenVmStateFlow.toggleInterest(
+    interest: Interest,
+    initialProfile: InitialProfile,
+) {
+    val state = this
+    val picked = interest in state.value.currentProfile.interests
+    val previousProfile = state.value.currentProfile
+    val newInterests = if (picked) {
+        previousProfile.interests.minus(interest)
+    } else {
+        previousProfile.interests.plus(interest)
+    }
+    val newProfile = previousProfile.copy(interests = newInterests)
+    updateCurrentProfile(newProfile, initialProfile)
+}
+
+private fun EditProfileScreenVmStateFlow.unlinkEmail() {
+    val state = this
+    state.updateEmailState { previous ->
+        previous.copy(
+            field = ValidatableField(null),
+            isUnlinkable = false,
+            isVerifiable = false,
+            isUnlinking = false,
+        )
+    }
+}
+
+private fun EditProfileScreenVmStateFlow.confirmEmail() {
+    updateEmailState { old ->
+        old.copy(isUnlinkable = true, isVerifiable = false)
+    }
+}
+
+private fun EditProfileScreenVmStateFlow.updateEmailState(
+    block: (previous: EmailState) -> EmailState,
+) {
+    val state = this
+    state.update { old ->
+        val oldProfile = old.currentProfile
+        old.copy(
+            currentProfile = oldProfile.copy(email = block(oldProfile.email)),
+        )
     }
 }
 
@@ -348,6 +446,42 @@ private fun <T> fieldElseNull(initial: T, new: T): Field<T>? {
     return null
 }
 
+private fun EditProfileScreenVmStateFlow.updateDescription(
+    string: String,
+    initialProfile: InitialProfile,
+) {
+    val state = this
+    val isValid = UserDescription.validate(string)
+    val newProfile = state.value.currentProfile.copy(
+        description = ValidatableField(string, isValid),
+    )
+    state.updateCurrentProfile(newProfile, initialProfile)
+}
+
+private fun EditProfileScreenVmStateFlow.updateSocialLink(
+    string: String,
+    initialProfile: InitialProfile,
+) {
+    val state = this
+    val isValid = SocialLink.validate(string)
+    val newProfile = state.value.currentProfile.copy(
+        socialLink = ValidatableField(string.ifBlank { null }, isValid),
+    )
+    state.updateCurrentProfile(newProfile, initialProfile)
+}
+
+private fun EditProfileScreenVmStateFlow.updateNickname(
+    string: String,
+    initialProfile: InitialProfile,
+) {
+    val state = this
+    val isValid = Nickname.validate(string)
+    val newProfile = state.value.currentProfile.copy(
+        nickname = ValidatableField(string, isValid),
+    )
+    state.updateCurrentProfile(newProfile, initialProfile)
+}
+
 private fun EditProfileScreenVmStateFlow.updateCurrentProfile(
     new: CurrentProfile,
     initialProfile: InitialProfile,
@@ -364,7 +498,11 @@ private fun EditProfileScreenVmStateFlow.updateCurrentProfile(
 
 private fun CurrentProfile.isSavable(initialProfile: InitialProfile): Boolean {
     val newProfile = this
-    return newProfile.hasChanges(initialProfile) && newProfile.validateAll()
+    val hasChanges = newProfile.hasChanges(initialProfile)
+    val allFieldsAreValid = newProfile.validateAll()
+    val emailIsNotVerifiable = !newProfile.email.isVerifiable
+
+    return hasChanges && allFieldsAreValid && emailIsNotVerifiable
 }
 
 private fun CurrentProfile.hasChanges(
@@ -376,8 +514,8 @@ private fun CurrentProfile.hasChanges(
         initialProfile.description.string == profile.description.value,
         initialProfile.socialLink?.string == profile.socialLink.value,
         initialProfile.interests.raw == profile.interests,
-        profile.avatar !is Initial,
-    ).any { it }
+        profile.avatar is Initial,
+    ).any { !it }
 }
 
 private fun CurrentProfile.validateAll(): Boolean {

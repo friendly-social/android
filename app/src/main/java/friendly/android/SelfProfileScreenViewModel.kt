@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import friendly.sdk.Email
 import friendly.sdk.FriendlyFilesClient
 import friendly.sdk.InterestList
 import friendly.sdk.Nickname
@@ -59,6 +60,7 @@ class SelfProfileScreenViewModel(
         val avatar: Uri?,
         val interests: InterestList,
         val socialLink: SocialLink?,
+        val email: Email?,
     )
 
     fun load() {
@@ -111,6 +113,7 @@ class SelfProfileScreenViewModel(
             avatar = avatarUrl,
             interests = cache.interests,
             socialLink = cache.socialLink,
+            email = cache.email,
             userAccessHash = null,
         )
     }

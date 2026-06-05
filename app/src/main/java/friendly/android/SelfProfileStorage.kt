@@ -2,6 +2,7 @@ package friendly.android
 
 import android.content.Context
 import androidx.core.content.edit
+import friendly.sdk.Email
 import friendly.sdk.FileAccessHash
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FileId
@@ -21,6 +22,7 @@ private const val AvatarIdPreference = "AVATAR_ID"
 private const val UserIdPreference = "USER_ID"
 private const val InterestsPreference = "INTERESTS"
 private const val SocialLinkPreference = "SOCIAL_LINK"
+private const val EmailPreference = "EMAIL"
 
 class SelfProfileStorage(context: Context) {
     data class Cache(
@@ -30,6 +32,7 @@ class SelfProfileStorage(context: Context) {
         val interests: InterestList,
         val socialLink: SocialLink?,
         val userId: UserId,
+        val email: Email?,
     )
 
     private val preferences = context.getSharedPreferences(
@@ -54,6 +57,13 @@ class SelfProfileStorage(context: Context) {
     fun storeSocialLink(socialLink: SocialLink?) {
         preferences.edit {
             putString(SocialLinkPreference, socialLink?.string)
+            commit()
+        }
+    }
+
+    fun storeEmail(email: Email?) {
+        preferences.edit {
+            putString(EmailPreference, email?.string)
             commit()
         }
     }
@@ -88,6 +98,7 @@ class SelfProfileStorage(context: Context) {
         avatar: FileDescriptor?,
         interests: InterestList,
         socialLink: SocialLink?,
+        email: Email? = null,
     ) {
         preferences.edit {
             putString(NicknamePreference, nickname.string)
@@ -104,6 +115,7 @@ class SelfProfileStorage(context: Context) {
             }
             putLong(UserIdPreference, userId.long)
             putString(SocialLinkPreference, socialLink?.string)
+            putString(EmailPreference, email?.string)
             commit()
         }
     }
@@ -116,6 +128,11 @@ class SelfProfileStorage(context: Context) {
     fun getSocialLink(): SocialLink? {
         val string = preferences.getString(SocialLinkPreference, null)
         return string?.let { string -> SocialLink.orThrow(string) }
+    }
+
+    fun getEmail(): Email? {
+        val string = preferences.getString(EmailPreference, null)
+        return string?.let(Email::orThrow)
     }
 
     fun getUserId(): UserId {
@@ -163,6 +180,7 @@ class SelfProfileStorage(context: Context) {
             interests = getInterests() ?: return null,
             socialLink = getSocialLink(),
             userId = getUserId(),
+            email = getEmail(),
         )
     }
 }

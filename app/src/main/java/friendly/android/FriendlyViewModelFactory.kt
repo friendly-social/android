@@ -8,19 +8,22 @@ import friendly.sdk.FriendlyClient
 import kotlin.reflect.KClass
 
 class FriendlyViewModelFactory(
+    private val linkEmailUseCase: LinkEmailUseCase,
+    private val unlinkEmailUseCase: UnlinkEmailUseCase,
     private val registerUseCase: RegisterUseCase,
     private val avatarUploadUseCase: AvatarUploadUseCase,
+    private val confirmCodeUseCase: ConfirmCodeUseCase,
     private val authStorage: AuthStorage,
     private val selfProfileStorage: SelfProfileStorage,
     private val client: FriendlyClient,
 ) : ViewModelProvider.Factory {
 
+    // todo refactor this thing
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(
         modelClass: KClass<T>,
         extras: CreationExtras,
     ): T {
-        // todo refactor this thing
         if (modelClass == RegisterScreenViewModel::class) {
             return RegisterScreenViewModel(
                 register = registerUseCase,
@@ -58,6 +61,8 @@ class FriendlyViewModelFactory(
                     client = client.users,
                     selfProfileStorage = selfProfileStorage,
                 ),
+                link = linkEmailUseCase,
+                unlink = unlinkEmailUseCase,
                 uploadAvatar = avatarUploadUseCase,
             ) as T
         }
@@ -65,6 +70,13 @@ class FriendlyViewModelFactory(
             return NetworkScreenViewModel(
                 client = client,
                 authStorage = authStorage,
+            ) as T
+        }
+        if (modelClass == ConfirmEmailCodeSheetViewModel::class) {
+            val savedStateHandle = extras.createSavedStateHandle()
+            return ConfirmEmailCodeSheetViewModel(
+                savedStateHandle = savedStateHandle,
+                confirm = confirmCodeUseCase,
             ) as T
         }
         val isShareProfileVm = modelClass == ShareProfileScreenViewModel::class

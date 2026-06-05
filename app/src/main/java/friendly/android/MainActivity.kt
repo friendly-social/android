@@ -28,9 +28,25 @@ class MainActivity : ComponentActivity() {
         )
         val authStorage = AuthStorage(context)
         FirebaseKit.onAppCreate(context, client, authStorage)
+        val localeRepository = LocaleRepository(context.applicationContext)
         val selfProfileStorage = SelfProfileStorage(context)
 
         val viewModelFactory = FriendlyViewModelFactory(
+            unlinkEmailUseCase = UnlinkEmailUseCase(
+                emailClient = client.email,
+                selfProfileStorage = selfProfileStorage,
+                authStorage = authStorage,
+            ),
+            linkEmailUseCase = LinkEmailUseCase(
+                localeRepository = localeRepository,
+                emailClient = client.email,
+                authStorage = authStorage,
+            ),
+            confirmCodeUseCase = ConfirmCodeUseCase(
+                authStorage = authStorage,
+                selfProfileStorage = selfProfileStorage,
+                emailClient = client.email,
+            ),
             registerUseCase = RegisterUseCase(
                 client = client,
                 authStorage = authStorage,

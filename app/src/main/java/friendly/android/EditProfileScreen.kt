@@ -53,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -62,23 +63,42 @@ import androidx.lifecycle.repeatOnLifecycle
 import friendly.android.AvatarUploadUseCase.UploadingPercentage
 import friendly.android.EditProfileScreen.EditProfileScreenUiState
 import friendly.android.EditProfileScreen.EditProfileScreenUiState.CurrentProfileUiState
+import friendly.android.EditProfileScreen.Event.SnackbarEvent
+import friendly.sdk.Email
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
 import friendly.sdk.UserId
 
 data class ValidatableField<T>(val value: T, val isValid: Boolean = true)
 
+data class EmailState(
+    val field: ValidatableField<String?> = ValidatableField(null, false),
+    val isUnlinkable: Boolean = false,
+    val isVerifiable: Boolean = false,
+    val isSending: Boolean = false,
+    val isUnlinking: Boolean = false,
+)
+
 object EditProfileScreen {
     data class OnEdit(
         val onNickname: (String) -> Unit,
         val onSocialLink: (String) -> Unit,
         val onDescription: (String) -> Unit,
+        val onEmail: (String) -> Unit,
         val toggleInterest: (Interest) -> Unit,
     )
 
-    sealed interface SnackbarEvent {
-        data object SavingError : SnackbarEvent
-        data object AvatarUploadingError : SnackbarEvent
+    sealed interface Event {
+        sealed interface SnackbarEvent : Event {
+            data object SavingFailure : SnackbarEvent
+            data object AvatarUploadingFailure : SnackbarEvent
+            data object EmailUnlinkingFailure : SnackbarEvent
+            data object EmailUnlinked : SnackbarEvent
+            data object EmailLinked : SnackbarEvent
+            data object EmailLinkingFailure : SnackbarEvent
+        }
+
+        data class VerificationCodeSent(val email: Email) : Event
     }
 
     sealed interface EditProfileScreenUiState {
@@ -96,6 +116,7 @@ object EditProfileScreen {
 
         data class CurrentProfileUiState(
             val nickname: ValidatableField<String>,
+            val email: EmailState,
             val description: ValidatableField<String>,
             val avatar: AvatarUiState,
             val interests: List<Interest>,
@@ -119,6 +140,7 @@ object EditProfileScreen {
 @Composable
 fun EditProfileScreen(
     onBack: () -> Unit,
+    onSendEmailCode: (Email) -> Unit,
     vm: EditProfileScreenViewModel,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
@@ -128,12 +150,11 @@ fun EditProfileScreen(
             onNickname = vm::onNickname,
             onSocialLink = vm::onSocialLink,
             onDescription = vm::onDescription,
+            onEmail = vm::onEmail,
             toggleInterest = vm::toggleInterest,
         )
     }
-
     val state by vm.state.collectAsState()
-
     var unsavedChangesConfirmationDialogVisible by remember {
         mutableStateOf(false)
     }
@@ -146,14 +167,9 @@ fun EditProfileScreen(
             vm.pickAvatar(uri)
         },
     )
-
     val snackbarHostState = remember { SnackbarHostState() }
     val lifecycleOwner = rememberLifecycleOwner()
-    val profileSavingErrorText = stringResource(R.string.profile_saving_error)
-    val avatarUploadingErrorText = stringResource(
-        id = R.string.avatar_uploading_error,
-    )
-
+    val snackbarStrings = snackbarStrings()
     val saveButtonEnabled = when (val state = state) {
         is EditProfileScreenUiState.Edit -> state.isSavable
         is EditProfileScreenUiState.Saving -> false
@@ -166,15 +182,12 @@ fun EditProfileScreen(
     LaunchedEffect(Unit) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(STARTED) {
             vm.events.collect { event ->
-                when (event) {
-                    SavingError -> {
-                        snackbarHostState.showSnackbar(profileSavingErrorText)
-                    }
-
-                    AvatarUploadingError -> {
-                        snackbarHostState.showSnackbar(avatarUploadingErrorText)
-                    }
-                }
+                handleEvent(
+                    event = event,
+                    snackbarStrings = snackbarStrings,
+                    snackbarHostState = snackbarHostState,
+                    onSendEmailCode = onSendEmailCode,
+                )
             }
         }
     }
@@ -240,14 +253,7 @@ fun EditProfileScreen(
                 },
             )
             when (val state = state) {
-                is Saving -> {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        LoadingIndicator(Modifier.size(48.dp))
-                    }
-                }
+                is Saving -> SavingState(modifier = Modifier.fillMaxSize())
 
                 is Edit -> {
                     EditProfileState(
@@ -256,6 +262,8 @@ fun EditProfileScreen(
                         onEditAvatarClick = {
                             editAvatarDialogVisible = true
                         },
+                        onVerifyEmailClick = vm::sendEmailVerificationCode,
+                        onUnlinkEmailClick = vm::unlinkEmailAddress,
                         modifier = modifier
                             .fillMaxSize()
                             .padding(innerPadding)
@@ -267,9 +275,52 @@ fun EditProfileScreen(
     }
 }
 
+private suspend fun handleEvent(
+    event: EditProfileScreen.Event,
+    snackbarStrings: Map<SnackbarEvent, String>,
+    snackbarHostState: SnackbarHostState,
+    onSendEmailCode: (Email) -> Unit,
+) {
+    when (event) {
+        is SnackbarEvent -> {
+            val message = snackbarStrings.getValue(event)
+            snackbarHostState.showSnackbar(message)
+        }
+        is EditProfileScreen.Event.VerificationCodeSent -> {
+            onSendEmailCode(event.email)
+        }
+    }
+}
+
+@Composable
+private fun snackbarStrings(): Map<SnackbarEvent, String> = mapOf(
+    SnackbarEvent.SavingFailure to
+        stringResource(R.string.profile_saving_error),
+    SnackbarEvent.AvatarUploadingFailure to
+        stringResource(R.string.avatar_uploading_error),
+    SnackbarEvent.EmailLinkingFailure to
+        stringResource(R.string.emailLinkingFailureText),
+    SnackbarEvent.EmailUnlinked to
+        stringResource(R.string.emailUnlinkedText),
+    SnackbarEvent.EmailLinked to
+        stringResource(R.string.emailLinkedText),
+    SnackbarEvent.EmailUnlinkingFailure to
+        stringResource(R.string.emailUnlinkingFailureText),
+)
+
 private fun EditProfileScreenUiState.isSavable(): Boolean = when (this) {
     is EditProfileScreenUiState.Saving -> false
     is EditProfileScreenUiState.Edit -> this.isSavable
+}
+
+@Composable
+fun SavingState(modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier,
+    ) {
+        LoadingIndicator(Modifier.size(48.dp))
+    }
 }
 
 @Composable
@@ -385,10 +436,18 @@ private fun SaveButton(
 }
 
 @Composable
+fun composableIf(
+    condition: Boolean,
+    block: @Composable () -> Unit,
+): (@Composable () -> Unit)? = if (condition) block else null
+
+@Composable
 private fun EditProfileState(
     state: EditProfileScreenUiState.Edit,
     onEdit: EditProfileScreen.OnEdit,
     onEditAvatarClick: () -> Unit,
+    onVerifyEmailClick: () -> Unit,
+    onUnlinkEmailClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var editInterestsVisible by remember { mutableStateOf(false) }
@@ -399,19 +458,13 @@ private fun EditProfileState(
             .verticalScroll(rememberScrollState())
             .fillMaxSize(),
     ) {
-        if (editInterestsVisible) {
-            ModalBottomSheet(
-                onDismissRequest = {
-                    editInterestsVisible = false
-                },
-            ) {
-                InterestsEditorContent(
-                    state = state,
-                    onToggle = onEdit.toggleInterest,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-        }
+        EditInterestsModalSheet(
+            visible = editInterestsVisible,
+            state = state,
+            onDismissRequest = { editInterestsVisible = false },
+            onToggle = onEdit.toggleInterest,
+            modifier = Modifier,
+        )
 
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -443,100 +496,134 @@ private fun EditProfileState(
                     modifier = Modifier.height(32.dp),
                 )
             }
-
-            Row {
-                Icon(
-                    painter = painterResource(R.drawable.ic_nickname_field),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp),
-                )
-                Spacer(Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = state.profile.nickname.value,
-                    onValueChange = onEdit.onNickname,
-                    placeholder = {
-                        Text(stringResource(R.string.your_nickname))
-                    },
-                    isError = !state.profile.nickname.isValid,
-                    supportingText = {
-                        if (!state.profile.nickname.isValid) {
-                            Text(
-                                text = stringResource(
-                                    id = R.string.nickname_validation_text,
-                                ),
-                            )
+            EditableField(
+                iconPainter = painterResource(R.drawable.ic_mail_outlined),
+                value = state.profile.email.field.value ?: "",
+                isValid = state.profile.email.field.isValid,
+                placeholderText = "Valid email address",
+                errorText = "You should enter a valid email address",
+                onValueChange = onEdit.onEmail,
+                trailingIcon = {
+                    val emailState = state.profile.email
+                    when {
+                        emailState.isSending || emailState.isUnlinking -> {
+                            LoadingIndicator(Modifier.size(32.dp))
                         }
-                    },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
 
-            Row {
-                Icon(
-                    painter = painterResource(R.drawable.ic_link),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp),
-                )
-                Spacer(Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = state.profile.socialLink.value ?: "",
-                    onValueChange = onEdit.onSocialLink,
-                    placeholder = {
-                        Text(stringResource(R.string.your_social_link))
-                    },
-                    isError = !state.profile.socialLink.isValid,
-                    supportingText = {
-                        if (!state.profile.socialLink.isValid) {
-                            Text(
-                                text = stringResource(
-                                    id = R.string.social_link_validation_text,
-                                ),
-                            )
+                        emailState.isUnlinkable -> {
+                            IconButton(onClick = onUnlinkEmailClick) {
+                                Icon(
+                                    painterResource(R.drawable.ic_close),
+                                    contentDescription = null,
+                                )
+                            }
                         }
-                    },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                )
-            }
 
-            Row {
-                Icon(
-                    painter = painterResource(R.drawable.ic_description_field),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp),
-                )
-                Spacer(Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = state.profile.description.value,
-                    onValueChange = onEdit.onDescription,
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.a_few_words_about_yourself),
-                        )
-                    },
-                    isError = !state.profile.description.isValid,
-                    supportingText = {
-                        if (!state.profile.description.isValid) {
-                            Text(
-                                text = stringResource(
-                                    id = R.string.description_validation_text,
-                                ),
-                            )
+                        else -> {
+                            TextButton(
+                                onClick = onVerifyEmailClick,
+                                enabled = emailState.isVerifiable,
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                            ) { Text("Verify") }
                         }
-                    },
-                    minLines = 3,
-                    singleLine = false,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                )
-            }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            EditableField(
+                iconPainter = painterResource(R.drawable.ic_nickname_field),
+                value = state.profile.nickname.value,
+                isValid = state.profile.nickname.isValid,
+                placeholderText = stringResource(R.string.your_nickname),
+                errorText = stringResource(
+                    id = R.string.nickname_validation_text,
+                ),
+                onValueChange = onEdit.onNickname,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            EditableField(
+                iconPainter = painterResource(R.drawable.ic_link),
+                value = state.profile.socialLink.value ?: "",
+                isValid = state.profile.socialLink.isValid,
+                placeholderText = stringResource(R.string.your_social_link),
+                errorText = stringResource(id = R.string.your_social_link),
+                onValueChange = onEdit.onSocialLink,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            EditableField(
+                iconPainter = painterResource(R.drawable.ic_description_field),
+                value = state.profile.description.value,
+                isValid = state.profile.description.isValid,
+                placeholderText = stringResource(
+                    R.string.a_few_words_about_yourself,
+                ),
+                errorText = stringResource(
+                    R.string.description_validation_text,
+                ),
+                onValueChange = onEdit.onDescription,
+                minLines = 3,
+                singleLine = false,
+                modifier = Modifier.fillMaxWidth(),
+            )
             Spacer(Modifier.height(12.dp))
         }
+    }
+}
+
+@Composable
+private fun EditInterestsModalSheet(
+    visible: Boolean,
+    state: EditProfileScreenUiState.Edit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    onToggle: (Interest) -> Unit,
+) {
+    if (visible) {
+        ModalBottomSheet(onDismissRequest = onDismissRequest) {
+            InterestsEditorContent(
+                state = state,
+                onToggle = onToggle,
+                modifier = modifier,
+            )
+        }
+    }
+}
+
+@Composable
+private fun EditableField(
+    iconPainter: Painter,
+    value: String,
+    isValid: Boolean,
+    placeholderText: String,
+    errorText: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    minLines: Int = 1,
+    singleLine: Boolean = true,
+    trailingIcon: (@Composable () -> Unit)? = null,
+    iconContentDescription: String? = null,
+) {
+    Row(modifier) {
+        Icon(
+            painter = iconPainter,
+            contentDescription = iconContentDescription,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(32.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = { Text(placeholderText) },
+            isError = !isValid,
+            supportingText = composableIf(!isValid) {
+                Text(errorText)
+            },
+            minLines = minLines,
+            singleLine = singleLine,
+            trailingIcon = trailingIcon,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
