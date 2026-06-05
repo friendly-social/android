@@ -108,9 +108,10 @@ fun FriendlyApp(
                 authorization = authorization,
                 contentPadding = { destination ->
                     when (destination) {
-                        is Home.EditProfile -> innerPadding
-                            .dropBottom()
-                            .plusBottom(navigationBarsPadding)
+                        is Home.EditProfile ->
+                            innerPadding
+                                .dropBottom()
+                                .plusBottom(navigationBarsPadding)
                         else -> innerPadding
                     }
                 },

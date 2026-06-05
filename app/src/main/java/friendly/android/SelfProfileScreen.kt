@@ -87,9 +87,9 @@ fun SelfProfileScreen(
                         ) {
                             Icon(
                                 painter =
-                                    painterResource(
-                                        R.drawable.ic_edit_outlined,
-                                    ),
+                                painterResource(
+                                    R.drawable.ic_edit_outlined,
+                                ),
                                 contentDescription = null,
                             )
                         }
@@ -123,7 +123,7 @@ fun SelfProfileScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     scrolledContainerColor =
-                        MaterialTheme.colorScheme.surfaceContainer,
+                    MaterialTheme.colorScheme.surfaceContainer,
                 ),
             )
         },
