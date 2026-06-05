@@ -16,6 +16,11 @@ data class FeedEntry(
     val avatarUri: Uri?,
     val isRequest: Boolean,
     val isExtendedNetwork: Boolean,
-    // TODO: commonFriends
-    // TODO: isExtendedNetwork
-)
+    val commonFriends: List<CommonFriend>,
+) {
+    data class CommonFriend(
+        val userId: UserId,
+        val nickname: Nickname,
+        val avatarUri: Uri?,
+    )
+}

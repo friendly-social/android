@@ -245,5 +245,14 @@ private fun FeedQueue.Entry.toFeedEntry(
         avatarUri = avatarEndpoint?.string?.toUri(),
         isRequest = entry.isRequest,
         isExtendedNetwork = entry.isExtendedNetwork,
+        commonFriends = entry.commonFriends.map { commonFriend ->
+            val nickname = commonFriend.nickname
+            val userId = commonFriend.id
+            val avatarUri = commonFriend.avatar
+                ?.let(filesClient::getEndpoint)
+                ?.string
+                ?.toUri()
+            FeedEntry.CommonFriend(userId, nickname, avatarUri)
+        },
     )
 }

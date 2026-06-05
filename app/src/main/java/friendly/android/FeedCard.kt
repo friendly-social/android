@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults.elevatedCardElevation
@@ -35,6 +37,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -109,10 +112,10 @@ private fun FeedCardContent(
                 Column {
                     ExpandableDescription(
                         description = entry.description,
-                        collapsedMaxLine = 7,
                         expandText = stringResource(R.string.expand),
-                        modifier = Modifier.fillMaxWidth(),
                         interests = entry.interests,
+                        collapsedMaxLine = 7,
+                        modifier = Modifier.fillMaxWidth(),
                     )
 
                     Spacer(Modifier.height(96.dp))
@@ -121,6 +124,7 @@ private fun FeedCardContent(
         }
 
         Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .padding(vertical = 16.dp, horizontal = 16.dp)
                 .fillMaxWidth()
@@ -147,7 +151,10 @@ private fun FeedCardContent(
                 )
             }
 
-            Spacer(Modifier.weight(1f))
+            CommonFriends(
+                friends = entry.commonFriends,
+                modifier = Modifier.weight(1f),
+            )
 
             FilledTonalIconButton(
                 colors = IconButtonDefaults.iconButtonColors(
@@ -175,15 +182,15 @@ private fun FeedCardContent(
 @Composable
 fun ExpandableDescription(
     description: UserDescription,
-    collapsedMaxLine: Int = 7,
     expandText: String,
     interests: List<Interest>,
     modifier: Modifier = Modifier,
+    collapsedMaxLine: Int = 7,
 ) {
     val text = description.string
     var isExpanded by remember { mutableStateOf(false) }
     var isClickable by remember { mutableStateOf(false) }
-    var lastCharacterIndex by remember { mutableStateOf(0) }
+    var lastCharacterIndex by remember { mutableIntStateOf(0) }
 
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -375,4 +382,57 @@ private fun Avatar(
         contentScale = ContentScale.FillBounds,
         modifier = modifier,
     )
+}
+
+@Composable
+private fun CommonFriends(
+    friends: List<FeedEntry.CommonFriend>,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(
+            space = (-8).dp,
+            alignment = Alignment.CenterHorizontally,
+        ),
+        modifier = modifier,
+    ) {
+        val moreThanLimit = friends.size > 3
+
+        for (commonFriend in friends.take(3)) {
+            UserAvatar(
+                userId = commonFriend.userId,
+                nickname = commonFriend.nickname,
+                uri = commonFriend.avatarUri,
+                style = UserAvatarStyle(48.dp, 16.dp),
+            )
+        }
+
+        if (moreThanLimit) {
+            MoreCommonFriendsStub(friends.size - 3)
+        }
+    }
+}
+
+@Composable
+private fun MoreCommonFriendsStub(
+    friendsLeft: Int,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        contentAlignment = Center,
+        modifier = modifier
+            .size(48.dp)
+            .background(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = CircleShape,
+            ),
+    ) {
+        Text(
+            text = "$friendsLeft+",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+    }
 }
