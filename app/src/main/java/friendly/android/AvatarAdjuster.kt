@@ -3,8 +3,10 @@ package friendly.android
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import androidx.core.graphics.scale
+import androidx.exifinterface.media.ExifInterface
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -31,11 +33,25 @@ class AvatarAdjuster(
         uri: Uri,
         inputStream: InputStream,
     ): Pair<InputStream, Long> {
+        /* Extract EXIF metadata to fix orientation issues.
+         * Some device cameras save images rotated sideways alongside an EXIF orientation flag
+         * rather than encoding the physical pixel array right-side up.
+         */
+        val rotationDegrees = getRotationDegrees(uri)
+
         val bitmap = BitmapFactory.decodeStream(inputStream)
             ?: error("Failed to decode image")
+        val rotatedBitmap = rotateBitmapIfNeeded(bitmap, rotationDegrees)
+
         val croppedDimension = minOf(bitmap.width, bitmap.height)
         val croppedBitmap = Bitmap
-            .createBitmap(bitmap, 0, 0, croppedDimension, croppedDimension)
+            .createBitmap(
+                rotatedBitmap,
+                0,
+                0,
+                croppedDimension,
+                croppedDimension,
+            )
         val scaledBitmap = croppedBitmap
             .scale(NewAvatarDimension, NewAvatarDimension)
 
@@ -56,6 +72,36 @@ class AvatarAdjuster(
         return Pair(
             first = ByteArrayInputStream(outputStream.toByteArray()),
             second = byteArray.size.toLong(),
+        )
+    }
+
+    private fun getRotationDegrees(uri: Uri): Int =
+        contentResolver.openInputStream(uri)?.use { stream ->
+            val exif = ExifInterface(stream)
+            when (
+                exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL,
+                )
+            ) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                else -> 0
+            }
+        } ?: 0
+
+    private fun rotateBitmapIfNeeded(bitmap: Bitmap, degrees: Int): Bitmap {
+        if (degrees == 0) return bitmap
+        val matrix = Matrix().apply { postRotate(degrees.toFloat()) }
+        return Bitmap.createBitmap(
+            bitmap,
+            0,
+            0,
+            bitmap.width,
+            bitmap.height,
+            matrix,
+            true,
         )
     }
 }
