@@ -4,9 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
 import androidx.core.graphics.scale
+import androidx.exifinterface.media.ExifInterface
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -45,7 +45,13 @@ class AvatarAdjuster(
 
         val croppedDimension = minOf(bitmap.width, bitmap.height)
         val croppedBitmap = Bitmap
-            .createBitmap(rotatedBitmap, 0, 0, croppedDimension, croppedDimension)
+            .createBitmap(
+                rotatedBitmap,
+                0,
+                0,
+                croppedDimension,
+                croppedDimension,
+            )
         val scaledBitmap = croppedBitmap
             .scale(NewAvatarDimension, NewAvatarDimension)
 
@@ -69,21 +75,33 @@ class AvatarAdjuster(
         )
     }
 
-    private fun getRotationDegrees(uri: Uri): Int {
-        return contentResolver.openInputStream(uri)?.use { stream ->
+    private fun getRotationDegrees(uri: Uri): Int =
+        contentResolver.openInputStream(uri)?.use { stream ->
             val exif = ExifInterface(stream)
-            when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+            when (
+                exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL,
+                )
+            ) {
                 ExifInterface.ORIENTATION_ROTATE_90 -> 90
                 ExifInterface.ORIENTATION_ROTATE_180 -> 180
                 ExifInterface.ORIENTATION_ROTATE_270 -> 270
                 else -> 0
             }
         } ?: 0
-    }
 
     private fun rotateBitmapIfNeeded(bitmap: Bitmap, degrees: Int): Bitmap {
         if (degrees == 0) return bitmap
         val matrix = Matrix().apply { postRotate(degrees.toFloat()) }
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        return Bitmap.createBitmap(
+            bitmap,
+            0,
+            0,
+            bitmap.width,
+            bitmap.height,
+            matrix,
+            true,
+        )
     }
 }
