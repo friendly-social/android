@@ -7,14 +7,13 @@ plugins {
 android {
     namespace = "friendly.cards"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
         minSdk = 29
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -35,7 +34,6 @@ kotlin {
     jvmToolchain(21)
     compilerOptions {
         freeCompilerArgs.add("-Xcontext-sensitive-resolution")
-        freeCompilerArgs.add("-Xnested-type-aliases")
         optIn.add("kotlin.time.ExperimentalTime")
         optIn.add("androidx.compose.material3.ExperimentalMaterial3Api")
     }
