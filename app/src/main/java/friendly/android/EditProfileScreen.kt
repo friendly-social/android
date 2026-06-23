@@ -69,8 +69,6 @@ import friendly.sdk.Interest
 import friendly.sdk.Nickname
 import friendly.sdk.UserId
 
-data class ValidatableField<T>(val value: T, val isValid: Boolean = true)
-
 data class EmailState(
     val field: ValidatableField<String?> = ValidatableField(null, false),
     val isUnlinkable: Boolean = false,

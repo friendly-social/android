@@ -13,6 +13,8 @@ class FriendlyViewModelFactory(
     private val registerUseCase: RegisterUseCase,
     private val avatarUploadUseCase: AvatarUploadUseCase,
     private val confirmCodeUseCase: ConfirmCodeUseCase,
+    private val sendAuthCodeUseCase: SendEmailAuthVerificationCodeUseCase,
+    private val loginUseCase: LoginUseCase,
     private val authStorage: AuthStorage,
     private val selfProfileStorage: SelfProfileStorage,
     private val client: FriendlyClient,
@@ -101,6 +103,18 @@ class FriendlyViewModelFactory(
                     authStorage = authStorage,
                 ),
                 filesClient = client.files,
+            ) as T
+        }
+        if (modelClass == SignInScreenViewModel::class) {
+            return SignInScreenViewModel(
+                verify = sendAuthCodeUseCase,
+            ) as T
+        }
+        if (modelClass == VerifyEmailAuthCodeSheetViewModel::class) {
+            val savedStateHandle = extras.createSavedStateHandle()
+            return VerifyEmailAuthCodeSheetViewModel(
+                savedStateHandle = savedStateHandle,
+                login = loginUseCase,
             ) as T
         }
         val isAddFriendByTokenVm =

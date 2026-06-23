@@ -88,4 +88,6 @@
     <string name="eight_digit_verification_code">8-digit verification code</string>
     <string name="verify">Verify</string>
     <string name="code_validation_failed">Confirmation code validation failed</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_in_via_email">Sign in via Email</string>
 </resources>

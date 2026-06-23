@@ -15,7 +15,7 @@ import kotlinx.parcelize.TypeParceler
  */
 @Parcelize
 @TypeParceler<Email, EmailParceler>
-data class EmailConfirmationState(val email: Email, val successful: Boolean) :
+data class EmailCodeSubmissionState(val email: Email, val successful: Boolean) :
     Parcelable
 
 private object EmailParceler : Parceler<Email> {

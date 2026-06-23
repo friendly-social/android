@@ -56,6 +56,15 @@ class MainActivity : ComponentActivity() {
                 client = client,
                 context = context,
             ),
+            sendAuthCodeUseCase = SendEmailAuthVerificationCodeUseCase(
+                localeRepository = localeRepository,
+                authClient = client.auth,
+            ),
+            loginUseCase = LoginUseCase(
+                authStorage = authStorage,
+                selfProfileStorage = selfProfileStorage,
+                authClient = client.auth,
+            ),
             authStorage = authStorage,
             selfProfileStorage = selfProfileStorage,
             client = client,

@@ -338,10 +338,10 @@ class EditProfileScreenViewModel(
     }
 
     fun onSuccessfulVerificationCodeState(
-        emailConfirmationState: EmailConfirmationState,
+        emailCodeSubmissionState: EmailCodeSubmissionState,
     ) {
         viewModelScope.launch {
-            if (emailConfirmationState.successful) {
+            if (emailCodeSubmissionState.successful) {
                 _events.emit(SnackbarEvent.EmailLinked)
                 _state.confirmEmail()
             } else {

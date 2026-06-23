@@ -12,17 +12,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun WelcomeScreen(
+    onSignIn: () -> Unit,
     onSignUp: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -66,12 +70,17 @@ fun WelcomeScreen(
             Spacer(Modifier.height(16.dp))
 
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Button(
-                    onClick = onSignUp,
-                ) {
+                TextButton(onClick = onSignIn) {
+                    Text(text = stringResource(R.string.sign_in))
+                }
+
+                Spacer(Modifier.width(16.dp))
+
+                Button(onClick = onSignUp) {
                     Text(text = stringResource(R.string.sign_up))
                 }
             }

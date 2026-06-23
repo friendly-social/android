@@ -29,6 +29,7 @@ import friendly.android.FriendlyNavGraph.Home
 import friendly.android.FriendlyNavGraph.Home.EditProfile
 import friendly.android.FriendlyNavGraph.NavDestination
 import friendly.android.FriendlyNavGraph.Registration
+import friendly.android.FriendlyNavGraph.SignIn
 import friendly.android.FriendlyNavGraph.Welcome
 import friendly.sdk.Authorization
 import friendly.sdk.EmailSerializable
@@ -212,6 +213,9 @@ object FriendlyNavGraph {
     sealed interface NavDestination
 
     @Serializable
+    data object SignIn : NavDestination
+
+    @Serializable
     data object Registration : NavDestination
 
     @Serializable
@@ -243,6 +247,9 @@ object FriendlyNavGraph {
         data object ShareProfileSheet : Home()
 
         @Serializable
+        data class CodeConfirmationSheet(val email: EmailSerializable) : Home()
+
+        @Serializable
         data class CodeVerificationSheet(val email: EmailSerializable) : Home()
 
         @Serializable
@@ -268,7 +275,7 @@ val EditProfileTypeMap = mapOf(
     typeOf<List<InterestSerializable>>() to InterestSerializableListNavType,
 )
 
-val CodeVerificationSheetTypeMap = mapOf(
+val EmailSheetTypeMap = mapOf(
     typeOf<EmailSerializable>() to EmailSerializableNavType,
 )
 
@@ -297,8 +304,32 @@ fun FriendlyNavGraph(
         ) {
             composable<Welcome> {
                 WelcomeScreen(
+                    onSignIn = { navController.navigate(SignIn) },
                     onSignUp = { navController.navigate(Registration) },
                     contentPadding = contentPadding(Welcome),
+                    modifier = Modifier,
+                )
+            }
+
+            composable<SignIn> {
+                val vm = viewModel<SignInScreenViewModel>(
+                    factory = viewModelFactory,
+                )
+                SignInScreen(
+                    vm = vm,
+                    onHome = {
+                        navController.navigate(Home.SelfProfile)
+                    },
+                    onConfirm = { email ->
+                        vm.sendConfirmationCode()
+                        navController.navigate(
+                            Home.CodeVerificationSheet(
+                                email = email.serializable(),
+                            ),
+                        )
+                    },
+                    onBack = { navController.popBackStack() },
+                    contentPadding = contentPadding(Registration),
                     modifier = Modifier,
                 )
             }
@@ -364,7 +395,27 @@ fun FriendlyNavGraph(
                 }
 
                 dialog<Home.CodeVerificationSheet>(
-                    typeMap = CodeVerificationSheetTypeMap,
+                    typeMap = EmailSheetTypeMap,
+                ) {
+                    VerifyEmailAuthCodeSheet(
+                        vm = viewModel<VerifyEmailAuthCodeSheetViewModel>(
+                            factory = viewModelFactory,
+                        ),
+                        onDismiss = { navController.popBackStack() },
+                        onVerification = { verificationCodeState ->
+                            val entry = navController.previousBackStackEntry
+                            entry?.savedStateHandle?.set(
+                                key = VerificationCodeStateKey,
+                                value = verificationCodeState,
+                            )
+                            navController.popBackStack()
+                        },
+                        modifier = Modifier,
+                    )
+                }
+
+                dialog<Home.CodeConfirmationSheet>(
+                    typeMap = EmailSheetTypeMap,
                 ) {
                     ConfirmEmailCodeSheet(
                         vm = viewModel<ConfirmEmailCodeSheetViewModel>(
@@ -408,16 +459,16 @@ fun FriendlyNavGraph(
                         factory = viewModelFactory,
                     )
 
-                    val emailConfirmationState by backStackEntry
+                    val emailCodeSubmissionState by backStackEntry
                         .savedStateHandle
-                        .getStateFlow<EmailConfirmationState?>(
+                        .getStateFlow<EmailCodeSubmissionState?>(
                             key = VerificationCodeStateKey,
                             initialValue = null,
                         )
                         .collectAsStateWithLifecycle()
 
-                    LaunchedEffect(emailConfirmationState) {
-                        emailConfirmationState?.let { state ->
+                    LaunchedEffect(emailCodeSubmissionState) {
+                        emailCodeSubmissionState?.let { state ->
                             if (state.successful) {
                                 vm.onSuccessfulVerificationCodeState(state)
                             }
@@ -428,7 +479,7 @@ fun FriendlyNavGraph(
                         onBack = { navController.popBackStack() },
                         onSendEmailCode = { email ->
                             navController.navigate(
-                                Home.CodeVerificationSheet(
+                                Home.CodeConfirmationSheet(
                                     email = email.serializable(),
                                 ),
                             )

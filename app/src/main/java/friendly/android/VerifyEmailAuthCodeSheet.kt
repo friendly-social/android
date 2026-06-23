@@ -8,13 +8,13 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.rememberLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 
-sealed interface EmailCodeConfirmationSheetEvent {
-    data object CodeConfirmationSuccess : EmailCodeConfirmationSheetEvent
+sealed interface EmailCodeVerificationSheetEvent {
+    data object CodeConfirmationSuccess : EmailCodeVerificationSheetEvent
 }
 
 @Composable
-fun ConfirmEmailCodeSheet(
-    vm: ConfirmEmailCodeSheetViewModel,
+fun VerifyEmailAuthCodeSheet(
+    vm: VerifyEmailAuthCodeSheetViewModel,
     onDismiss: () -> Unit,
     onVerification: (EmailCodeSubmissionState) -> Unit,
     modifier: Modifier = Modifier,

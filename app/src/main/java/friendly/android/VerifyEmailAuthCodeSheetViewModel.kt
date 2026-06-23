@@ -5,21 +5,19 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import friendly.sdk.ConfirmationCode
+import friendly.android.FriendlyNavGraph.Home.CodeConfirmationSheet as CodeConfirmationSheetRoute
 import friendly.sdk.Email
+import friendly.sdk.LoginCode
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import friendly.android.FriendlyNavGraph.Home.CodeConfirmationSheet as CodeConfirmationSheetRoute
 
-private data class EmailCodeVerificationSheetVmState(
+private data class VerifyEmailAuthCodeSheetVmState(
     val email: Email,
     val codeValue: String,
     val codeVerificationFailed: Boolean,
@@ -42,26 +40,26 @@ private data class EmailCodeVerificationSheetVmState(
     }
 }
 
-class ConfirmEmailCodeSheetViewModel(
+class VerifyEmailAuthCodeSheetViewModel(
     savedStateHandle: SavedStateHandle,
-    private val confirm: ConfirmCodeUseCase,
+    val login: LoginUseCase,
 ) : ViewModel() {
     private val route = savedStateHandle.toRoute<CodeConfirmationSheetRoute>(
         typeMap = EmailSheetTypeMap,
     )
 
     private val _state = MutableStateFlow(
-        EmailCodeVerificationSheetVmState(
+        VerifyEmailAuthCodeSheetVmState(
             email = route.email.typed(),
             codeValue = "",
+            codeVerificationFailed = false,
             codeValid = false,
             isVerifying = false,
-            codeVerificationFailed = false,
         ),
     )
 
-    val state: StateFlow<EmailCodeSheetUiState> = _state
-        .map(EmailCodeVerificationSheetVmState::toUiState)
+    val state = _state
+        .map(VerifyEmailAuthCodeSheetVmState::toUiState)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
@@ -73,10 +71,8 @@ class ConfirmEmailCodeSheetViewModel(
             ),
         )
 
-    private val _events = MutableSharedFlow<EmailCodeConfirmationSheetEvent>()
-
-    val events: SharedFlow<EmailCodeConfirmationSheetEvent> =
-        _events.shareIn(viewModelScope, Eagerly)
+    private val _events = MutableSharedFlow<EmailCodeVerificationSheetEvent>()
+    val events = _events.shareIn(viewModelScope, Eagerly)
 
     fun updateCode(new: String) {
         if (!new.isDigitsOnly() || new.length > 8) return
@@ -96,16 +92,20 @@ class ConfirmEmailCodeSheetViewModel(
         }
 
         viewModelScope.launch {
-            val confirmationCode = ConfirmationCode.orThrow(
-                int = _state.value.codeValue.toInt(),
-            )
-            val result = confirm(route.email.typed(), confirmationCode)
+            val loginCode = LoginCode.orThrow(_state.value.codeValue.toInt())
+            val result = login(route.email.typed(), loginCode)
 
             when (result) {
-                is Failure -> {
+                LoginUseCase.LoginResult.IOError,
+                LoginUseCase.LoginResult.InvalidCode,
+                LoginUseCase.LoginResult.UnknownError,
+                    -> {
                     _state.update { it.copy(codeVerificationFailed = true) }
                 }
-                is Success -> _events.emit(CodeConfirmationSuccess)
+
+                LoginUseCase.LoginResult.LoggedIn -> _events.emit(
+                    CodeConfirmationSuccess,
+                )
             }
 
             _state.update { old -> old.copy(isVerifying = false) }
