@@ -230,6 +230,12 @@ object FriendlyNavGraph {
         data object Network : Home()
 
         @Serializable
+        data object Community : Home()
+
+        @Serializable
+        data object Chat : Home()
+
+        @Serializable
         data object SelfProfile : Home()
 
         @Serializable
@@ -372,6 +378,20 @@ fun FriendlyNavGraph(
                         },
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedContentScope = this@composable,
+                        contentPadding = contentPadding(Home.Network),
+                        modifier = Modifier,
+                    )
+                }
+
+                composable<Home.Community> {
+                    CommunityScreen(
+                        contentPadding = contentPadding(Home.Network),
+                        modifier = Modifier,
+                    )
+                }
+
+                composable<Home.Chat> {
+                    ChatScreen(
                         contentPadding = contentPadding(Home.Network),
                         modifier = Modifier,
                     )

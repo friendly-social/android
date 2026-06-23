@@ -21,7 +21,8 @@ class SendEmailAuthVerificationCodeUseCase(
         return when (result) {
             is EmailResult.IOError,
             is EmailResult.ServerError,
-            is EmailResult.UnknownEmail -> VerificationResult.Failure
+            is EmailResult.UnknownEmail,
+            -> VerificationResult.Failure
             is EmailResult.Success -> VerificationResult.Success
         }
     }

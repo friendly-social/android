@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -31,6 +33,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import friendly.android.FriendlyNavGraph.Home
+import friendly.android.HomeNavigationItem.BadgeKind
 import friendly.sdk.Authorization
 
 data class HomeNavigationItem(
@@ -38,7 +41,13 @@ data class HomeNavigationItem(
     val selectedIconResource: Int = R.drawable.ic_photo_camera,
     val unselectedIconResource: Int = R.drawable.ic_photo_camera,
     val destination: Home,
-)
+    val badge: BadgeKind = BadgeKind.None,
+) {
+    sealed interface BadgeKind {
+        data object None : BadgeKind
+        data class TextAccent(val text: String) : BadgeKind
+    }
+}
 
 val homeNavigationItems = listOf(
     HomeNavigationItem(
@@ -52,6 +61,20 @@ val homeNavigationItems = listOf(
         selectedIconResource = R.drawable.ic_group_filled,
         unselectedIconResource = R.drawable.ic_group_unfilled,
         destination = Home.Network,
+    ),
+    HomeNavigationItem(
+        titleResource = R.string.community,
+        selectedIconResource = R.drawable.ic_interests_filled,
+        unselectedIconResource = R.drawable.ic_interests_outlined,
+        destination = Home.Community,
+        badge = BadgeKind.TextAccent("Q3"),
+    ),
+    HomeNavigationItem(
+        titleResource = R.string.chat,
+        selectedIconResource = R.drawable.ic_chat_bubble_filled,
+        unselectedIconResource = R.drawable.ic_chat_bubble_outlined,
+        destination = Home.Chat,
+        badge = BadgeKind.TextAccent("Q4"),
     ),
     HomeNavigationItem(
         titleResource = R.string.profile,
@@ -112,6 +135,7 @@ fun FriendlyApp(
                             innerPadding
                                 .dropBottom()
                                 .plusBottom(navigationBarsPadding)
+
                         else -> innerPadding
                     }
                 },
@@ -161,17 +185,49 @@ fun BottomNavigationBar(
                     )
                 },
                 icon = {
-                    Icon(
-                        painter = if (selected) {
-                            painterResource(item.selectedIconResource)
-                        } else {
-                            painterResource(item.unselectedIconResource)
-                        },
-                        contentDescription = null,
-                    )
+                    IconWithBadge(item, selected)
                 },
                 modifier = Modifier,
             )
+        }
+    }
+}
+
+@Composable
+private fun IconWithBadge(item: HomeNavigationItem, selected: Boolean) {
+    BadgedBox(
+        badge = {
+            if (item.badge is BadgeKind.TextAccent) {
+                DestinationBadge(selected, item.badge)
+            }
+        },
+    ) {
+        Icon(
+            painter = if (selected) {
+                painterResource(item.selectedIconResource)
+            } else {
+                painterResource(item.unselectedIconResource)
+            },
+            contentDescription = null,
+        )
+    }
+}
+
+@Composable
+private fun DestinationBadge(selected: Boolean, badge: BadgeKind.TextAccent) {
+    if (selected) {
+        Badge(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ) {
+            Text(badge.text)
+        }
+    } else {
+        Badge(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ) {
+            Text(badge.text)
         }
     }
 }

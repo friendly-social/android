@@ -41,7 +41,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import friendly.sdk.Interest
@@ -322,7 +321,7 @@ private fun InterestsPage(
             .padding(horizontal = 16.dp),
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_interests),
+            painter = painterResource(R.drawable.ic_interests_outlined),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(128.dp),

@@ -90,4 +90,10 @@
     <string name="code_validation_failed">Confirmation code validation failed</string>
     <string name="sign_in">Sign in</string>
     <string name="sign_in_via_email">Sign in via Email</string>
+    <string name="community">Community</string>
+    <string name="chat">Chat</string>
+    <string name="chats_are_under_construction">Chats are under construction</string>
+    <string name="we_are_planning_to_chats_by_the_end_of_2026_q4">We are planning to Chats by the end of 2026 Q4</string>
+    <string name="communities_are_under_construction">Communities are under construction</string>
+    <string name="we_are_planning_to_communities_by_the_end_of_2026_q3">We are planning to Communities by the end of 2026 Q3</string>
 </resources>

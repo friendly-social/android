@@ -5,7 +5,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import friendly.android.FriendlyNavGraph.Home.CodeConfirmationSheet as CodeConfirmationSheetRoute
 import friendly.sdk.Email
 import friendly.sdk.LoginCode
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -16,6 +15,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import friendly.android.FriendlyNavGraph.Home.CodeConfirmationSheet as CodeConfirmationSheetRoute
 
 private data class VerifyEmailAuthCodeSheetVmState(
     val email: Email,
@@ -99,7 +99,7 @@ class VerifyEmailAuthCodeSheetViewModel(
                 LoginUseCase.LoginResult.IOError,
                 LoginUseCase.LoginResult.InvalidCode,
                 LoginUseCase.LoginResult.UnknownError,
-                    -> {
+                -> {
                     _state.update { it.copy(codeVerificationFailed = true) }
                 }
 

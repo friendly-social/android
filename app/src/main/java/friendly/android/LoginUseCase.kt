@@ -1,6 +1,5 @@
 package friendly.android
 
-import friendly.sdk.ConfirmationCode
 import friendly.sdk.Email
 import friendly.sdk.FriendlyAuthClient
 import friendly.sdk.LoginCode
@@ -17,10 +16,7 @@ class LoginUseCase(
         data object UnknownError : LoginResult
     }
 
-    suspend operator fun invoke(
-        email: Email,
-        code: LoginCode,
-    ): LoginResult {
+    suspend operator fun invoke(email: Email, code: LoginCode): LoginResult {
         val loginResult = authClient.login(email, code)
 
         return when (loginResult) {

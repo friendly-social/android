@@ -57,6 +57,5 @@ class SignInScreenViewModel(
     }
 
     fun onSuccessfulCodeConfirmation() {
-
     }
 }

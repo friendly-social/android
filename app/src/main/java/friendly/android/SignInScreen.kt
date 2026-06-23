@@ -32,9 +32,7 @@ import androidx.compose.ui.unit.dp
 import friendly.sdk.Email
 
 sealed interface SignInScreenUiState {
-    data class Idle(
-        val email: ValidatableField<String>,
-    ) : SignInScreenUiState
+    data class Idle(val email: ValidatableField<String>) : SignInScreenUiState
 
     data object Loading : SignInScreenUiState
 }
@@ -125,7 +123,7 @@ fun IdleState(
             placeholder = { Text("email@domain.com") },
             isError = state.email.invalidAndNotBlank,
             supportingText = {
-                if (state.email.invalidAndNotBlank){
+                if (state.email.invalidAndNotBlank) {
                     Text(stringResource(R.string.email_validation_text))
                 }
             },

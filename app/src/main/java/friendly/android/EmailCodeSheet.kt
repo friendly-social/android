@@ -52,7 +52,6 @@ private val EmailCodeSheetUiState.isCodeFieldError: Boolean
         }
     }
 
-
 /**
  * Generic sheet component for either confirming or verifying code sent
  * to an email.
