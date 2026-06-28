@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -555,7 +556,8 @@ fun FriendlyNavGraph(
                     goToSignUp = { navController.navigate(Welcome) },
                     onGoBack = { navController.popBackStack() },
                     onNetworkScreen = {
-                        navController.navigate(Home.Network)
+                        navController.popBackStack()
+                        navController.goToHomeTab(Home.Network)
                     },
                     friendToken = FriendToken.orThrow(friendToken),
                     userId = UserId(userId.toLong()),
@@ -567,5 +569,18 @@ fun FriendlyNavGraph(
                 )
             }
         }
+    }
+}
+
+private fun NavHostController.goToHomeTab(tab: Home) {
+    val navController = this
+    navController.navigate(tab) {
+        popUpTo(
+            navController.graph.findStartDestination().id,
+        ) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
     }
 }
