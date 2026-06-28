@@ -334,9 +334,7 @@ fun FriendlyNavGraph(
                 SignInScreen(
                     vm = vm,
                     onHome = {
-                        println("onHome = {")
                         navController.navigate(Home.SelfProfile)
-                        println("onHome = }")
                     },
                     onConfirm = { email ->
                         vm.sendConfirmationCode()
