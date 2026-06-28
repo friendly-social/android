@@ -96,4 +96,8 @@
     <string name="we_are_planning_to_chats_by_the_end_of_2026_q4">We are planning to Chats by the end of 2026 Q4</string>
     <string name="communities_are_under_construction">Communities are under construction</string>
     <string name="we_are_planning_to_communities_by_the_end_of_2026_q3">We are planning to Communities by the end of 2026 Q3</string>
+    <string name="code_confirmation_failure">Code confirmation failure</string>
+    <string name="code_sending_failure">Code sending failure</string>
+    <string name="sign_in_failure">Sign in failure</string>
+    <string name="sign_in_success">Sign in success</string>
 </resources>

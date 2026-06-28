@@ -7,16 +7,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.rememberLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import friendly.android.EmailCodeVerificationSheetEvent.CodeVerificationSuccess
+import friendly.sdk.Authorization
 
 sealed interface EmailCodeVerificationSheetEvent {
-    data object CodeConfirmationSuccess : EmailCodeVerificationSheetEvent
+    data class CodeVerificationSuccess(
+        val authorization: Authorization,
+    ) : EmailCodeVerificationSheetEvent
 }
 
 @Composable
 fun VerifyEmailAuthCodeSheet(
     vm: VerifyEmailAuthCodeSheetViewModel,
     onDismiss: () -> Unit,
-    onVerification: (EmailCodeSubmissionState) -> Unit,
+    onVerification: (EmailCodeLoginState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsState()
@@ -26,9 +30,13 @@ fun VerifyEmailAuthCodeSheet(
         lifecycleOwner.lifecycle.repeatOnLifecycle(STARTED) {
             vm.events.collect { event ->
                 when (event) {
-                    CodeConfirmationSuccess -> {
+                    is CodeVerificationSuccess -> {
                         onVerification(
-                            EmailCodeSubmissionState(state.email, true),
+                            EmailCodeLoginState(
+                                email = state.email,
+                                authorization = event.authorization,
+                                success = true,
+                            ),
                         )
                     }
                 }

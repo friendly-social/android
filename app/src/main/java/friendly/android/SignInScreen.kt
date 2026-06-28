@@ -18,23 +18,63 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.rememberLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import friendly.sdk.Email
+import kotlinx.coroutines.launch
 
 sealed interface SignInScreenUiState {
     data class Idle(val email: ValidatableField<String>) : SignInScreenUiState
 
     data object Loading : SignInScreenUiState
+}
+
+
+sealed interface SignInScreenEvent {
+    data object SignInSuccess : SignInScreenEvent
+
+    enum class SnackbarEvent : SignInScreenEvent {
+        CodeConfirmationFailure,
+        CodeSendingFailure,
+        SignInFailure,
+        SignInSuccess,
+    }
+}
+
+
+@Composable
+private fun snackbarStrings(): Map<SignInScreenEvent.SnackbarEvent, String> {
+    return SignInScreenEvent.SnackbarEvent.entries.associateWith { event ->
+        when (event) {
+            CodeConfirmationFailure ->
+                stringResource(R.string.code_confirmation_failure)
+
+            CodeSendingFailure ->
+                stringResource(R.string.code_sending_failure)
+
+            SignInFailure ->
+                stringResource(R.string.sign_in_failure)
+
+            SignInSuccess ->
+                stringResource(R.string.sign_in_success)
+        }
+    }
 }
 
 @Composable
@@ -47,6 +87,29 @@ fun SignInScreen(
     modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val lifecycleOwner = rememberLifecycleOwner()
+    val snackbarStrings = snackbarStrings()
+
+    LaunchedEffect(Unit) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(STARTED) {
+            vm.events.collect { event ->
+                when (event) {
+                    is SignInScreenEvent.SnackbarEvent -> {
+                        launch {
+                            snackbarHostState.showSnackbar(
+                                message = snackbarStrings.getValue(key = event),
+                                duration = SnackbarDuration.Short,
+                            )
+                        }
+                    }
+
+                    is SignInScreenEvent.SignInSuccess -> onHome()
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -62,6 +125,7 @@ fun SignInScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier.padding(contentPadding),
     ) { innerPadding ->
         when (val state = state) {

@@ -317,14 +317,26 @@ fun FriendlyNavGraph(
                 )
             }
 
-            composable<SignIn> {
+            composable<SignIn> { backStackEntry ->
                 val vm = viewModel<SignInScreenViewModel>(
                     factory = viewModelFactory,
                 )
+                val emailCodeSubmissionState by backStackEntry
+                    .savedStateHandle
+                    .getStateFlow<EmailCodeLoginState?>(
+                        key = VerificationCodeStateKey,
+                        initialValue = null,
+                    )
+                    .collectAsStateWithLifecycle()
+                LaunchedEffect(emailCodeSubmissionState) {
+                    emailCodeSubmissionState?.let(vm::onCodeConfirmationResult)
+                }
                 SignInScreen(
                     vm = vm,
                     onHome = {
+                        println("onHome = {")
                         navController.navigate(Home.SelfProfile)
+                        println("onHome = }")
                     },
                     onConfirm = { email ->
                         vm.sendConfirmationCode()

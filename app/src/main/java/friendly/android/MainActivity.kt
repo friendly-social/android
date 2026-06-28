@@ -60,10 +60,13 @@ class MainActivity : ComponentActivity() {
                 localeRepository = localeRepository,
                 authClient = client.auth,
             ),
-            loginUseCase = LoginUseCase(
+            confirmLoginCodeUseCase = ConfirmLoginCodeUseCase(
+                authClient = client.auth,
+            ),
+            signInUseCase = SignInUseCase(
                 authStorage = authStorage,
                 selfProfileStorage = selfProfileStorage,
-                authClient = client.auth,
+                usersClient = client.users,
             ),
             authStorage = authStorage,
             selfProfileStorage = selfProfileStorage,

@@ -26,6 +26,7 @@ class RegisterUseCase(
             avatar = avatar,
             socialLink = socialLink,
         )
+        // todo: add some handler for all authorization cases here
         val authorizationSuccess = authorization.orThrow()
         authStorage.store(authorizationSuccess)
         profileStorage.store(

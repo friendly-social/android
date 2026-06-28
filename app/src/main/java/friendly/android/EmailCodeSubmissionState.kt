@@ -1,9 +1,7 @@
 package friendly.android
 
-import android.os.Parcel
 import android.os.Parcelable
 import friendly.sdk.Email
-import kotlinx.parcelize.Parceler
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.TypeParceler
 
@@ -15,13 +13,7 @@ import kotlinx.parcelize.TypeParceler
  */
 @Parcelize
 @TypeParceler<Email, EmailParceler>
-data class EmailCodeSubmissionState(val email: Email, val successful: Boolean) :
-    Parcelable
-
-private object EmailParceler : Parceler<Email> {
-    override fun create(parcel: Parcel) = Email.orThrow(parcel.readString()!!)
-
-    override fun Email.write(parcel: Parcel, flags: Int) {
-        parcel.writeString(string)
-    }
-}
+data class EmailCodeSubmissionState(
+    val email: Email,
+    val successful: Boolean,
+) : Parcelable
