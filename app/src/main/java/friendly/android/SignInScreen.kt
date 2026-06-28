@@ -45,7 +45,6 @@ sealed interface SignInScreenUiState {
     data object Loading : SignInScreenUiState
 }
 
-
 sealed interface SignInScreenEvent {
     data object SignInSuccess : SignInScreenEvent
 
@@ -57,10 +56,9 @@ sealed interface SignInScreenEvent {
     }
 }
 
-
 @Composable
-private fun snackbarStrings(): Map<SignInScreenEvent.SnackbarEvent, String> {
-    return SignInScreenEvent.SnackbarEvent.entries.associateWith { event ->
+private fun snackbarStrings(): Map<SignInScreenEvent.SnackbarEvent, String> =
+    SignInScreenEvent.SnackbarEvent.entries.associateWith { event ->
         when (event) {
             CodeConfirmationFailure ->
                 stringResource(R.string.code_confirmation_failure)
@@ -75,7 +73,6 @@ private fun snackbarStrings(): Map<SignInScreenEvent.SnackbarEvent, String> {
                 stringResource(R.string.sign_in_success)
         }
     }
-}
 
 @Composable
 fun SignInScreen(

@@ -105,7 +105,7 @@ class VerifyEmailAuthCodeSheetViewModel(
                 }
 
                 is ConfirmLoginCodeUseCase.LoginResult.Success -> _events.emit(
-                    CodeVerificationSuccess(result.authorization)
+                    CodeVerificationSuccess(result.authorization),
                 )
             }
 

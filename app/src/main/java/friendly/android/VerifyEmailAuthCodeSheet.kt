@@ -11,9 +11,8 @@ import friendly.android.EmailCodeVerificationSheetEvent.CodeVerificationSuccess
 import friendly.sdk.Authorization
 
 sealed interface EmailCodeVerificationSheetEvent {
-    data class CodeVerificationSuccess(
-        val authorization: Authorization,
-    ) : EmailCodeVerificationSheetEvent
+    data class CodeVerificationSuccess(val authorization: Authorization) :
+        EmailCodeVerificationSheetEvent
 }
 
 @Composable

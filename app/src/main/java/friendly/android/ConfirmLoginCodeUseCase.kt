@@ -13,8 +13,8 @@ class ConfirmLoginCodeUseCase(private val authClient: FriendlyAuthClient) {
         data object ServerError : LoginResult
     }
 
-    suspend operator fun invoke(email: Email, code: LoginCode): LoginResult {
-        return when (val loginResult = authClient.login(email, code)) {
+    suspend operator fun invoke(email: Email, code: LoginCode): LoginResult =
+        when (val loginResult = authClient.login(email, code)) {
             is IOError -> LoginResult.IOError
             is InvalidCode -> LoginResult.InvalidCode
             is ServerError -> LoginResult.ServerError
@@ -24,5 +24,4 @@ class ConfirmLoginCodeUseCase(private val authClient: FriendlyAuthClient) {
                 LoginResult.Success(authorization)
             }
         }
-    }
 }

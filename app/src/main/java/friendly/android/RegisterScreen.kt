@@ -16,10 +16,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -44,6 +47,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import friendly.sdk.Interest
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
@@ -57,11 +61,34 @@ fun RegisterScreen(
     val scope = rememberCoroutineScope()
     val state by vm.state.collectAsState()
 
+    Scaffold(
+        modifier = modifier.padding(contentPadding),
+    ) { innerPadding ->
+        ScreenContent(
+            scope = scope,
+            pagerState = pagerState,
+            state = state,
+            vm = vm,
+            onHome = onHome,
+            modifier = Modifier.padding(innerPadding).imePadding(),
+        )
+    }
+}
+
+@Composable
+fun ScreenContent(
+    state: RegisterScreenUiState,
+    scope: CoroutineScope,
+    pagerState: PagerState,
+    vm: RegisterScreenViewModel,
+    onHome: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     when (val state = state) {
         is RegisterScreenUiState.Generating -> {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize(),
+                modifier = modifier.fillMaxSize(),
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(stringResource(R.string.generating))
@@ -77,7 +104,7 @@ fun RegisterScreen(
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = false,
-                modifier = modifier.padding(contentPadding),
+                modifier = modifier,
             ) { pageIndex ->
                 when (pageIndex) {
                     0 -> NicknameAndDescriptionPage(

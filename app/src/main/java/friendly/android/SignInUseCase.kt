@@ -1,7 +1,6 @@
 package friendly.android
 
 import friendly.sdk.Authorization
-import friendly.sdk.FriendlyClient
 import friendly.sdk.FriendlyUsersClient
 import friendly.sdk.FriendlyUsersClient.DetailsResult.IOError
 import friendly.sdk.FriendlyUsersClient.DetailsResult.ServerError
@@ -26,8 +25,8 @@ class SignInUseCase(
         data object Success : Result
     }
 
-    suspend operator fun invoke(authorization: Authorization): Result {
-        return when (val detailsResult = usersClient.details(authorization)) {
+    suspend operator fun invoke(authorization: Authorization): Result =
+        when (val detailsResult = usersClient.details(authorization)) {
             is IOError -> Result.IOError
             is ServerError -> Result.ServerError
             is Unauthorized -> Result.Unauthorized
@@ -47,5 +46,4 @@ class SignInUseCase(
                 Result.Success
             }
         }
-    }
 }

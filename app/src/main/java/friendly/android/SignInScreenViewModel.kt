@@ -66,9 +66,7 @@ class SignInScreenViewModel(
         }
     }
 
-    fun onCodeConfirmationResult(
-        result: EmailCodeLoginState,
-    ) {
+    fun onCodeConfirmationResult(result: EmailCodeLoginState) {
         viewModelScope.launch {
             when (result.success) {
                 true -> {
@@ -80,7 +78,8 @@ class SignInScreenViewModel(
                     when (signInResult) {
                         is SignInUseCase.Result.IOError,
                         is SignInUseCase.Result.ServerError,
-                        is SignInUseCase.Result.Unauthorized -> {
+                        is SignInUseCase.Result.Unauthorized,
+                        -> {
                             _events.emit(SnackbarEvent.SignInFailure)
                         }
                         is SignInUseCase.Result.Success -> {

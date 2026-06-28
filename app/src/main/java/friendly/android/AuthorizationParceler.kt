@@ -8,10 +8,7 @@ import friendly.sdk.UserId
 import kotlinx.parcelize.Parceler
 
 object AuthorizationParceler : Parceler<Authorization?> {
-    override fun Authorization?.write(
-        parcel: Parcel,
-        flags: Int,
-    ) {
+    override fun Authorization?.write(parcel: Parcel, flags: Int) {
         when (this) {
             null -> parcel.writeBoolean(false)
 
