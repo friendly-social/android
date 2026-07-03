@@ -15,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -29,6 +28,7 @@ import friendly.android.FriendlyNavGraph.AddFriendByToken
 import friendly.android.FriendlyNavGraph.Home
 import friendly.android.FriendlyNavGraph.Home.EditProfile
 import friendly.android.FriendlyNavGraph.NavDestination
+import friendly.android.FriendlyNavGraph.NoFriendsBlockingScreen
 import friendly.android.FriendlyNavGraph.Registration
 import friendly.android.FriendlyNavGraph.SignIn
 import friendly.android.FriendlyNavGraph.Welcome
@@ -269,7 +269,10 @@ object FriendlyNavGraph {
     }
 
     @Serializable
-    data object AddFriendByToken : Home()
+    data object AddFriendByToken : NavDestination
+
+    @Serializable
+    data object NoFriendsBlockingScreen : NavDestination
 }
 
 val EditProfileTypeMap = mapOf(
@@ -294,11 +297,18 @@ fun FriendlyNavGraph(
     navController: NavHostController,
     viewModelFactory: FriendlyViewModelFactory,
     authorization: Authorization?,
+    hasFirstFriend: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val firstDestination = when (authorization) {
         null -> Welcome
-        else -> Home()
+        else -> {
+            if (hasFirstFriend) {
+                Home()
+            } else {
+                NoFriendsBlockingScreen
+            }
+        }
     }
 
     SharedTransitionLayout {
@@ -335,7 +345,9 @@ fun FriendlyNavGraph(
                 SignInScreen(
                     vm = vm,
                     onHome = {
-                        navController.navigate(Home.SelfProfile)
+                        navController.navigate(Home.SelfProfile) {
+                            popUpTo(navController.graph.id)
+                        }
                     },
                     onConfirm = { email ->
                         vm.sendConfirmationCode()
@@ -357,8 +369,10 @@ fun FriendlyNavGraph(
                 )
                 RegisterScreen(
                     vm = vm,
-                    onHome = {
-                        navController.navigate(Home.SelfProfile)
+                    onRegistration = {
+                        navController.navigate(NoFriendsBlockingScreen) {
+                            popUpTo(navController.graph.id)
+                        }
                     },
                     contentPadding = contentPadding(Registration),
                     modifier = Modifier,
@@ -471,7 +485,9 @@ fun FriendlyNavGraph(
                             factory = viewModelFactory,
                         ),
                         onSignOut = {
-                            navController.navigate(Welcome) { popUpTo(0) }
+                            navController.navigate(Welcome) {
+                                popUpTo(navController.graph.id)
+                            }
                         },
                         onEditProfileClick = { route ->
                             navController.navigate(route)
@@ -556,8 +572,8 @@ fun FriendlyNavGraph(
                     goToSignUp = { navController.navigate(Welcome) },
                     onGoBack = { navController.popBackStack() },
                     onNetworkScreen = {
-                        navController.popBackStack()
-                        navController.goToHomeTab(Home.Network)
+                        navController.navigate(Home.Network) {
+                        }
                     },
                     friendToken = FriendToken.orThrow(friendToken),
                     userId = UserId(userId.toLong()),
@@ -568,19 +584,21 @@ fun FriendlyNavGraph(
                     modifier = Modifier,
                 )
             }
-        }
-    }
-}
 
-private fun NavHostController.goToHomeTab(tab: Home) {
-    val navController = this
-    navController.navigate(tab) {
-        popUpTo(
-            navController.graph.findStartDestination().id,
-        ) {
-            saveState = true
+            composable<NoFriendsBlockingScreen> {
+                NoFriendsBlockingScreen(
+                    onAddFriendSuccess = {
+                        navController.navigate(Home.Feed) {
+                            popUpTo(navController.graph.id)
+                        }
+                    },
+                    contentPadding = contentPadding(NoFriendsBlockingScreen),
+                    vm = viewModel<NoFriendsBlockingScreenViewModel>(
+                        factory = viewModelFactory,
+                    ),
+                    modifier = Modifier,
+                )
+            }
         }
-        launchSingleTop = true
-        restoreState = true
     }
 }

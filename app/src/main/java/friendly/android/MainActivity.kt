@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import androidx.room.Room
 import friendly.sdk.FriendlyClient
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -30,6 +32,20 @@ class MainActivity : ComponentActivity() {
         FirebaseKit.onAppCreate(context, client, authStorage)
         val localeRepository = LocaleRepository(context.applicationContext)
         val selfProfileStorage = SelfProfileStorage(context)
+
+        val db = Room
+            .databaseBuilder<FriendlyDatabase>(
+                context = applicationContext,
+                name = "friendly-cache",
+            )
+            .build()
+
+        val networkRepository = NetworkRepository(
+            dao = db.networkDao(),
+            networkClient = client.network,
+            authStorage = authStorage,
+            scope = lifecycleScope,
+        )
 
         val viewModelFactory = FriendlyViewModelFactory(
             unlinkEmailUseCase = UnlinkEmailUseCase(
@@ -68,17 +84,24 @@ class MainActivity : ComponentActivity() {
                 selfProfileStorage = selfProfileStorage,
                 usersClient = client.users,
             ),
+            addFriendUseCase = AddFriendUseCase(
+                friendsClient = client.friends,
+                authStorage = authStorage,
+                selfProfileStorage = selfProfileStorage,
+            ),
             authStorage = authStorage,
             selfProfileStorage = selfProfileStorage,
             client = client,
         )
 
         val authorization = authStorage.getAuthOrNull()
+        val hasFirstFriend = selfProfileStorage.getHasFirstFriend()
 
         setContent {
             FriendlyApp(
                 viewModelFactory = viewModelFactory,
                 authorization = authorization,
+                hasFirstFriend = hasFirstFriend,
             )
         }
     }

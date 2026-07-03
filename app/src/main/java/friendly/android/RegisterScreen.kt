@@ -53,7 +53,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun RegisterScreen(
     vm: RegisterScreenViewModel,
-    onHome: () -> Unit,
+    onRegistration: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
 ) {
@@ -69,7 +69,7 @@ fun RegisterScreen(
             pagerState = pagerState,
             state = state,
             vm = vm,
-            onHome = onHome,
+            onHome = onRegistration,
             modifier = Modifier.padding(innerPadding).imePadding(),
         )
     }

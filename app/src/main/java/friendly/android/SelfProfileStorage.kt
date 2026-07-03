@@ -23,6 +23,7 @@ private const val UserIdPreference = "USER_ID"
 private const val InterestsPreference = "INTERESTS"
 private const val SocialLinkPreference = "SOCIAL_LINK"
 private const val EmailPreference = "EMAIL"
+private const val HasFirstFriendPreference = "HAS_FIRST_FRIEND"
 
 class SelfProfileStorage(context: Context) {
     data class Cache(
@@ -90,6 +91,15 @@ class SelfProfileStorage(context: Context) {
             commit()
         }
     }
+
+    fun setHasFirstFriend() {
+        preferences.edit {
+            putBoolean(HasFirstFriendPreference, true)
+        }
+    }
+
+    fun getHasFirstFriend(): Boolean =
+        preferences.getBoolean(HasFirstFriendPreference, false)
 
     fun store(
         nickname: Nickname,

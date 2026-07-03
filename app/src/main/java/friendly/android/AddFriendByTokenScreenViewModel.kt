@@ -3,40 +3,30 @@ package friendly.android
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import friendly.sdk.FriendToken
-import friendly.sdk.FriendlyClient
 import friendly.sdk.FriendlyFriendsClient
 import friendly.sdk.UserId
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AddFriendByTokenScreenViewModel(
-    private val client: FriendlyClient,
-    private val authStorage: AuthStorage,
+    private val addFriend: AddFriendUseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow<AddFriendByTokenScreenUiState>(
         value = AddFriendByTokenScreenUiState.Waiting,
     )
     val state = _state.asStateFlow()
 
+    // todo introduce events here
+    private val _events = MutableSharedFlow<String>()
+    val events = _events.shareIn(viewModelScope, Eagerly)
+
     fun add(userId: UserId, friendToken: FriendToken) {
-        val authorization = authStorage.getAuthOrNull()
-
-        if (authorization == null) {
-            _state.update {
-                AddFriendByTokenScreenUiState.Unauthorized
-            }
-            return
-        }
-
         viewModelScope.launch {
-            val result = client.friends.add(
-                authorization = authorization,
-                token = friendToken,
-                userId = userId,
-            )
-
+            val result = addFriend(friendToken, userId)
             val finalState = when (result) {
                 is FriendlyFriendsClient.AddResult.FriendTokenExpired -> {
                     AddFriendByTokenScreenUiState.FriendTokenExpired
@@ -58,7 +48,6 @@ class AddFriendByTokenScreenViewModel(
                     AddFriendByTokenScreenUiState.Success
                 }
             }
-
             _state.update { finalState }
         }
     }

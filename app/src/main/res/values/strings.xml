@@ -100,4 +100,12 @@
     <string name="code_sending_failure">Code sending failure</string>
     <string name="sign_in_failure">Sign in failure</string>
     <string name="sign_in_success">Sign in success</string>
+    <string name="friend_link_expired">Friend link expired</string>
+    <string name="network_error_occurred">Network error occurred</string>
+    <string name="no_friends_screen_primary_text">Before you can start, we need to make sure you were invited. Ask one of your friends for the invite link and paste it down below.</string>
+    <string name="paste">Paste</string>
+    <string name="welcome_to_a_private_network">Welcome to a private network!</string>
+    <string name="link_is_invalid">Invalid link</string>
+    <string name="server_error">Server error</string>
+    <string name="unauthorized">Unauthorized</string>
 </resources>

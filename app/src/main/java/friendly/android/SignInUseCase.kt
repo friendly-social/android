@@ -43,6 +43,7 @@ class SignInUseCase(
                     socialLink = details.socialLink,
                     email = details.email,
                 )
+                selfProfileStorage.setHasFirstFriend()
                 Result.Success
             }
         }

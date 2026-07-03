@@ -28,7 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -88,6 +87,7 @@ val homeNavigationItems = listOf(
 fun FriendlyApp(
     viewModelFactory: FriendlyViewModelFactory,
     authorization: Authorization?,
+    hasFirstFriend: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val navController = rememberNavController()
@@ -129,6 +129,7 @@ fun FriendlyApp(
                 navController = navController,
                 viewModelFactory = viewModelFactory,
                 authorization = authorization,
+                hasFirstFriend = hasFirstFriend,
                 contentPadding = { destination ->
                     when (destination) {
                         is Home.EditProfile ->
@@ -164,15 +165,7 @@ fun BottomNavigationBar(
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    navController.navigate(item.destination) {
-                        popUpTo(
-                            navController.graph.findStartDestination().id,
-                        ) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
+                    navController.switchHomeTab(item.destination)
                 },
                 label = {
                     Text(

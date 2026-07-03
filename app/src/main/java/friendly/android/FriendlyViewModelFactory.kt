@@ -16,6 +16,7 @@ class FriendlyViewModelFactory(
     private val sendAuthCodeUseCase: SendEmailAuthVerificationCodeUseCase,
     private val signInUseCase: SignInUseCase,
     private val confirmLoginCodeUseCase: ConfirmLoginCodeUseCase,
+    private val addFriendUseCase: AddFriendUseCase,
     private val authStorage: AuthStorage,
     private val selfProfileStorage: SelfProfileStorage,
     private val client: FriendlyClient,
@@ -123,9 +124,11 @@ class FriendlyViewModelFactory(
             modelClass == AddFriendByTokenScreenViewModel::class
         if (isAddFriendByTokenVm) {
             return AddFriendByTokenScreenViewModel(
-                client = client,
-                authStorage = authStorage,
+                addFriend = addFriendUseCase,
             ) as T
+        }
+        if (modelClass == NoFriendsBlockingScreenViewModel::class) {
+            return NoFriendsBlockingScreenViewModel(addFriendUseCase) as T
         }
         error("unknown viewmodel class")
     }
