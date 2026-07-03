@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.serialization)
     alias(libs.plugins.google.services)
     alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -69,7 +70,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.molecule)
-    implementation(libs.friendly.sdk)
     implementation(libs.serialization.json)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.ktor)
@@ -77,6 +77,13 @@ dependencies {
     implementation(libs.zxing.core)
     implementation(libs.alexzhirkevich.qrose)
     implementation(libs.ktor.logging)
-    implementation(projects.cards)
     implementation(libs.androidx.lifecycle.viewmodel)
+
+    implementation(libs.friendly.sdk)
+
+    ksp(libs.room.compiler)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+
+    implementation(projects.cards)
 }
