@@ -24,13 +24,14 @@ private data class SelfProfileScreenVmState(
     val profile: SelfProfileScreenViewModel.UserProfile? = null,
     val isError: Boolean = false,
     val isLoading: Boolean = true,
+    val isLoggingOut: Boolean = false,
 ) {
     fun toUiState(): SelfProfileScreenUiState {
         if (isLoading) return SelfProfileScreenUiState.Loading
         if (isError) return SelfProfileScreenUiState.Error
 
         if (profile != null) {
-            return SelfProfileScreenUiState.Present(profile)
+            return SelfProfileScreenUiState.Present(profile, isLoggingOut)
         }
 
         return SelfProfileScreenUiState.Error
@@ -93,7 +94,10 @@ class SelfProfileScreenViewModel(
 
     fun logout(onSignOut: () -> Unit) {
         viewModelScope.launch {
+            _state.update { it.copy(isLoggingOut = true) }
+
             if (logout()) {
+                _state.update { it.copy(isLoggingOut = false) }
                 onSignOut()
             }
         }

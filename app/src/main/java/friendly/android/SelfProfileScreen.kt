@@ -24,6 +24,7 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -52,12 +53,18 @@ private val SelfProfileScreenUiState.unlinkedEmailBadgeVisible: Boolean
     get() = if (this is Present) profile.email == null else false
 
 sealed interface SelfProfileScreenUiState {
-    data class Present(val profile: UserProfile) : SelfProfileScreenUiState
+    data class Present(
+        val profile: UserProfile,
+        val isLoggingOut: Boolean,
+    ) : SelfProfileScreenUiState
 
     data object Loading : SelfProfileScreenUiState
 
     data object Error : SelfProfileScreenUiState
 }
+
+private val SelfProfileScreenUiState.isLoggingOut
+    get() = (this as? Present)?.isLoggingOut ?: false
 
 @Composable
 fun SelfProfileScreen(
@@ -87,9 +94,9 @@ fun SelfProfileScreen(
                         ) {
                             Icon(
                                 painter =
-                                painterResource(
-                                    R.drawable.ic_edit_outlined,
-                                ),
+                                    painterResource(
+                                        R.drawable.ic_edit_outlined,
+                                    ),
                                 contentDescription = null,
                             )
                         }
@@ -123,7 +130,7 @@ fun SelfProfileScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     scrolledContainerColor =
-                    MaterialTheme.colorScheme.surfaceContainer,
+                        MaterialTheme.colorScheme.surfaceContainer,
                 ),
             )
         },
@@ -147,6 +154,7 @@ fun SelfProfileScreen(
 
             SignOutAlertDialog(
                 visible = signOutDialogVisible,
+                isLoggingOut = state.isLoggingOut,
                 onAlertVisibility = { newValue ->
                     signOutDialogVisible = newValue
                 },
@@ -291,6 +299,7 @@ private fun LoadedSelfProfileState(
 @Composable
 private fun SignOutAlertDialog(
     visible: Boolean,
+    isLoggingOut: Boolean,
     vm: SelfProfileScreenViewModel,
     onAlertVisibility: (Boolean) -> Unit,
     onSignOut: () -> Unit,
@@ -311,13 +320,24 @@ private fun SignOutAlertDialog(
                 Text(stringResource(R.string.attention))
             },
             text = {
-                Text(stringResource(R.string.log_out_alert_text))
+                when (isLoggingOut) {
+                    true -> {
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                    }
+
+                    false -> {
+                        Text(stringResource(R.string.log_out_alert_text))
+                    }
+                }
             },
             onDismissRequest = {
                 onAlertVisibility(false)
             },
             confirmButton = {
-                TextButton(onClick = { vm.logout(onSignOut) }) {
+                TextButton(
+                    onClick = { vm.logout(onSignOut) },
+                    enabled = !isLoggingOut,
+                ) {
                     Text(stringResource(R.string.log_out))
                 }
             },
