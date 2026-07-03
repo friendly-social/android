@@ -45,9 +45,8 @@ sealed interface AddFriendByTokenScreenUiState {
 }
 
 sealed interface AddFriendByTokenScreenUiEvents {
-    data class SnackbarEvent(
-        val kind: SnackbarEventKind,
-    ): AddFriendByTokenScreenUiEvents {
+    data class SnackbarEvent(val kind: SnackbarEventKind) :
+        AddFriendByTokenScreenUiEvents {
         enum class SnackbarEventKind {
             FriendLinkExpired,
             NetworkErrorOccurred,
@@ -183,7 +182,10 @@ private fun NetworkError(
     onGoBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier,
+    ) {
         NetworkErrorBox(
             onRetry = { vm.add(userId, friendToken) },
             modifier = Modifier,
