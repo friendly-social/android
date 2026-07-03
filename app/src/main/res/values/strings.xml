@@ -107,5 +107,6 @@
     <string name="welcome_to_a_private_network">Welcome to a private network!</string>
     <string name="link_is_invalid">Invalid link</string>
     <string name="server_error">Server error</string>
+    <string name="server_error_occurred">Server error occurred</string>
     <string name="unauthorized">Unauthorized</string>
 </resources>

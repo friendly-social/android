@@ -15,16 +15,23 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.rememberLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import friendly.android.AddFriendByTokenScreenUiEvents.SnackbarEvent
+import friendly.android.AddFriendByTokenScreenUiEvents.SnackbarEvent.SnackbarEventKind
 import friendly.sdk.FriendToken
 import friendly.sdk.UserId
 
@@ -33,9 +40,39 @@ sealed interface AddFriendByTokenScreenUiState {
     data object Unauthorized : AddFriendByTokenScreenUiState
     data object FriendTokenExpired : AddFriendByTokenScreenUiState
     data object NetworkError : AddFriendByTokenScreenUiState
-    data object UnknownError : AddFriendByTokenScreenUiState
+    data object ServerError : AddFriendByTokenScreenUiState
     data object Success : AddFriendByTokenScreenUiState
 }
+
+sealed interface AddFriendByTokenScreenUiEvents {
+    data class SnackbarEvent(
+        val kind: SnackbarEventKind,
+    ): AddFriendByTokenScreenUiEvents {
+        enum class SnackbarEventKind {
+            FriendLinkExpired,
+            NetworkErrorOccurred,
+            ServerErrorOccurred,
+            UnauthorizedError,
+        }
+    }
+}
+
+@Composable
+private fun snackbarStrings(): Map<SnackbarEventKind, String> =
+    SnackbarEventKind.entries.associateWith { event ->
+        when (event) {
+            FriendLinkExpired ->
+                stringResource(R.string.friend_link_expired)
+
+            NetworkErrorOccurred ->
+                stringResource(R.string.network_error_occurred)
+
+            ServerErrorOccurred -> stringResource(R.string.server_error)
+
+            UnauthorizedError ->
+                stringResource(R.string.unauthorized)
+        }
+    }
 
 @Composable
 fun AddFriendByTokenScreen(
@@ -50,8 +87,27 @@ fun AddFriendByTokenScreen(
 ) {
     val state by vm.state.collectAsState()
 
+    val lifecycleOwner = rememberLifecycleOwner()
+
+    val snackbarStrings = snackbarStrings()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(Unit) {
         vm.add(userId, friendToken)
+
+        lifecycleOwner.lifecycle.repeatOnLifecycle(STARTED) {
+            vm.events.collect { event ->
+                when (event) {
+                    is SnackbarEvent -> {
+                        snackbarHostState.showSnackbar(
+                            message = snackbarStrings.getValue(event.kind),
+                            duration = SnackbarDuration.Short,
+                        )
+                    }
+                }
+            }
+        }
     }
 
     Box(
@@ -83,8 +139,8 @@ fun AddFriendByTokenScreen(
                     Unauthorized(goToSignUp, Modifier)
                 }
 
-                AddFriendByTokenScreenUiState.UnknownError -> {
-                    Text(stringResource(R.string.unknown_error_occurred))
+                AddFriendByTokenScreenUiState.ServerError -> {
+                    Text(stringResource(R.string.server_error_occurred))
                 }
 
                 AddFriendByTokenScreenUiState.Waiting -> {
