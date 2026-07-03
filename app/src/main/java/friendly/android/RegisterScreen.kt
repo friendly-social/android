@@ -33,10 +33,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,10 +50,29 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.rememberLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import coil3.compose.AsyncImage
+import friendly.android.RegisterScreenUiEvent.SnackbarEvent.SnackbarEventKind
 import friendly.sdk.Interest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
+@Composable
+private fun snackbarStrings(): Map<SnackbarEventKind, String> {
+    return SnackbarEventKind.entries.associateWith { kind ->
+        when (kind) {
+            SnackbarEventKind.NetworkError ->
+                stringResource(R.string.network_error_occurred)
+
+            SnackbarEventKind.ServerError ->
+                stringResource(R.string.server_error_occurred)
+
+            SnackbarEventKind.CompressionFailure ->
+                stringResource(R.string.compression_failure)
+        }
+    }
+}
 
 @Composable
 fun RegisterScreen(
@@ -61,7 +85,31 @@ fun RegisterScreen(
     val scope = rememberCoroutineScope()
     val state by vm.state.collectAsState()
 
+    val lifecycleOwner = rememberLifecycleOwner()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarStrings = snackbarStrings()
+
+    LaunchedEffect(Unit) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(STARTED) {
+            vm.events.collect { event ->
+                when (event) {
+                    is SnackbarEvent -> {
+                        launch {
+                            snackbarHostState.showSnackbar(
+                                message = snackbarStrings.getValue(event.kind),
+                                duration = SnackbarDuration.Short,
+                            )
+                        }
+                    }
+
+                    is SuccessfulRegistration -> onRegistration()
+                }
+            }
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier.padding(contentPadding),
     ) { innerPadding ->
         ScreenContent(
@@ -69,8 +117,9 @@ fun RegisterScreen(
             pagerState = pagerState,
             state = state,
             vm = vm,
-            onHome = onRegistration,
-            modifier = Modifier.padding(innerPadding).imePadding(),
+            modifier = Modifier
+                .padding(innerPadding)
+                .imePadding(),
         )
     }
 }
@@ -81,7 +130,6 @@ fun ScreenContent(
     scope: CoroutineScope,
     pagerState: PagerState,
     vm: RegisterScreenViewModel,
-    onHome: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when (val state = state) {
@@ -126,9 +174,7 @@ fun ScreenContent(
                     1 -> InterestsPage(
                         state = state,
                         onToggle = vm::toggleInterest,
-                        onProceed = {
-                            vm.register(onSuccess = onHome)
-                        },
+                        onProceed = vm::register,
                         onBack = {
                             scope.launch { pagerState.animateScrollToPage(0) }
                         },

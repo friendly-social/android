@@ -43,6 +43,20 @@ sealed interface RegisterScreenUiState {
     data object Generating : RegisterScreenUiState
 }
 
+sealed interface RegisterScreenUiEvent {
+    data object SuccessfulRegistration : RegisterScreenUiEvent
+
+    data class SnackbarEvent(
+        val kind: SnackbarEventKind,
+    ): RegisterScreenUiEvent {
+        enum class SnackbarEventKind {
+            NetworkError,
+            ServerError,
+            CompressionFailure,
+        }
+    }
+}
+
 val AvatarState.uriOrNull: Uri?
     get() = when (this) {
         is AvatarState.None -> null

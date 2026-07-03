@@ -4,18 +4,25 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import friendly.android.RegisterScreenUiEvent.SnackbarEvent
+import friendly.android.RegisterScreenUiEvent.SnackbarEvent.SnackbarEventKind
 import friendly.android.RegisterScreenUiState.AvatarState
 import friendly.android.RegisterScreenUiState.AvatarState.None
 import friendly.android.RegisterScreenUiState.AvatarState.Uploaded
+import friendly.android.RegisterUseCase.RegistrationResult.NetworkError
+import friendly.android.RegisterUseCase.RegistrationResult.ServerError
+import friendly.android.RegisterUseCase.RegistrationResult.Success
 import friendly.sdk.FileDescriptor
 import friendly.sdk.Interest
 import friendly.sdk.InterestList
 import friendly.sdk.Nickname
 import friendly.sdk.SocialLink
 import friendly.sdk.UserDescription
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -74,6 +81,9 @@ class RegisterScreenViewModel(
             ),
         )
 
+    private val _events = MutableSharedFlow<RegisterScreenUiEvent>()
+    val events = _events.shareIn(viewModelScope, Eagerly)
+
     fun updateNickname(new: String) {
         _state.update {
             it.copy(nickname = new)
@@ -114,8 +124,7 @@ class RegisterScreenViewModel(
         val descriptionIsValid =
             UserDescription.validate(_state.value.description)
         val interestsAreValid = _state.value.pickedInterests.isNotEmpty()
-        // TODO: use sdk validation for socialLink
-        val socialLinkIsValid = _state.value.socialLink.isNotEmpty()
+        val socialLinkIsValid = SocialLink.validate(_state.value.socialLink)
 
         return nicknameIsValid &&
             descriptionIsValid &&
@@ -123,7 +132,7 @@ class RegisterScreenViewModel(
             socialLinkIsValid
     }
 
-    fun register(onSuccess: () -> Unit) {
+    fun register() {
         viewModelScope.launch {
             if (!stateIsValid()) return@launch
 
@@ -134,15 +143,29 @@ class RegisterScreenViewModel(
             val socialLink = SocialLink.orThrow(_state.value.socialLink)
             val interests = InterestList.orThrow(_state.value.pickedInterests)
             val avatarFileDescriptor = _state.value.avatarFileDescriptor
-            register(
+            val result = register(
                 nickname = nickname,
                 description = description,
                 interests = interests,
                 socialLink = socialLink,
                 avatar = avatarFileDescriptor,
             )
-            FirebaseKit.onLogin()
-            onSuccess()
+            when (result) {
+                NetworkError -> {
+                    _events.emit(SnackbarEvent(SnackbarEventKind.NetworkError))
+                    _state.update { it.copy(isGenerating = false) }
+                }
+
+                ServerError -> {
+                    _events.emit(SnackbarEvent(SnackbarEventKind.ServerError))
+                    _state.update { it.copy(isGenerating = false) }
+                }
+
+                Success -> {
+                    FirebaseKit.onLogin()
+                    _events.emit(RegisterScreenUiEvent.SuccessfulRegistration)
+                }
+            }
         }
     }
 
@@ -191,18 +214,23 @@ class RegisterScreenViewModel(
 
             is AvatarUploadUseCase.UploadingResult.CompressionFailure -> {
                 _state.update { old ->
+                    _events.emit(
+                        SnackbarEvent(SnackbarEventKind.CompressionFailure),
+                    )
                     old.copy(avatar = None)
                 }
             }
 
             is AvatarUploadUseCase.UploadingResult.IOError -> {
                 _state.update { old ->
+                    _events.emit(SnackbarEvent(SnackbarEventKind.NetworkError))
                     old.copy(avatar = None)
                 }
             }
 
             is AvatarUploadUseCase.UploadingResult.ServerError -> {
                 _state.update { old ->
+                    _events.emit(SnackbarEvent(SnackbarEventKind.ServerError))
                     old.copy(avatar = None)
                 }
             }
