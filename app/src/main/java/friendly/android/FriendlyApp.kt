@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -95,18 +96,31 @@ fun FriendlyApp(
     val currentDestination = currentBackStackEntry?.destination
     val currentDestinationHierarchy = currentDestination?.hierarchy
 
-    val isHome = currentDestinationHierarchy?.any { destination ->
-        homeNavigationItems.any { item ->
-            destination.hasRoute(item.destination::class)
+    val destinationForBottomBar =
+        if (currentDestination?.hasRoute(Home.PictureViewerDialog::class) ==
+            true
+        ) {
+            navController.previousBackStackEntry?.destination
+        } else {
+            currentDestination
         }
-    } ?: false
+
+    val bottomBarVisible = destinationForBottomBar
+        ?.hierarchy
+        ?.any { destination ->
+            homeNavigationItems.any { item ->
+                destination.hasRoute(item.destination::class)
+            }
+        }
+        ?: false
+
     val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues()
 
     FriendlyTheme {
         Scaffold(
             bottomBar = {
                 AnimatedVisibility(
-                    visible = isHome,
+                    visible = bottomBarVisible,
                     enter = slideInVertically(
                         initialOffsetY = { it },
                         animationSpec = tween(300, easing = EaseInOutCubic),
@@ -136,6 +150,8 @@ fun FriendlyApp(
                             innerPadding
                                 .dropBottom()
                                 .plusBottom(navigationBarsPadding)
+
+                        is Home.PictureViewerDialog -> PaddingValues(0.dp)
 
                         else -> innerPadding
                     }

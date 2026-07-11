@@ -1,7 +1,6 @@
 package friendly.android
 
 import friendly.sdk.FileDescriptor
-import friendly.sdk.FriendlyAuthClient
 import friendly.sdk.FriendlyClient
 import friendly.sdk.InterestList
 import friendly.sdk.Nickname

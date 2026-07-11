@@ -1,5 +1,6 @@
 package friendly.android
 
+import android.net.Uri
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
@@ -24,6 +25,7 @@ fun IndicatedCardFeed(
     currentItems: List<FeedEntry>,
     like: (FeedEntry) -> Unit,
     dislike: (FeedEntry) -> Unit,
+    onProfilePictureClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val swipeCardsState = rememberSwipeableCardsState(
@@ -63,6 +65,7 @@ fun IndicatedCardFeed(
                         swipeCardsState.swipe(SwipeableCardDirection.Left)
                         dislike(entry)
                     },
+                    onProfilePictureClick = onProfilePictureClick,
                     modifier = Modifier.fillMaxSize(),
                 )
             }

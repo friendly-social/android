@@ -59,8 +59,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
-private fun snackbarStrings(): Map<SnackbarEventKind, String> {
-    return SnackbarEventKind.entries.associateWith { kind ->
+private fun snackbarStrings(): Map<SnackbarEventKind, String> =
+    SnackbarEventKind.entries.associateWith { kind ->
         when (kind) {
             SnackbarEventKind.NetworkError ->
                 stringResource(R.string.network_error_occurred)
@@ -72,7 +72,6 @@ private fun snackbarStrings(): Map<SnackbarEventKind, String> {
                 stringResource(R.string.compression_failure)
         }
     }
-}
 
 @Composable
 fun RegisterScreen(

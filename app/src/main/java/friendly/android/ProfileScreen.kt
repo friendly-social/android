@@ -11,6 +11,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -94,11 +95,12 @@ data class ProfileScreenSource(
 fun ProfileScreen(
     source: ProfileScreenSource,
     onHome: () -> Unit,
+    onProfilePictureClick: (Uri) -> Unit,
     vm: ProfileScreenViewModel,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues.Zero,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues.Zero,
 ) {
     val state by vm.state.collectAsState()
     var removeFriendDialogVisible by remember { mutableStateOf(false) }
@@ -123,6 +125,7 @@ fun ProfileScreen(
             onDismissRemoveFriendDialog = { removeFriendDialogVisible = false },
             vm = vm,
             onHome = onHome,
+            onProfilePictureClick = onProfilePictureClick,
             profileSource = source,
             state = state,
             sharedTransitionScope = sharedTransitionScope,
@@ -138,13 +141,14 @@ private fun ScaffoldContent(
     removeFriendDialogVisible: Boolean,
     vm: ProfileScreenViewModel,
     onHome: () -> Unit,
+    onProfilePictureClick: (Uri) -> Unit,
     profileSource: ProfileScreenSource,
     state: ProfileScreenUiState,
     onDismissRemoveFriendDialog: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues.Zero, // todo exp
+    contentPadding: PaddingValues = PaddingValues.Zero,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         RemoveFriendAlertDialog(
@@ -161,6 +165,7 @@ private fun ScaffoldContent(
             state = state,
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = animatedContentScope,
+            onProfilePictureClick = onProfilePictureClick,
             modifier = Modifier,
             contentPadding = contentPadding,
         )
@@ -212,6 +217,7 @@ fun SharedAvatarNicknameContent(
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     contentPadding: PaddingValues,
+    onProfilePictureClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ): Unit = with(sharedTransitionScope) {
     Column(
@@ -228,6 +234,7 @@ fun SharedAvatarNicknameContent(
             userId = userId,
             avatar = avatar,
             animatedContentScope = animatedContentScope,
+            onProfilePictureClick = onProfilePictureClick,
         )
 
         Spacer(Modifier.height(16.dp))
@@ -312,6 +319,7 @@ private fun SharedTransitionScope.PreloadedContent(
     userId: UserId,
     avatar: Uri?,
     animatedContentScope: AnimatedContentScope,
+    onProfilePictureClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -330,7 +338,15 @@ private fun SharedTransitionScope.PreloadedContent(
                     ),
                     animatedVisibilityScope = animatedContentScope,
                 )
-                .skipToLookaheadSize(),
+                .skipToLookaheadSize()
+                .clickable(
+                    onClick = {
+                        avatar?.let(onProfilePictureClick)
+                    },
+                    indication = null,
+                    interactionSource = null,
+                ),
+
         )
 
         Spacer(Modifier.height(24.dp))

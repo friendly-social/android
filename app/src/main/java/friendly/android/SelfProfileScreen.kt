@@ -1,9 +1,11 @@
 package friendly.android
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,10 +55,8 @@ private val SelfProfileScreenUiState.unlinkedEmailBadgeVisible: Boolean
     get() = if (this is Present) profile.email == null else false
 
 sealed interface SelfProfileScreenUiState {
-    data class Present(
-        val profile: UserProfile,
-        val isLoggingOut: Boolean,
-    ) : SelfProfileScreenUiState
+    data class Present(val profile: UserProfile, val isLoggingOut: Boolean) :
+        SelfProfileScreenUiState
 
     data object Loading : SelfProfileScreenUiState
 
@@ -71,6 +71,7 @@ fun SelfProfileScreen(
     vm: SelfProfileScreenViewModel,
     onSignOut: () -> Unit,
     onEditProfileClick: (EditProfileRoute) -> Unit,
+    onProfilePictureClick: (uri: String) -> Unit, // todo uri typing
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
 ) {
@@ -93,10 +94,9 @@ fun SelfProfileScreen(
                             },
                         ) {
                             Icon(
-                                painter =
-                                    painterResource(
-                                        R.drawable.ic_edit_outlined,
-                                    ),
+                                painter = painterResource(
+                                    R.drawable.ic_edit_outlined,
+                                ),
                                 contentDescription = null,
                             )
                         }
@@ -130,7 +130,7 @@ fun SelfProfileScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     scrolledContainerColor =
-                        MaterialTheme.colorScheme.surfaceContainer,
+                    MaterialTheme.colorScheme.surfaceContainer,
                 ),
             )
         },
@@ -175,6 +175,9 @@ fun SelfProfileScreen(
                 is Present -> {
                     LoadedSelfProfileState(
                         state = state,
+                        onProfilePictureClick = { uri ->
+                            onProfilePictureClick(uri.toString())
+                        },
                         contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -230,6 +233,7 @@ fun LinkEmailAlertDialog(
 @Composable
 private fun LoadedSelfProfileState(
     state: Present,
+    onProfilePictureClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues.Zero,
 ) {
@@ -254,7 +258,13 @@ private fun LoadedSelfProfileState(
                     userId = state.profile.userId,
                     uri = state.profile.avatar,
                     style = Large,
-                    modifier = Modifier,
+                    modifier = Modifier.clickable(
+                        onClick = {
+                            state.profile.avatar?.let(onProfilePictureClick)
+                        },
+                        indication = null,
+                        interactionSource = null,
+                    ),
                 )
 
                 Spacer(Modifier.height(24.dp))

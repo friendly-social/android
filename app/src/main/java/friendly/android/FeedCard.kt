@@ -64,6 +64,7 @@ fun FeedCard(
     entry: FeedEntry,
     like: (FeedEntry) -> Unit,
     dislike: (FeedEntry) -> Unit,
+    onProfilePictureClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -75,6 +76,7 @@ fun FeedCard(
                 entry = entry,
                 like = like,
                 dislike = dislike,
+                onProfilePictureClick = onProfilePictureClick,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -87,6 +89,7 @@ private fun FeedCardContent(
     entry: FeedEntry,
     like: (FeedEntry) -> Unit,
     dislike: (FeedEntry) -> Unit,
+    onProfilePictureClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
@@ -101,6 +104,7 @@ private fun FeedCardContent(
                 avatarUri = entry.avatarUri,
                 isExtendedNetwork = entry.isExtendedNetwork,
                 isRequest = entry.isRequest,
+                onProfilePictureClick = onProfilePictureClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f),
@@ -262,6 +266,7 @@ private fun AvatarWithOverlay(
     avatarUri: Uri?,
     isExtendedNetwork: Boolean,
     isRequest: Boolean,
+    onProfilePictureClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
@@ -269,7 +274,13 @@ private fun AvatarWithOverlay(
             userId = userId,
             nickname = nickname,
             avatarUri = avatarUri,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(
+                    onClick = { avatarUri?.let(onProfilePictureClick) },
+                    indication = null,
+                    interactionSource = null,
+                ),
         )
 
         Surface(

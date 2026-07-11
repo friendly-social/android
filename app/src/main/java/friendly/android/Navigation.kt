@@ -7,12 +7,15 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.DialogProperties
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -266,6 +269,11 @@ object FriendlyNavGraph {
             val nickname: String,
             val avatarUri: String?,
         ) : Home()
+
+        @Serializable
+        data class PictureViewerDialog(val uri: String) : Home()
+
+        // todo: do they really should belong to the Home?
     }
 
     @Serializable
@@ -385,6 +393,13 @@ fun FriendlyNavGraph(
                         vm = viewModel<FeedScreenViewModel>(
                             factory = viewModelFactory,
                         ),
+                        onProfilePictureClick = { uri ->
+                            navController.navigate(
+                                route = Home.PictureViewerDialog(
+                                    uri.toString(),
+                                ),
+                            )
+                        },
                         modifier = Modifier,
                         contentPadding = contentPadding(Home.Feed),
                     )
@@ -492,6 +507,11 @@ fun FriendlyNavGraph(
                         onEditProfileClick = { route ->
                             navController.navigate(route)
                         },
+                        onProfilePictureClick = { uri ->
+                            navController.navigate(
+                                route = Home.PictureViewerDialog(uri),
+                            )
+                        },
                         contentPadding = contentPadding(Home.SelfProfile),
                         modifier = Modifier,
                     )
@@ -552,10 +572,32 @@ fun FriendlyNavGraph(
                         vm = viewModel<ProfileScreenViewModel>(
                             factory = viewModelFactory,
                         ),
+                        contentPadding = contentPadding(route),
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedContentScope = this@composable,
+                        onProfilePictureClick = { uri ->
+                            navController.navigate(
+                                route = Home.PictureViewerDialog(
+                                    uri.toString(),
+                                ),
+                            )
+                        },
+                    )
+                }
+
+                dialog<Home.PictureViewerDialog>(
+                    dialogProperties = DialogProperties(
+                        usePlatformDefaultWidth = false,
+                        decorFitsSystemWindows = false,
+                    ),
+                ) { backStackEntry ->
+                    val route: Home.PictureViewerDialog = backStackEntry
+                        .toRoute()
+                    PictureViewerDialog(
+                        onDismiss = { navController.popBackStack() },
+                        uri = route.uri.toUri(),
                         contentPadding = contentPadding(route),
-                        modifier = Modifier,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
@@ -573,6 +615,7 @@ fun FriendlyNavGraph(
                     onGoBack = { navController.popBackStack() },
                     onNetworkScreen = {
                         navController.navigate(Home.Network) {
+                            popUpTo(navController.graph.id)
                         }
                     },
                     friendToken = FriendToken.orThrow(friendToken),

@@ -1,5 +1,6 @@
 package friendly.android
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,6 +55,7 @@ sealed interface FeedScreenUiState {
 fun FeedScreen(
     vm: FeedScreenViewModel,
     contentPadding: PaddingValues,
+    onProfilePictureClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsState()
@@ -91,7 +93,7 @@ fun FeedScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
             ) {
-                ScaffoldContent(vm, state)
+                ScaffoldContent(vm, state, onProfilePictureClick)
             }
         }
     }
@@ -101,6 +103,7 @@ fun FeedScreen(
 private fun ScaffoldContent(
     vm: FeedScreenViewModel,
     state: FeedScreenUiState,
+    onProfilePictureClick: (Uri) -> Unit,
 ) {
     AnimatedContent(
         targetState = state,
@@ -122,6 +125,7 @@ private fun ScaffoldContent(
                         currentItems = state.currentFeedItems,
                         like = vm::like,
                         dislike = vm::dislike,
+                        onProfilePictureClick = onProfilePictureClick,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }

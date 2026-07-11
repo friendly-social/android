@@ -46,9 +46,8 @@ sealed interface RegisterScreenUiState {
 sealed interface RegisterScreenUiEvent {
     data object SuccessfulRegistration : RegisterScreenUiEvent
 
-    data class SnackbarEvent(
-        val kind: SnackbarEventKind,
-    ): RegisterScreenUiEvent {
+    data class SnackbarEvent(val kind: SnackbarEventKind) :
+        RegisterScreenUiEvent {
         enum class SnackbarEventKind {
             NetworkError,
             ServerError,
