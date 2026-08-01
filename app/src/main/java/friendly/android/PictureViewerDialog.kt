@@ -121,6 +121,7 @@ fun TopBar(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_arrow_back),
+                tint = Color.White,
                 contentDescription = null,
             )
         }
