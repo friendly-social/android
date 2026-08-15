@@ -3,7 +3,6 @@ package friendly.android
 import android.net.Uri
 import friendly.android.AvatarUploadUseCase.UploadingPercentage
 import friendly.android.RegisterScreenUiState.AvatarState
-import friendly.sdk.Interest
 import friendly.sdk.Nickname
 import friendly.sdk.UserDescription
 
@@ -21,8 +20,7 @@ val RegisterScreenUiState.isFirstPageValid: Boolean
 
 sealed interface RegisterScreenUiState {
     data class Editing(
-        val availableInterests: List<Interest>,
-        val pickedInterests: List<Interest>,
+        val pickedInterests: List<String>,
         val nickname: String,
         val socialLink: String,
         val description: String,

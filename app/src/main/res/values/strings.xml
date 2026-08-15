@@ -110,4 +110,5 @@
     <string name="server_error_occurred">Server error occurred</string>
     <string name="unauthorized">Unauthorized</string>
     <string name="compression_failure">Compression failure</string>
+    <string name="add_new_interest">Add new interest</string>
 </resources>

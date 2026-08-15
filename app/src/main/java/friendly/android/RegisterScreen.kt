@@ -20,17 +20,14 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -42,7 +39,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,7 +51,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import coil3.compose.AsyncImage
 import friendly.android.RegisterScreenUiEvent.SnackbarEvent.SnackbarEventKind
 import friendly.sdk.Interest
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
@@ -77,11 +72,10 @@ private fun snackbarStrings(): Map<SnackbarEventKind, String> =
 fun RegisterScreen(
     vm: RegisterScreenViewModel,
     onRegistration: () -> Unit,
+    onEditInterests: (initialInterests: List<String>) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
 ) {
-    val pagerState = rememberPagerState(initialPage = 0) { 2 }
-    val scope = rememberCoroutineScope()
     val state by vm.state.collectAsState()
 
     val lifecycleOwner = rememberLifecycleOwner()
@@ -112,10 +106,9 @@ fun RegisterScreen(
         modifier = modifier.padding(contentPadding),
     ) { innerPadding ->
         ScreenContent(
-            scope = scope,
-            pagerState = pagerState,
             state = state,
             vm = vm,
+            onEditInterests = onEditInterests,
             modifier = Modifier
                 .padding(innerPadding)
                 .imePadding(),
@@ -126,9 +119,8 @@ fun RegisterScreen(
 @Composable
 fun ScreenContent(
     state: RegisterScreenUiState,
-    scope: CoroutineScope,
-    pagerState: PagerState,
     vm: RegisterScreenViewModel,
+    onEditInterests: (initialInterests: List<String>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when (val state = state) {
@@ -148,46 +140,27 @@ fun ScreenContent(
         }
 
         is RegisterScreenUiState.Editing -> {
-            HorizontalPager(
-                state = pagerState,
-                userScrollEnabled = false,
-                modifier = modifier,
-            ) { pageIndex ->
-                when (pageIndex) {
-                    0 -> NicknameAndDescriptionPage(
-                        state = state,
-                        onNickname = vm::updateNickname,
-                        onDescription = vm::updateDescription,
-                        onSocialLink = vm::updateSocialLink,
-                        onAvatarResult = vm::pickAvatar,
-                        onProceed = {
-                            if (state.isFirstPageValid) {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(1)
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxSize(),
-                    )
-
-                    1 -> InterestsPage(
-                        state = state,
-                        onToggle = vm::toggleInterest,
-                        onProceed = vm::register,
-                        onBack = {
-                            scope.launch { pagerState.animateScrollToPage(0) }
-                        },
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-            }
+            EditingState(
+                state = state,
+                onNickname = vm::updateNickname,
+                onDescription = vm::updateDescription,
+                onSocialLink = vm::updateSocialLink,
+                onAvatarResult = vm::pickAvatar,
+                onRegister = vm::register,
+                onEditInterests = {
+                    // TODO: need to pass an interest list here
+                    onEditInterests(state.pickedInterests)
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }
 
 @Composable
-private fun NicknameAndDescriptionPage(
-    onProceed: () -> Unit,
+private fun EditingState(
+    onRegister: () -> Unit,
+    onEditInterests: () -> Unit,
     modifier: Modifier = Modifier,
     onNickname: (String) -> Unit,
     onSocialLink: (String) -> Unit,
@@ -230,7 +203,24 @@ private fun NicknameAndDescriptionPage(
             modifier = Modifier,
         )
 
-        Spacer(Modifier.height(8.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(
+                space = 8.dp,
+                alignment = Alignment.CenterHorizontally,
+            ),
+            maxItemsInEachRow = 4,
+        ) {
+            state.pickedInterests.forEach { interest ->
+                InterestChip(Interest.orThrow(interest))
+            }
+        }
+
+        Button(
+            onClick = onEditInterests,
+            shape = ButtonDefaults.textShape,
+        ) {
+            Text(stringResource(R.string.edit_interests))
+        }
 
         Row {
             Icon(
@@ -299,13 +289,9 @@ private fun NicknameAndDescriptionPage(
                     .height(64.dp),
             ) {
                 Button(
-                    onClick = {
-                        onProceed()
-                    },
+                    onClick = onRegister,
                 ) {
-                    Text(
-                        text = stringResource(R.string.proceed),
-                    )
+                    Text(text = stringResource(R.string.sign_up))
                 }
             }
         } else {
@@ -371,79 +357,6 @@ private fun AvatarPicker(
                         modifier = Modifier.fillMaxSize(),
                     )
                     CircularProgressIndicator(Modifier.size(32.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun InterestsPage(
-    state: RegisterScreenUiState.Editing,
-    onToggle: (Interest) -> Unit,
-    onBack: () -> Unit,
-    onProceed: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_interests_outlined),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(128.dp),
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(R.string.pick_your_interests),
-            style = MaterialTheme.typography.headlineLarge,
-        )
-
-        Spacer(Modifier.height(32.dp))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(
-                space = 8.dp,
-                alignment = Alignment.CenterHorizontally,
-            ),
-            maxItemsInEachRow = 4,
-        ) {
-            interests.forEach { interest ->
-                ToggleableInterestChip(
-                    interest = interest,
-                    selected = interest in state.pickedInterests,
-                    onToggle = onToggle,
-                )
-            }
-        }
-
-        Spacer(Modifier.height(32.dp))
-
-        Row(modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(
-                onClick = onBack,
-            ) {
-                Text(stringResource(R.string.back))
-            }
-
-            Spacer(Modifier.weight(1f))
-
-            if (state.pickedInterests.isNotEmpty()) {
-                Button(
-                    onClick = {
-                        onProceed()
-                    },
-                ) {
-                    Text(
-                        text = stringResource(R.string.proceed),
-                    )
                 }
             }
         }

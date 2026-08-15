@@ -42,7 +42,6 @@ private data class EditProfileScreenVmState(
     val userId: UserId,
     val initialNickname: Nickname,
     val currentProfile: CurrentProfile,
-    val availableInterests: List<Interest>,
     val isSaving: Boolean,
     val isSavable: Boolean,
     val hasChanges: Boolean,
@@ -75,7 +74,6 @@ private data class EditProfileScreenVmState(
             ),
             isSavable = isSavable,
             hasChanges = hasChanges,
-            availableInterests = availableInterests,
         )
     }
 
@@ -160,7 +158,6 @@ class EditProfileScreenViewModel(
             userId = route.userId.typed(),
             initialNickname = initialProfile.nickname,
             currentProfile = CurrentProfile.initial(initialProfile),
-            availableInterests = interests,
             isSavable = false,
             isSaving = false,
             hasChanges = false,
@@ -184,10 +181,6 @@ class EditProfileScreenViewModel(
         scope = viewModelScope,
         started = Eagerly,
     )
-
-    fun toggleInterest(interest: Interest) {
-        _state.toggleInterest(interest, initialProfile)
-    }
 
     fun onNickname(string: String) {
         _state.updateNickname(string, initialProfile)
@@ -242,6 +235,10 @@ class EditProfileScreenViewModel(
                 isUnlinkable = false,
             )
         }
+    }
+
+    fun onPickedInterests(newPickedInterests: List<String>) {
+        _state.updateInterests(newPickedInterests, initialProfile)
     }
 
     fun pickAvatar(uri: Uri?) {
@@ -351,19 +348,15 @@ class EditProfileScreenViewModel(
     }
 }
 
-private fun EditProfileScreenVmStateFlow.toggleInterest(
-    interest: Interest,
+private fun EditProfileScreenVmStateFlow.updateInterests(
+    newPickedInterests: List<String>,
     initialProfile: InitialProfile,
 ) {
     val state = this
-    val picked = interest in state.value.currentProfile.interests
     val previousProfile = state.value.currentProfile
-    val newInterests = if (picked) {
-        previousProfile.interests.minus(interest)
-    } else {
-        previousProfile.interests.plus(interest)
-    }
-    val newProfile = previousProfile.copy(interests = newInterests)
+    val newProfile = previousProfile.copy(
+        interests = newPickedInterests.map(Interest::orThrow),
+    )
     updateCurrentProfile(newProfile, initialProfile)
 }
 
@@ -496,6 +489,7 @@ private fun EditProfileScreenVmStateFlow.updateCurrentProfile(
     }
 }
 
+// TODO: move this thing into toUiState function to simplify everything
 private fun CurrentProfile.isSavable(initialProfile: InitialProfile): Boolean {
     val newProfile = this
     val hasChanges = newProfile.hasChanges(initialProfile)
@@ -505,6 +499,7 @@ private fun CurrentProfile.isSavable(initialProfile: InitialProfile): Boolean {
     return hasChanges && allFieldsAreValid && emailIsNotVerifiable
 }
 
+// TODO: move this thing into toUiState function
 private fun CurrentProfile.hasChanges(
     initialProfile: InitialProfile,
 ): Boolean {

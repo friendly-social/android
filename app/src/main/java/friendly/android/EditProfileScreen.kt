@@ -33,7 +33,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -83,7 +82,6 @@ object EditProfileScreen {
         val onSocialLink: (String) -> Unit,
         val onDescription: (String) -> Unit,
         val onEmail: (String) -> Unit,
-        val toggleInterest: (Interest) -> Unit,
     )
 
     sealed interface Event {
@@ -107,7 +105,6 @@ object EditProfileScreen {
             override val userId: UserId,
             override val initialNickname: Nickname,
             val profile: CurrentProfileUiState,
-            val availableInterests: List<Interest>,
             val isSavable: Boolean,
             val hasChanges: Boolean,
         ) : EditProfileScreenUiState
@@ -140,6 +137,7 @@ fun EditProfileScreen(
     onBack: () -> Unit,
     onSendEmailCode: (Email) -> Unit,
     vm: EditProfileScreenViewModel,
+    onEditInterests: (List<String>) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
 ) {
@@ -149,7 +147,6 @@ fun EditProfileScreen(
             onSocialLink = vm::onSocialLink,
             onDescription = vm::onDescription,
             onEmail = vm::onEmail,
-            toggleInterest = vm::toggleInterest,
         )
     }
     val state by vm.state.collectAsState()
@@ -262,6 +259,7 @@ fun EditProfileScreen(
                         },
                         onVerifyEmailClick = vm::sendEmailVerificationCode,
                         onUnlinkEmailClick = vm::unlinkEmailAddress,
+                        onEditInterests = onEditInterests,
                         modifier = modifier
                             .fillMaxSize()
                             .padding(innerPadding)
@@ -284,6 +282,7 @@ private suspend fun handleEvent(
             val message = snackbarStrings.getValue(event)
             snackbarHostState.showSnackbar(message)
         }
+
         is EditProfileScreen.Event.VerificationCodeSent -> {
             onSendEmailCode(event.email)
         }
@@ -446,24 +445,15 @@ private fun EditProfileState(
     onEditAvatarClick: () -> Unit,
     onVerifyEmailClick: () -> Unit,
     onUnlinkEmailClick: () -> Unit,
+    onEditInterests: (List<String>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var editInterestsVisible by remember { mutableStateOf(false) }
-
     Box(
         modifier = modifier
             .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
             .fillMaxSize(),
     ) {
-        EditInterestsModalSheet(
-            visible = editInterestsVisible,
-            state = state,
-            onDismissRequest = { editInterestsVisible = false },
-            onToggle = onEdit.toggleInterest,
-            modifier = Modifier,
-        )
-
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -489,7 +479,11 @@ private fun EditProfileState(
                     InterestChip(interest)
                 }
                 SuggestionChip(
-                    onClick = { editInterestsVisible = true },
+                    onClick = {
+                        onEditInterests(
+                            state.profile.interests.map(Interest::string),
+                        )
+                    },
                     label = { Text(stringResource(R.string.edit_interests)) },
                     modifier = Modifier.height(32.dp),
                 )
@@ -522,7 +516,7 @@ private fun EditProfileState(
                                 onClick = onVerifyEmailClick,
                                 enabled = emailState.isVerifiable,
                                 modifier = Modifier.padding(horizontal = 8.dp),
-                            ) { Text("Verify") }
+                            ) { Text(stringResource(R.string.verify)) }
                         }
                     }
                 },
@@ -564,25 +558,6 @@ private fun EditProfileState(
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(12.dp))
-        }
-    }
-}
-
-@Composable
-private fun EditInterestsModalSheet(
-    visible: Boolean,
-    state: EditProfileScreenUiState.Edit,
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
-    onToggle: (Interest) -> Unit,
-) {
-    if (visible) {
-        ModalBottomSheet(onDismissRequest = onDismissRequest) {
-            InterestsEditorContent(
-                state = state,
-                onToggle = onToggle,
-                modifier = modifier,
-            )
         }
     }
 }
@@ -691,45 +666,6 @@ private fun EditAvatar(
                         .padding(4.dp)
                         .size(24.dp)
                         .align(Alignment.TopEnd),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun InterestsEditorContent(
-    state: EditProfileScreenUiState.Edit,
-    onToggle: (Interest) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .padding(horizontal = 8.dp)
-            .fillMaxSize(),
-    ) {
-        Text(
-            text = stringResource(R.string.edit_interests),
-            textAlign = Center,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(
-                space = 8.dp,
-                alignment = Alignment.CenterHorizontally,
-            ),
-            maxItemsInEachRow = 4,
-        ) {
-            state.availableInterests.forEach { interest ->
-                ToggleableInterestChip(
-                    interest = interest,
-                    selected = interest in state.profile.interests,
-                    onToggle = onToggle,
                 )
             }
         }

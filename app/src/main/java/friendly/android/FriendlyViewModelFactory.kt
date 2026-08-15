@@ -130,6 +130,10 @@ class FriendlyViewModelFactory(
         if (modelClass == NoFriendsBlockingScreenViewModel::class) {
             return NoFriendsBlockingScreenViewModel(addFriendUseCase) as T
         }
+        if (modelClass == EditInterestsDialogViewModel::class) {
+            val savedStateHandle = extras.createSavedStateHandle()
+            return EditInterestsDialogViewModel(savedStateHandle) as T
+        }
         error("unknown viewmodel class")
     }
 }

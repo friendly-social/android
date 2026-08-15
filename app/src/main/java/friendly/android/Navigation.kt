@@ -273,6 +273,9 @@ object FriendlyNavGraph {
         @Serializable
         data class PictureViewerDialog(val uri: String) : Home()
 
+        @Serializable
+        data class EditInterestsDialog(val interests: List<String>) : Home()
+
         // todo: do they really should belong to the Home?
     }
 
@@ -297,7 +300,8 @@ val EmailSheetTypeMap = mapOf(
     typeOf<EmailSerializable>() to EmailSerializableNavType,
 )
 
-const val VerificationCodeStateKey = "verification_code_state"
+private const val VerificationCodeStateKey = "verification_code_state"
+private const val PickedInterestsStateKey = "picked_interests_state"
 
 @Composable
 fun FriendlyNavGraph(
@@ -371,16 +375,34 @@ fun FriendlyNavGraph(
                 )
             }
 
-            composable<Registration> {
+            composable<Registration> { backStackEntry ->
                 val vm = viewModel<RegisterScreenViewModel>(
                     factory = viewModelFactory,
                 )
+
+                val pickedInterestsState by backStackEntry
+                    .savedStateHandle
+                    .getStateFlow<List<String>?>(
+                        key = PickedInterestsStateKey,
+                        initialValue = null,
+                    )
+                    .collectAsStateWithLifecycle()
+
+                LaunchedEffect(pickedInterestsState) {
+                    pickedInterestsState?.let(vm::onPickedInterests)
+                }
+
                 RegisterScreen(
                     vm = vm,
                     onRegistration = {
                         navController.navigate(NoFriendsBlockingScreen) {
                             popUpTo(navController.graph.id)
                         }
+                    },
+                    onEditInterests = { initialInterests ->
+                        navController.navigate(
+                            Home.EditInterestsDialog(initialInterests),
+                        )
                     },
                     contentPadding = contentPadding(Registration),
                     modifier = Modifier,
@@ -542,6 +564,18 @@ fun FriendlyNavGraph(
                         }
                     }
 
+                    val pickedInterestsState by backStackEntry
+                        .savedStateHandle
+                        .getStateFlow<List<String>?>(
+                            key = PickedInterestsStateKey,
+                            initialValue = null,
+                        )
+                        .collectAsStateWithLifecycle()
+
+                    LaunchedEffect(pickedInterestsState) {
+                        pickedInterestsState?.let(vm::onPickedInterests)
+                    }
+
                     EditProfileScreen(
                         onBack = { navController.popBackStack() },
                         onSendEmailCode = { email ->
@@ -553,6 +587,11 @@ fun FriendlyNavGraph(
                         },
                         vm = vm,
                         contentPadding = contentPadding(route),
+                        onEditInterests = { initialInterests ->
+                            navController.navigate(
+                                Home.EditInterestsDialog(initialInterests),
+                            )
+                        },
                     )
                 }
 
@@ -598,6 +637,32 @@ fun FriendlyNavGraph(
                         uri = route.uri.toUri(),
                         contentPadding = contentPadding(route),
                         modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                dialog<Home.EditInterestsDialog>(
+                    dialogProperties = DialogProperties(
+                        usePlatformDefaultWidth = false,
+                        decorFitsSystemWindows = false,
+                    ),
+                ) { backStackEntry ->
+                    val route: Home.EditInterestsDialog = backStackEntry
+                        .toRoute()
+                    EditInterestsDialog(
+                        onDismiss = { navController.popBackStack() },
+                        contentPadding = contentPadding(route),
+                        modifier = Modifier.fillMaxSize(),
+                        onConfirm = { newPickedInterests ->
+                            val entry = navController.previousBackStackEntry
+                            entry?.savedStateHandle?.set(
+                                key = PickedInterestsStateKey,
+                                value = newPickedInterests,
+                            )
+                            navController.popBackStack()
+                        },
+                        vm = viewModel<EditInterestsDialogViewModel>(
+                            factory = viewModelFactory,
+                        ),
                     )
                 }
             }

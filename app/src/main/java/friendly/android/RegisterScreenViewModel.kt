@@ -31,8 +31,7 @@ private data class RegisterState(
     val nickname: String,
     val description: String,
     val socialLink: String,
-    val availableInterests: List<Interest>,
-    val pickedInterests: List<Interest>,
+    val pickedInterests: List<String>,
     val isGenerating: Boolean,
     val avatar: AvatarState,
     val avatarFileDescriptor: FileDescriptor?,
@@ -42,7 +41,6 @@ private data class RegisterState(
         return RegisterScreenUiState.Editing(
             nickname = nickname,
             description = description,
-            availableInterests = availableInterests,
             pickedInterests = pickedInterests,
             avatar = avatar,
             socialLink = socialLink,
@@ -58,7 +56,6 @@ class RegisterScreenViewModel(
         value = RegisterState(
             nickname = "",
             description = "",
-            availableInterests = interests,
             pickedInterests = listOf(),
             isGenerating = false,
             avatar = None,
@@ -74,7 +71,6 @@ class RegisterScreenViewModel(
             initialValue = RegisterScreenUiState.Editing(
                 nickname = "",
                 description = "",
-                availableInterests = interests,
                 pickedInterests = listOf(),
                 avatar = None,
                 socialLink = "",
@@ -102,21 +98,8 @@ class RegisterScreenViewModel(
         }
     }
 
-    fun toggleInterest(interest: Interest) {
-        val picked = interest in _state.value.pickedInterests
-        if (picked) {
-            _state.update {
-                it.copy(
-                    pickedInterests = it.pickedInterests.minus(interest),
-                )
-            }
-        } else {
-            _state.update {
-                it.copy(
-                    pickedInterests = it.pickedInterests.plus(interest),
-                )
-            }
-        }
+    fun onPickedInterests(newPickedInterests: List<String>) {
+        _state.update { old -> old.copy(pickedInterests = newPickedInterests) }
     }
 
     private fun stateIsValid(): Boolean {
@@ -141,7 +124,8 @@ class RegisterScreenViewModel(
             val nickname = Nickname.orThrow(_state.value.nickname)
             val description = UserDescription.orThrow(_state.value.description)
             val socialLink = SocialLink.orThrow(_state.value.socialLink)
-            val interests = InterestList.orThrow(_state.value.pickedInterests)
+            val interests = InterestList
+                .orThrow(_state.value.pickedInterests.map(Interest::orThrow))
             val avatarFileDescriptor = _state.value.avatarFileDescriptor
             val result = register(
                 nickname = nickname,
