@@ -111,4 +111,6 @@
     <string name="unauthorized">Unauthorized</string>
     <string name="compression_failure">Compression failure</string>
     <string name="add_new_interest">Add new interest</string>
+    <string name="like">like</string>
+    <string name="dislike">dislike</string>
 </resources>

@@ -191,6 +191,7 @@ class MockDataActivity : ComponentActivity() {
             val authStorage = AuthStorage(this@MockDataActivity)
             authStorage.clear()
             selfProfileStorage.clear()
+            selfProfileStorage.setHasFirstFriend()
             selfProfileStorage.store(
                 nickname = nickname,
                 description = description,

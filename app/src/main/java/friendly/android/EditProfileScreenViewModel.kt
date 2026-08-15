@@ -430,9 +430,7 @@ private fun <T> fieldElseNull(initial: T, new: T): Field<T>? {
     return null
 }
 
-private fun EditProfileScreenVmStateFlow.updateDescription(
-    string: String,
-) {
+private fun EditProfileScreenVmStateFlow.updateDescription(string: String) {
     val state = this
     val isValid = UserDescription.validate(string)
     val newProfile = state.value.currentProfile.copy(
@@ -441,9 +439,7 @@ private fun EditProfileScreenVmStateFlow.updateDescription(
     state.updateCurrentProfile(newProfile)
 }
 
-private fun EditProfileScreenVmStateFlow.updateSocialLink(
-    string: String,
-) {
+private fun EditProfileScreenVmStateFlow.updateSocialLink(string: String) {
     val state = this
     val isValid = SocialLink.validate(string)
     val newProfile = state.value.currentProfile.copy(
@@ -452,9 +448,7 @@ private fun EditProfileScreenVmStateFlow.updateSocialLink(
     state.updateCurrentProfile(newProfile)
 }
 
-private fun EditProfileScreenVmStateFlow.updateNickname(
-    string: String,
-) {
+private fun EditProfileScreenVmStateFlow.updateNickname(string: String) {
     val state = this
     val isValid = Nickname.validate(string)
     val newProfile = state.value.currentProfile.copy(
