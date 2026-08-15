@@ -43,16 +43,17 @@ private data class EditProfileScreenVmState(
     val initialNickname: Nickname,
     val currentProfile: CurrentProfile,
     val isSaving: Boolean,
-    val isSavable: Boolean,
-    val hasChanges: Boolean,
 ) {
-    fun mapToUiState(): EditProfileScreenUiState {
+    fun mapToUiState(initialProfile: InitialProfile): EditProfileScreenUiState {
         if (isSaving) {
             return EditProfileScreenUiState.Saving(
                 userId = userId,
                 initialNickname = initialNickname,
             )
         }
+
+        val isSavable = currentProfile.isSavable(initialProfile)
+        val hasChanges = currentProfile.hasChanges(initialProfile)
 
         return EditProfileScreenUiState.Edit(
             userId = userId,
@@ -158,14 +159,12 @@ class EditProfileScreenViewModel(
             userId = route.userId.typed(),
             initialNickname = initialProfile.nickname,
             currentProfile = CurrentProfile.initial(initialProfile),
-            isSavable = false,
             isSaving = false,
-            hasChanges = false,
         ),
     )
 
     val state: StateFlow<EditProfileScreenUiState> = _state
-        .map(EditProfileScreenVmState::mapToUiState)
+        .map { vmState -> vmState.mapToUiState(initialProfile) }
         .stateIn(
             viewModelScope,
             SharingStarted.Eagerly,
@@ -183,15 +182,15 @@ class EditProfileScreenViewModel(
     )
 
     fun onNickname(string: String) {
-        _state.updateNickname(string, initialProfile)
+        _state.updateNickname(string)
     }
 
     fun onSocialLink(string: String) {
-        _state.updateSocialLink(string, initialProfile)
+        _state.updateSocialLink(string)
     }
 
     fun onDescription(string: String) {
-        _state.updateDescription(string, initialProfile)
+        _state.updateDescription(string)
     }
 
     fun sendEmailVerificationCode() {
@@ -238,7 +237,7 @@ class EditProfileScreenViewModel(
     }
 
     fun onPickedInterests(newPickedInterests: List<String>) {
-        _state.updateInterests(newPickedInterests, initialProfile)
+        _state.updateInterests(newPickedInterests)
     }
 
     fun pickAvatar(uri: Uri?) {
@@ -246,7 +245,6 @@ class EditProfileScreenViewModel(
 
         _state.setStartAvatarUploadingState(
             percentage = UploadingPercentage(0f),
-            initialProfile = initialProfile,
         )
 
         viewModelScope.launch {
@@ -254,10 +252,7 @@ class EditProfileScreenViewModel(
                 avatarUri = uri,
                 block = { flow ->
                     flow.collect { update ->
-                        _state.setStartAvatarUploadingState(
-                            percentage = update,
-                            initialProfile = initialProfile,
-                        )
+                        _state.setStartAvatarUploadingState(percentage = update)
                     }
                 },
             )
@@ -265,7 +260,6 @@ class EditProfileScreenViewModel(
                 is Success -> {
                     _state.setStartAvatarUploadedState(
                         fileDescriptor = uploadingResult.fileDescriptor,
-                        initialProfile = initialProfile,
                         filesClient = filesClient,
                     )
                 }
@@ -280,7 +274,7 @@ class EditProfileScreenViewModel(
 
     fun removeAvatar() {
         val newProfile = _state.value.currentProfile.copy(avatar = None)
-        _state.updateCurrentProfile(newProfile, initialProfile)
+        _state.updateCurrentProfile(newProfile)
     }
 
     fun save(onSuccess: () -> Unit) {
@@ -350,14 +344,13 @@ class EditProfileScreenViewModel(
 
 private fun EditProfileScreenVmStateFlow.updateInterests(
     newPickedInterests: List<String>,
-    initialProfile: InitialProfile,
 ) {
     val state = this
     val previousProfile = state.value.currentProfile
     val newProfile = previousProfile.copy(
         interests = newPickedInterests.map(Interest::orThrow),
     )
-    updateCurrentProfile(newProfile, initialProfile)
+    updateCurrentProfile(newProfile)
 }
 
 private fun EditProfileScreenVmStateFlow.unlinkEmail() {
@@ -395,18 +388,16 @@ private typealias EditProfileScreenVmStateFlow =
 
 private fun EditProfileScreenVmStateFlow.setStartAvatarUploadingState(
     percentage: UploadingPercentage,
-    initialProfile: InitialProfile,
 ) {
     val currentProfile = this.value.currentProfile
     val newProfile = currentProfile.copy(
         avatar = AvatarState.Uploading(percentage),
     )
-    updateCurrentProfile(newProfile, initialProfile)
+    updateCurrentProfile(newProfile)
 }
 
 private fun EditProfileScreenVmStateFlow.setStartAvatarUploadedState(
     fileDescriptor: FileDescriptor,
-    initialProfile: InitialProfile,
     filesClient: FriendlyFilesClient,
 ) {
     val currentProfile = this.value.currentProfile
@@ -419,7 +410,7 @@ private fun EditProfileScreenVmStateFlow.setStartAvatarUploadedState(
             uri = endpoint.string.toUri(),
         ),
     )
-    updateCurrentProfile(newProfile, initialProfile)
+    updateCurrentProfile(newProfile)
 }
 
 private fun EditProfileScreenVmStateFlow.resetToInitialAvatarState(
@@ -429,7 +420,7 @@ private fun EditProfileScreenVmStateFlow.resetToInitialAvatarState(
     val newProfile = currentProfile.copy(
         avatar = AvatarState.Initial(initialProfile.avatar),
     )
-    updateCurrentProfile(newProfile, initialProfile)
+    updateCurrentProfile(newProfile)
 }
 
 private fun <T> fieldElseNull(initial: T, new: T): Field<T>? {
@@ -441,50 +432,44 @@ private fun <T> fieldElseNull(initial: T, new: T): Field<T>? {
 
 private fun EditProfileScreenVmStateFlow.updateDescription(
     string: String,
-    initialProfile: InitialProfile,
 ) {
     val state = this
     val isValid = UserDescription.validate(string)
     val newProfile = state.value.currentProfile.copy(
         description = ValidatableField(string, isValid),
     )
-    state.updateCurrentProfile(newProfile, initialProfile)
+    state.updateCurrentProfile(newProfile)
 }
 
 private fun EditProfileScreenVmStateFlow.updateSocialLink(
     string: String,
-    initialProfile: InitialProfile,
 ) {
     val state = this
     val isValid = SocialLink.validate(string)
     val newProfile = state.value.currentProfile.copy(
         socialLink = ValidatableField(string.ifBlank { null }, isValid),
     )
-    state.updateCurrentProfile(newProfile, initialProfile)
+    state.updateCurrentProfile(newProfile)
 }
 
 private fun EditProfileScreenVmStateFlow.updateNickname(
     string: String,
-    initialProfile: InitialProfile,
 ) {
     val state = this
     val isValid = Nickname.validate(string)
     val newProfile = state.value.currentProfile.copy(
         nickname = ValidatableField(string, isValid),
     )
-    state.updateCurrentProfile(newProfile, initialProfile)
+    state.updateCurrentProfile(newProfile)
 }
 
 private fun EditProfileScreenVmStateFlow.updateCurrentProfile(
     new: CurrentProfile,
-    initialProfile: InitialProfile,
 ) {
     val oldState = this
     oldState.update { old ->
         old.copy(
             currentProfile = new,
-            isSavable = new.isSavable(initialProfile),
-            hasChanges = new.hasChanges(initialProfile),
         )
     }
 }
