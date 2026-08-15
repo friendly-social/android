@@ -640,12 +640,7 @@ fun FriendlyNavGraph(
                     )
                 }
 
-                dialog<Home.EditInterestsDialog>(
-                    dialogProperties = DialogProperties(
-                        usePlatformDefaultWidth = false,
-                        decorFitsSystemWindows = false,
-                    ),
-                ) { backStackEntry ->
+                composable<Home.EditInterestsDialog> { backStackEntry ->
                     val route: Home.EditInterestsDialog = backStackEntry
                         .toRoute()
                     EditInterestsDialog(
