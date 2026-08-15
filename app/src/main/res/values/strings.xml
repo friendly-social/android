@@ -2,8 +2,8 @@
     <string name="app_name">Friendly</string>
     <string name="sign_up">Sign up</string>
     <string name="welcome_to_friendly">Welcome to Friendly</string>
-    <string name="welcome_screen_title">Make connections easily. Thank you for testing. Lorem ipsum.</string>
-    <string name="welcome_screen_text">"Friendly is a WIP project that—i hope—will be finished as soon as it posssible. Making some long welcome text to this look a little bit complete.\n\nFor now we only support only sign up feature for testing purposes. That means that currently after sign up you won't be able to sign in to your account when you reset this app or try launching it on another device.\n                "</string>
+    <string name="welcome_screen_title">Make connections easily without global search</string>
+    <string name="welcome_screen_text">Friendly is a closed social network you can only join by invitation. Without creeps, without ragebait, with six degrees of separation.</string>
     <string name="sign_up_to_friendly">Sign up to Friendly</string>
     <string name="a_few_words_about_yourself">A few words about yourself</string>
     <string name="your_interests">Your interests</string>
@@ -43,7 +43,7 @@
     <string name="expand">Expand</string>
     <string name="cancel">Cancel</string>
     <string name="log_out">Log out</string>
-    <string name="log_out_alert_text">Are you sure you want to log out? Currently app doesn\'t support account tokens saving</string>
+    <string name="log_out_alert_text">Are you sure you want to log out? You could permanently lose your account if you haven’t linked an email address.</string>
     <string name="attention">Attention</string>
     <string name="share_profile_qr_code_description">Your friend should scan this QR code. The QR code is only available once.</string>
     <string name="hold_to_copy">Hold to copy</string>
