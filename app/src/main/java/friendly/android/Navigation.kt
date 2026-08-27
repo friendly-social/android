@@ -448,6 +448,9 @@ fun FriendlyNavGraph(
                 composable<Home.Community> {
                     CommunityScreen(
                         contentPadding = contentPadding(Home.Network),
+                        vm = viewModel<CommunityScreenViewModel>(
+                            factory = viewModelFactory,
+                        ),
                         modifier = Modifier,
                     )
                 }

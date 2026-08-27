@@ -130,6 +130,9 @@ class FriendlyViewModelFactory(
         if (modelClass == NoFriendsBlockingScreenViewModel::class) {
             return NoFriendsBlockingScreenViewModel(addFriendUseCase) as T
         }
+        if (modelClass == CommunityScreenViewModel::class) {
+            return CommunityScreenViewModel(client, authStorage) as T
+        }
         if (modelClass == EditInterestsDialogViewModel::class) {
             val savedStateHandle = extras.createSavedStateHandle()
             return EditInterestsDialogViewModel(savedStateHandle) as T
