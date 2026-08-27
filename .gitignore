@@ -4,3 +4,6 @@ build/
 .gradle/
 local.properties
 .DS_Store
+*.jks
+*.aab
+*.apk

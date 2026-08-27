@@ -17,17 +17,23 @@ jobs:
 
             -   uses: actions/setup-java@v4
                 with:
-                  distribution: temurin
-                  java-version: 21
+                    distribution: temurin
+                    java-version: 21
 
             -   name: Setup Gradle
                 uses: gradle/actions/setup-gradle@v5
 
             -   name: Decode keystore
-                run: echo "$KEYSTORE_BASE64" | base64 --decode > keystore.jks
+                run: echo "$KEYSTORE_BASE64" | base64 --decode > app/keystore.jks
+                env:
+                    KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
 
             -   name: Build debug with signing
                 run: ./gradlew assembleDebug
+                env:
+                    KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+                    KEYSTORE_KEY_ALIAS: ${{ secrets.KEYSTORE_KEY_ALIAS }}
+                    KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
 
             -   name: Upload artifacts
                 uses: actions/upload-artifact@v4
@@ -38,10 +44,10 @@ jobs:
             -   name: Deploy Apk
                 uses: WebFreak001/deploy-nightly@v3.2.0
                 with:
-                  upload_url: https://uploads.github.com/repos/friendly-social/android/releases/280899065/assets{?name,label}
-                  release_id: 280899065
-                  asset_path: app/build/outputs/apk/debug/app-debug.apk
-                  asset_name: friendly-latest.apk
-                  asset_content_type: application/zip
-                  max_releases: 1
-                  ignore_hash: true
+                    upload_url: https://uploads.github.com/repos/friendly-social/android/releases/280899065/assets{?name,label}
+                    release_id: 280899065
+                    asset_path: app/build/outputs/apk/debug/app-debug.apk
+                    asset_name: friendly-latest.apk
+                    asset_content_type: application/zip
+                    max_releases: 1
+                    ignore_hash: true

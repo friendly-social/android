@@ -1,3 +1,6 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import org.jetbrains.kotlin.konan.properties.propertyString
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -14,18 +17,25 @@ android {
     defaultConfig {
         applicationId = "friendly.android"
         minSdk = 29
-        targetSdk = 36
+        targetSdk = 37
         compileSdk = 37
-        versionCode = 1
+        versionCode = 3
         versionName = "1.0"
     }
 
     signingConfigs {
         getByName("debug") {
             storeFile = file("keystore.jks")
-            storePassword = "12345678"
-            keyAlias = "public"
-            keyPassword = "12345678"
+
+            val localProperties =
+                gradleLocalProperties(rootProject.projectDir, providers)
+
+            storePassword = localProperties.propertyString("keystorePassword")
+                ?: System.getenv("KEYSTORE_PASSWORD")
+            keyAlias = localProperties.propertyString("keystoreKeyAlias")
+                ?: System.getenv("KEYSTORE_KEY_ALIAS")
+            keyPassword = localProperties.propertyString("keystoreKeyPassword")
+                ?: System.getenv("KEYSTORE_KEY_PASSWORD")
         }
     }
 
