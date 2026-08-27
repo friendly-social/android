@@ -132,7 +132,8 @@ private fun CommunityPost(
             UserAvatar(
                 userId = details.owner.id,
                 nickname = details.owner.nickname,
-                uri = details.owner.avatar?.let(vm::fileUri), // todo idk move to the separate model
+                // todo idk move to the separate model
+                uri = details.owner.avatar?.let(vm::fileUri),
                 style = UserAvatarStyle.Small,
                 modifier = Modifier,
             )

@@ -23,6 +23,8 @@ google-services = "4.5.0"
 firebase-bom = "34.18.0"
 room = "2.8.4"
 ksp = "2.3.4"
+noties = "4.6.2"
+appcompat = "1.8.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,16 +38,24 @@ androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graph
 #androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 alexzhirkevich-qrose = { module = "io.github.alexzhirkevich:qrose", version.ref = "alexzhirkevichQrose" }
 
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 ktor-logging =  { module = "io.ktor:ktor-client-logging", version.ref = "ktorVersion" }
 
-smartword-compose-swipeable-cards = { module = "com.github.smartword-app:compose-swipeable-cards", version.ref = "composeSwipeableCards" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 molecule = { module = "app.cash.molecule:molecule-runtime", version.ref = "molecule" }
+
+noties-markdown-core = { module = "io.noties.markwon:core", version.ref = "noties" }
+noties-markdown-ext-strikethrough = { module = "io.noties.markwon:ext-strikethrough", version.ref = "noties" }
+noties-markdown-ext-tables = { module = "io.noties.markwon:ext-tables", version.ref = "noties" }
+noties-markdown-html = { module = "io.noties.markwon:html", version.ref = "noties" }
+noties-markdown-linkify = { module = "io.noties.markwon:linkify", version.ref = "noties" }
+noties-markdown-ext-tasklist = { module = "io.noties.markwon:ext-tasklist", version.ref = "noties" }
 
 friendly-sdk = { module = "me.y9san9.friendly:sdk", version.ref = "friendlySdk" }
 
@@ -61,6 +71,7 @@ firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
