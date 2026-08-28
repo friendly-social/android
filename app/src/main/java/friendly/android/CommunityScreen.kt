@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import friendly.markdowntext.MarkdownText
 import friendly.sdk.CommunityPostDetails
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
@@ -165,7 +166,7 @@ private fun CommunityPost(
                     }
                 }
                 MarkdownText(
-                    content = MarkdownContent(string = details.text.string),
+                    markdown = details.text.string,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -173,14 +174,3 @@ private fun CommunityPost(
     }
 }
 
-@Composable
-private fun MarkdownText(
-    content: MarkdownContent,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        text = content.string,
-        style = MaterialTheme.typography.bodyMedium,
-        modifier = modifier,
-    )
-}

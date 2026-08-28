@@ -90,10 +90,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel)
 
     implementation(libs.friendly.sdk)
+    implementation(projects.cards)
+    implementation(projects.markdowntext)
 
     ksp(libs.room.compiler)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
 
-    implementation(projects.cards)
 }
