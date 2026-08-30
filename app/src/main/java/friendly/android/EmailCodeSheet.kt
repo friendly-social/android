@@ -131,7 +131,7 @@ fun EmailCodeSheet(
                         Text(text = stringResource(R.string.proceed))
                     }
 
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(16.dp))
                 }
 
                 is CodeVerifying -> {
