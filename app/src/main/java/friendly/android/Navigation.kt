@@ -36,6 +36,7 @@ import friendly.android.FriendlyNavGraph.Registration
 import friendly.android.FriendlyNavGraph.SignIn
 import friendly.android.FriendlyNavGraph.Welcome
 import friendly.sdk.Authorization
+import friendly.sdk.CommunityPostDescriptorSerializable
 import friendly.sdk.EmailSerializable
 import friendly.sdk.FriendToken
 import friendly.sdk.InterestSerializable
@@ -49,6 +50,11 @@ import friendly.sdk.UserIdSerializable
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.reflect.typeOf
+
+// TODO: plans for this god file
+//  - dsl for navigation to specific destinations
+//  - consistency in nav types
+//  - make navigation operations live in the same file per each destination
 
 private val addFriendDeepLink = navDeepLink {
     uriPattern = "friendly://add/{userId}/{friendToken}"
@@ -213,6 +219,39 @@ val InterestSerializableListNavType =
         ) = bundle.putString(key, Json.encodeToString(value.map { it.string }))
     }
 
+val CommunityPostDescriptorSerializableNavType =
+    object :
+        NavType<CommunityPostDescriptorSerializable>(
+            isNullableAllowed = false,
+        ) {
+        override fun get(
+            bundle: Bundle,
+            key: String,
+        ): CommunityPostDescriptorSerializable? =
+            bundle.getString(key)?.let { json ->
+                Json.decodeFromString<CommunityPostDescriptorSerializable>(json)
+            }
+
+        override fun parseValue(
+            value: String,
+        ): CommunityPostDescriptorSerializable =
+            Json.decodeFromString<CommunityPostDescriptorSerializable>(
+                Uri.decode(
+                    value,
+                ),
+            )
+
+        override fun serializeAsValue(
+            value: CommunityPostDescriptorSerializable,
+        ): String = Json.encodeToString(value)
+
+        override fun put(
+            bundle: Bundle,
+            key: String,
+            value: CommunityPostDescriptorSerializable,
+        ) = bundle.putString(key, Json.encodeToString(value))
+    }
+
 object FriendlyNavGraph {
     sealed interface NavDestination
 
@@ -235,6 +274,11 @@ object FriendlyNavGraph {
 
         @Serializable
         data object Community : Home()
+
+        @Serializable
+        data class CommunityPost(
+            val descriptor: CommunityPostDescriptorSerializable,
+        ) : Home()
 
         @Serializable
         data object Chat : Home()
@@ -298,6 +342,11 @@ val EditProfileTypeMap = mapOf(
 
 val EmailSheetTypeMap = mapOf(
     typeOf<EmailSerializable>() to EmailSerializableNavType,
+)
+
+val CommunityPostTypeMap = mapOf(
+    typeOf<CommunityPostDescriptorSerializable>()
+        to CommunityPostDescriptorSerializableNavType,
 )
 
 private const val VerificationCodeStateKey = "verification_code_state"
@@ -451,6 +500,32 @@ fun FriendlyNavGraph(
                         vm = viewModel<CommunityScreenViewModel>(
                             factory = viewModelFactory,
                         ),
+                        onPostClick = { descriptor ->
+                            navController.navigate(
+                                Home.CommunityPost(descriptor.serializable()),
+                            )
+                        },
+                        modifier = Modifier,
+                    )
+                }
+
+                composable<Home.CommunityPost>(
+                    typeMap = CommunityPostTypeMap,
+                ) { backStackEntry ->
+                    val route: Home.CommunityPost = backStackEntry.toRoute()
+                    val descriptor = route.descriptor.typed()
+                    CommunityPostScreen(
+                        vm = viewModel<CommunityPostScreenViewModel>(
+                            factory = viewModelFactory,
+                        ),
+                        descriptor = descriptor,
+                        contentPadding = contentPadding(route),
+                        onPostClick = { descriptor ->
+                            navController.navigate(
+                                Home.CommunityPost(descriptor.serializable()),
+                            )
+                        },
+                        onBack = { navController.popBackStack() },
                         modifier = Modifier,
                     )
                 }

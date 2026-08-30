@@ -1,6 +1,7 @@
 [versions]
 agp = "9.2.1"
 composeSwipeableCards = "1.1.4"
+kotlinxDatetime = "0.8.0"
 zxing = "3.5.4"
 kotlin = "2.4.10"
 coreKtx = "1.19.0"
@@ -41,6 +42,7 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 alexzhirkevich-qrose = { module = "io.github.alexzhirkevich:qrose", version.ref = "alexzhirkevichQrose" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }

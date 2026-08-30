@@ -88,6 +88,7 @@ dependencies {
     implementation(libs.alexzhirkevich.qrose)
     implementation(libs.ktor.logging)
     implementation(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.kotlinx.datetime)
 
     implementation(libs.friendly.sdk)
     implementation(projects.cards)
@@ -96,5 +97,4 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-
 }

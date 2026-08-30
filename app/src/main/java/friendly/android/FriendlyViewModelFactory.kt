@@ -133,6 +133,9 @@ class FriendlyViewModelFactory(
         if (modelClass == CommunityScreenViewModel::class) {
             return CommunityScreenViewModel(client, authStorage) as T
         }
+        if (modelClass == CommunityPostScreenViewModel::class) {
+            return CommunityPostScreenViewModel(client, authStorage) as T
+        }
         if (modelClass == EditInterestsDialogViewModel::class) {
             val savedStateHandle = extras.createSavedStateHandle()
             return EditInterestsDialogViewModel(savedStateHandle) as T
