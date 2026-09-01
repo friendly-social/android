@@ -376,8 +376,18 @@ fun FriendlyNavGraph(
         NavHost(
             navController = navController,
             startDestination = firstDestination,
-            enterTransition = { fadeIn(animationSpec = tween(150)) },
-            exitTransition = { fadeOut(animationSpec = tween(150)) },
+            enterTransition = {
+                fadeIn(animationSpec = tween(150))
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(150))
+            },
+            predictivePopEnterTransition = {
+                fadeIn(animationSpec = tween(150))
+            },
+            predictivePopExitTransition = {
+                fadeOut(animationSpec = tween(150))
+            },
             modifier = modifier,
         ) {
             composable<Welcome> {
