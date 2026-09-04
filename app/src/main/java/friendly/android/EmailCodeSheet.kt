@@ -106,6 +106,7 @@ fun EmailCodeSheet(
                         onValueChange = onCode,
                         codeVerificationFailed = state.codeVerificationFailed,
                         isError = state.isCodeFieldError,
+                        requestFocusOnStart = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
 

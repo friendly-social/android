@@ -26,6 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
@@ -42,6 +44,7 @@ fun EightDigitVerificationCodeField(
     onValueChange: (String) -> Unit,
     codeVerificationFailed: Boolean,
     isError: Boolean,
+    requestFocusOnStart: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val transparentSelectionColors = TextSelectionColors(
@@ -49,6 +52,7 @@ fun EightDigitVerificationCodeField(
         backgroundColor = Color.Transparent,
     )
 
+    val focusRequester = remember { FocusRequester() }
     val shakeOffset = remember { Animatable(0f) }
 
     LaunchedEffect(codeVerificationFailed) {
@@ -77,6 +81,11 @@ fun EightDigitVerificationCodeField(
         CompositionLocalProvider(
             LocalTextSelectionColors provides transparentSelectionColors,
         ) {
+            LaunchedEffect(Unit) {
+                if (requestFocusOnStart) {
+                    focusRequester.requestFocus()
+                }
+            }
             BasicTextField(
                 value = value,
                 onValueChange = { new ->
@@ -90,6 +99,7 @@ fun EightDigitVerificationCodeField(
                 cursorBrush = SolidColor(Color.Unspecified),
                 modifier = Modifier
                     .matchParentSize()
+                    .focusRequester(focusRequester)
                     .alpha(0f),
             )
         }
