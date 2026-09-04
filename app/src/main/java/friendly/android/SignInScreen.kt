@@ -174,7 +174,8 @@ fun IdleState(
         )
 
         Text(
-            text = "We will send you a verification code",
+            text =
+            stringResource(R.string.we_will_send_you_a_verification_code),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
@@ -185,8 +186,8 @@ fun IdleState(
         OutlinedTextField(
             value = state.email.value,
             onValueChange = vm::onEmail,
-            label = { Text("Email address") },
-            placeholder = { Text("email@domain.com") },
+            label = { Text(stringResource(R.string.your_email_address)) },
+            placeholder = { Text(stringResource(R.string.example_email)) },
             isError = state.email.invalidAndNotBlank,
             supportingText = {
                 if (state.email.invalidAndNotBlank) {

@@ -492,8 +492,10 @@ private fun EditProfileState(
                 iconPainter = painterResource(R.drawable.ic_mail_outlined),
                 value = state.profile.email.field.value ?: "",
                 isValid = state.profile.email.field.isValid,
-                placeholderText = "Valid email address",
-                errorText = "You should enter a valid email address",
+                placeholderText = stringResource(R.string.valid_email_address),
+                errorText = stringResource(
+                    R.string.you_should_enter_a_valid_email_address,
+                ),
                 onValueChange = onEdit.onEmail,
                 trailingIcon = {
                     val emailState = state.profile.email

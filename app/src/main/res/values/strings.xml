@@ -115,4 +115,8 @@
     <string name="add_new_interest">Add new interest</string>
     <string name="like">like</string>
     <string name="dislike">dislike</string>
+    <string name="example_email">address@domain.com</string>
+    <string name="we_will_send_you_a_verification_code">We will send you a verification code</string>
+    <string name="valid_email_address">Valid email address</string>
+    <string name="you_should_enter_a_valid_email_address">You should enter a valid email address</string>
 </resources>
