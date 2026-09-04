@@ -146,7 +146,6 @@ class RegisterScreenViewModel(
                 }
 
                 Success -> {
-                    FirebaseKit.onLogin()
                     _events.emit(RegisterScreenUiEvent.SuccessfulRegistration)
                 }
             }

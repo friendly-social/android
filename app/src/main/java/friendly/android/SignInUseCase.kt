@@ -44,6 +44,7 @@ class SignInUseCase(
                     email = details.email,
                 )
                 selfProfileStorage.setHasFirstFriend()
+                FirebaseKit.onLogin()
                 Result.Success
             }
         }

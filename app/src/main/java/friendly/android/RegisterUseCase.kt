@@ -47,6 +47,7 @@ class RegisterUseCase(
                     interests = interests,
                     socialLink = socialLink,
                 )
+                FirebaseKit.onLogin()
                 RegistrationResult.Success
             }
         }
