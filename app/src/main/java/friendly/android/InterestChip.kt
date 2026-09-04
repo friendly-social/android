@@ -27,7 +27,7 @@ fun InterestChip(interest: Interest, modifier: Modifier = Modifier) {
     key(interest.string) {
         SuggestionChip(
             onClick = {},
-            label = { Text(interest.string) },
+            label = { Text(interest.string, maxLines = 1) },
             colors = SuggestionChipDefaults
                 .suggestionChipColors(
                     containerColor = color,

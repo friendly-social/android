@@ -62,6 +62,7 @@
     <string name="save">Save</string>
     <string name="discard">Discard</string>
     <string name="edit_interests">Edit interests</string>
+    <string name="edit_interest">Edit interest</string>
     <string name="unsaved_changes_alert_text">Your changes have not been saved</string>
     <string name="pick_new_avatar">Pick new avatar</string>
     <string name="remove_avatar">Remove avatar</string>
