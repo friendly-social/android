@@ -90,7 +90,9 @@ fun CommunityScreen(
                 items(state.value.posts) { item ->
                     CommunityPost(
                         details = item,
-                        avatarUri = (item as? Plain)?.owner?.avatar?.let(vm::fileUri),
+                        avatarUri = (item as? Plain)?.owner?.avatar?.let(
+                            vm::fileUri,
+                        ),
                         onClick = onPostClick,
                         modifier = Modifier,
                     )

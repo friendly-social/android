@@ -5,24 +5,21 @@ sealed interface NotificationDestinationExtra {
     data object Activity : NotificationDestinationExtra
     data object Feed : NotificationDestinationExtra
 
-    fun raw(): String {
-        return when (this) {
-            is Activity -> "activity"
-            is Feed -> "feed"
-            is Network -> "network"
-        }
+    fun raw(): String = when (this) {
+        is Activity -> "activity"
+        is Feed -> "feed"
+        is Network -> "network"
     }
 
     companion object {
         const val EXTRAS_KEY = "destination"
 
-        fun ofRaw(string: String): NotificationDestinationExtra {
-            return when (string) {
+        fun ofRaw(string: String): NotificationDestinationExtra =
+            when (string) {
                 "activity" -> Activity
                 "network" -> Network
                 "feed" -> Feed
                 else -> error("Unknown NotificationDestinationExtra: $string")
             }
-        }
     }
 }

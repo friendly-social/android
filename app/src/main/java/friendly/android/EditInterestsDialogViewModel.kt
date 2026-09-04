@@ -17,9 +17,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class EditInterestsDialogViewModel(
-    savedStateHandle: SavedStateHandle,
-) : ViewModel() {
+class EditInterestsDialogViewModel(savedStateHandle: SavedStateHandle) :
+    ViewModel() {
     private val route = savedStateHandle.toRoute<EditInterestsDialog>()
     private val initialInterests = route.interests
 
@@ -150,10 +149,7 @@ class EditInterestsDialogViewModel(
     }
 }
 
-private fun <T> List<T>.setOrAppend(
-    index: Int,
-    value: T,
-): List<T> {
+private fun <T> List<T>.setOrAppend(index: Int, value: T): List<T> {
     require(index in 0..size)
     return toMutableList().apply {
         if (index >= size) {
