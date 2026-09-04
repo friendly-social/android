@@ -32,56 +32,64 @@ fun CommunityPost(
     modifier: Modifier = Modifier,
     onClick: (CommunityPostDescriptor) -> Unit = {},
 ) {
-    Card(
-        onClick = { onClick(details.descriptor) },
-        modifier = modifier,
-    ) {
-        Row(
-            verticalAlignment = Alignment.Top,
-            modifier = Modifier.padding(
-                vertical = 12.dp,
-                horizontal = 12.dp,
-            ),
-        ) {
-            UserAvatar(
-                userId = details.owner.id,
-                nickname = details.owner.nickname,
-                // todo idk move to the separate model
-                uri = avatarUri,
-                style = UserAvatarStyle.Small,
-                modifier = Modifier,
-            )
-            Spacer(Modifier.width(4.dp))
-            Column(
-                modifier = Modifier,
+    when (details) {
+        is CommunityPostDetails.Deleted -> {
+            Text("Deleted, TODO")
+        }
+
+        is CommunityPostDetails.Plain -> {
+            Card(
+                onClick = { onClick(details.descriptor) },
+                modifier = modifier,
             ) {
-                Row {
-                    Text(
-                        text = details.owner.nickname.string,
-                        color = MaterialTheme.colorScheme.secondary,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    modifier = Modifier.padding(
+                        vertical = 12.dp,
+                        horizontal = 12.dp,
+                    ),
+                ) {
+                    UserAvatar(
+                        userId = details.owner.id,
+                        nickname = details.owner.nickname,
+                        // todo idk move to the separate model
+                        uri = avatarUri,
+                        style = UserAvatarStyle.Small,
+                        modifier = Modifier,
                     )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = formatDateTime(details.instant),
-                        fontSize = 12.sp,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary,
-                        fontWeight = FontWeight.Light,
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    if (details.edited) {
-                        Text(
-                            text = "[ed1t3d]",
-                            style = MaterialTheme.typography.bodySmall,
+                    Spacer(Modifier.width(4.dp))
+                    Column(
+                        modifier = Modifier,
+                    ) {
+                        Row {
+                            Text(
+                                text = details.owner.nickname.string,
+                                color = MaterialTheme.colorScheme.secondary,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = formatDateTime(details.instant),
+                                fontSize = 12.sp,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontWeight = FontWeight.Light,
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            if (details.edited) {
+                                Text(
+                                    text = "[ed1t3d]",
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                        }
+                        MarkdownText(
+                            markdown = details.text.string,
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                 }
-                MarkdownText(
-                    markdown = details.text.string,
-                    modifier = Modifier.fillMaxSize(),
-                )
             }
         }
     }

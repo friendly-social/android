@@ -103,7 +103,8 @@ fun CommunityPostScreen(
                         items(state.upstream) { post ->
                             CommunityPost(
                                 details = post,
-                                avatarUri = post.owner.avatar?.let(vm::fileUri),
+                                avatarUri = (post as? Plain)?.owner?.avatar
+                                    ?.let(vm::fileUri),
                                 onClick = { onPostClick(post.descriptor) },
                                 modifier = Modifier,
                             )
@@ -112,9 +113,10 @@ fun CommunityPostScreen(
                         item {
                             CommunityPost(
                                 details = state.post,
-                                avatarUri = state.post.owner.avatar?.let(
-                                    vm::fileUri,
-                                ),
+                                avatarUri = (state.post as? Plain)
+                                    ?.owner
+                                    ?.avatar
+                                    ?.let(vm::fileUri),
                                 onClick = {},
                                 modifier = Modifier,
                             )
@@ -123,8 +125,8 @@ fun CommunityPostScreen(
                         items(state.replies.data) { reply ->
                             CommunityPost(
                                 details = reply,
-                                avatarUri =
-                                reply.owner.avatar?.let(vm::fileUri),
+                                avatarUri = (reply as? Plain)?.owner?.avatar
+                                    ?.let(vm::fileUri),
                                 onClick = { onPostClick(reply.descriptor) },
                                 modifier = Modifier,
                             )

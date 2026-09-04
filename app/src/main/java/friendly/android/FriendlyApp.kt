@@ -90,6 +90,7 @@ fun FriendlyApp(
     authorization: Authorization?,
     hasFirstFriend: Boolean,
     modifier: Modifier = Modifier,
+    notificationDestination: NotificationDestinationExtra?,
 ) {
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
@@ -144,6 +145,7 @@ fun FriendlyApp(
                 viewModelFactory = viewModelFactory,
                 authorization = authorization,
                 hasFirstFriend = hasFirstFriend,
+                notificationDestination = notificationDestination,
                 contentPadding = { destination ->
                     when (destination) {
                         is Home.EditProfile ->

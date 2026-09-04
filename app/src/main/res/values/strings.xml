@@ -55,6 +55,7 @@
     <string name="notification_request_channel_name">Friend Request</string>
     <string name="notification_request_title">%1$s wants to be friends!</string>
     <string name="notification_mutual_request_title">%1$s is your friend now!</string>
+    <string name="notification_reply_from_title">Reply from %1$s</string>
     <string name="notification_request_text">Click to check out the new friend request.</string>
     <string name="notification_mutual_request_text">Click to write something in response.</string>
     <string name="done">Done</string>

@@ -13,6 +13,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
@@ -35,6 +36,8 @@ import friendly.android.FriendlyNavGraph.NoFriendsBlockingScreen
 import friendly.android.FriendlyNavGraph.Registration
 import friendly.android.FriendlyNavGraph.SignIn
 import friendly.android.FriendlyNavGraph.Welcome
+import friendly.android.NotificationDestinationExtra.Activity
+import friendly.android.NotificationDestinationExtra.Network
 import friendly.sdk.Authorization
 import friendly.sdk.CommunityPostDescriptorSerializable
 import friendly.sdk.EmailSerializable
@@ -359,17 +362,17 @@ fun FriendlyNavGraph(
     viewModelFactory: FriendlyViewModelFactory,
     authorization: Authorization?,
     hasFirstFriend: Boolean,
+    notificationDestination: NotificationDestinationExtra?,
     modifier: Modifier = Modifier,
 ) {
-    val firstDestination = when (authorization) {
-        null -> Welcome
-        else -> {
-            if (hasFirstFriend) {
-                Home()
-            } else {
-                NoFriendsBlockingScreen
-            }
-        }
+    val firstDestination = remember {
+        determineInitialDestination(
+            authorization,
+            hasFirstFriend,
+        )
+    }
+    val startHomeDestination = remember {
+        determineInitialHomeDestination(notificationDestination)
     }
 
     SharedTransitionLayout {
@@ -468,7 +471,7 @@ fun FriendlyNavGraph(
                 )
             }
 
-            navigation<Home>(startDestination = Home.Feed) {
+            navigation<Home>(startDestination = startHomeDestination) {
                 composable<Home.Feed> {
                     FeedScreen(
                         vm = viewModel<FeedScreenViewModel>(
@@ -506,7 +509,7 @@ fun FriendlyNavGraph(
 
                 composable<Home.Community> {
                     CommunityScreen(
-                        contentPadding = contentPadding(Home.Network),
+                        contentPadding = contentPadding(Home.Community),
                         vm = viewModel<CommunityScreenViewModel>(
                             factory = viewModelFactory,
                         ),
@@ -790,6 +793,32 @@ fun FriendlyNavGraph(
                     modifier = Modifier,
                 )
             }
+        }
+    }
+}
+
+private fun determineInitialHomeDestination(
+    notificationDestination: NotificationDestinationExtra?,
+): Home = if (notificationDestination != null) {
+    when (notificationDestination) {
+        is Activity -> Home.Community
+        is Network -> Home.Network
+        is Feed -> Home.Feed
+    }
+} else {
+    Home.Feed
+}
+
+private fun determineInitialDestination(
+    authorization: Authorization?,
+    hasFirstFriend: Boolean,
+): NavDestination = when (authorization) {
+    null -> Welcome
+    else -> {
+        if (hasFirstFriend) {
+            Home()
+        } else {
+            NoFriendsBlockingScreen
         }
     }
 }

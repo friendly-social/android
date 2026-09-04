@@ -97,11 +97,16 @@ class MainActivity : ComponentActivity() {
         val authorization = authStorage.getAuthOrNull()
         val hasFirstFriend = selfProfileStorage.getHasFirstFriend()
 
+        val notificationDestination = intent.extras
+            ?.getString(NotificationDestinationExtra.EXTRAS_KEY)
+            ?.let(NotificationDestinationExtra::ofRaw)
+
         setContent {
             FriendlyApp(
                 viewModelFactory = viewModelFactory,
                 authorization = authorization,
                 hasFirstFriend = hasFirstFriend,
+                notificationDestination = notificationDestination,
             )
         }
     }
