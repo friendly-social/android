@@ -84,8 +84,6 @@ class FeedScreenViewModel(
     fun loadInitial() {
         if (_state.value.currentFeedItems.isNotEmpty()) return
 
-        Log.d("Feed", "loadInitial start")
-
         viewModelScope.launch {
             val feedQueueResult = loadFeedQueue()
             _state.setLoadFeedQueueState(
@@ -95,7 +93,6 @@ class FeedScreenViewModel(
                     TODO("Unhandled Authorization error")
                 },
             )
-            Log.d("Feed", "loadInitial finished")
         }
     }
 
