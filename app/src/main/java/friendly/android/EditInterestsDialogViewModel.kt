@@ -140,7 +140,8 @@ class EditInterestsDialogViewModel(savedStateHandle: SavedStateHandle) :
 
         _state.update { old ->
             old.copy(
-                pickedInterests = old.pickedInterests.setOrAppend(index, value),
+                pickedInterests = old.pickedInterests
+                    .setOrAppend(index, value.trim()),
                 currentInterestIndex = null,
                 currentInterestValue = null,
                 editingInterest = false,
