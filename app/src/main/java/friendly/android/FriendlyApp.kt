@@ -51,23 +51,30 @@ data class HomeNavigationItem(
 
 val homeNavigationItems = listOf(
     HomeNavigationItem(
-        titleResource = R.string.feed,
-        selectedIconResource = R.drawable.ic_cards_star_filled,
-        unselectedIconResource = R.drawable.ic_cards_star_unfilled,
-        destination = Home.Feed,
-    ),
-    HomeNavigationItem(
-        titleResource = R.string.network,
-        selectedIconResource = R.drawable.ic_group_filled,
-        unselectedIconResource = R.drawable.ic_group_unfilled,
-        destination = Home.Network,
-    ),
-    HomeNavigationItem(
         titleResource = R.string.community,
         selectedIconResource = R.drawable.ic_interests_filled,
         unselectedIconResource = R.drawable.ic_interests_outlined,
         destination = Home.Community,
         badge = BadgeKind.TextAccent("Q3"),
+    ),
+    HomeNavigationItem(
+        titleResource = R.string.activity,
+        selectedIconResource = R.drawable.ic_inbox_filled,
+        unselectedIconResource = R.drawable.ic_inbox_outlined,
+        destination = Home.Activity,
+        badge = BadgeKind.TextAccent("Q3"),
+    ),
+//    HomeNavigationItem(
+//        titleResource = R.string.feed,
+//        selectedIconResource = R.drawable.ic_cards_star_filled,
+//        unselectedIconResource = R.drawable.ic_cards_star_unfilled,
+//        destination = Home.Feed,
+//    ),
+    HomeNavigationItem(
+        titleResource = R.string.network,
+        selectedIconResource = R.drawable.ic_group_filled,
+        unselectedIconResource = R.drawable.ic_group_unfilled,
+        destination = Home.Network,
     ),
     HomeNavigationItem(
         titleResource = R.string.chat,
@@ -95,16 +102,14 @@ fun FriendlyApp(
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = currentBackStackEntry?.destination
-    val currentDestinationHierarchy = currentDestination?.hierarchy
 
-    val destinationForBottomBar =
-        if (currentDestination?.hasRoute(Home.PictureViewerDialog::class) ==
-            true
-        ) {
-            navController.previousBackStackEntry?.destination
-        } else {
-            currentDestination
-        }
+    val currentDestinationHasPictureViewerRoute =
+        currentDestination?.hasRoute(Home.PictureViewerDialog::class) == true
+    val destinationForBottomBar = if (currentDestinationHasPictureViewerRoute) {
+        navController.previousBackStackEntry?.destination
+    } else {
+        currentDestination
+    }
 
     val bottomBarVisible = destinationForBottomBar
         ?.hierarchy

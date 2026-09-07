@@ -287,6 +287,9 @@ object FriendlyNavGraph {
         data object Chat : Home()
 
         @Serializable
+        data object Activity : Home()
+
+        @Serializable
         data object SelfProfile : Home()
 
         @Serializable
@@ -543,9 +546,16 @@ fun FriendlyNavGraph(
                     )
                 }
 
+                composable<Home.Activity> {
+                    ActivityScreen(
+                        contentPadding = contentPadding(Home.Activity),
+                        modifier = Modifier,
+                    )
+                }
+
                 composable<Home.Chat> {
                     ChatScreen(
-                        contentPadding = contentPadding(Home.Network),
+                        contentPadding = contentPadding(Home.Chat),
                         modifier = Modifier,
                     )
                 }
@@ -806,7 +816,7 @@ private fun determineInitialHomeDestination(
         is Feed -> Home.Feed
     }
 } else {
-    Home.Feed
+    Home.Community
 }
 
 private fun determineInitialDestination(

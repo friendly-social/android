@@ -73,7 +73,7 @@ sealed interface ProfileScreenUiState {
     data object Error : ProfileScreenUiState
 }
 
-val ProfileScreenUiState.socialLink: SocialLink?
+private val ProfileScreenUiState.socialLink: SocialLink?
     get() = when (val state = this) {
         is ProfileScreenUiState.Error -> null
         is ProfileScreenUiState.Loading -> null

@@ -1,8 +1,3 @@
-@file:OptIn(
-    ExperimentalMaterial3Api::class,
-    ExperimentalMaterial3ExpressiveApi::class,
-)
-
 package friendly.android
 
 import android.net.Uri
@@ -25,8 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -257,7 +250,7 @@ private fun ScaffoldContent(
                     ) {
                         Text(
                             text =
-                            stringResource(R.string.unknown_error_occurred),
+                                stringResource(R.string.unknown_error_occurred),
                             modifier = Modifier,
                         )
                     }

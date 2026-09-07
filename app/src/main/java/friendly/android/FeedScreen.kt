@@ -190,7 +190,7 @@ private fun EmptyFeed(modifier: Modifier = Modifier) {
         modifier = modifier.verticalScroll(rememberScrollState()),
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_inbox),
+            painter = painterResource(R.drawable.ic_inbox_outlined),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(64.dp),
