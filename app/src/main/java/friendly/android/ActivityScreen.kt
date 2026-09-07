@@ -77,7 +77,8 @@ fun ActivityScreen(
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = "We are planning to release Activity tab by the end of 2026 Q3. Here you will see all replies you will receive in Community.",
+                text =
+                "We are planning to release Activity tab by the end of 2026 Q3. Here you will see all replies you will receive in Community.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

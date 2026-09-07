@@ -20,20 +20,26 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +50,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import friendly.android.FriendlyNavGraph.Home
 import friendly.android.NetworkScreenUiState.Success.FriendItem
@@ -87,6 +97,7 @@ fun NetworkScreen(
     vm: NetworkScreenViewModel,
     onProfile: (Home.Profile) -> Unit,
     onShare: () -> Unit,
+    onFeed: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     modifier: Modifier = Modifier,
@@ -118,7 +129,9 @@ fun NetworkScreen(
                 state = pullToRefreshState,
             )
         },
-        modifier = modifier.padding(contentPadding).fillMaxSize(),
+        modifier = modifier
+            .padding(contentPadding)
+            .fillMaxSize(),
     ) {
         Scaffold(
             topBar = {
@@ -128,6 +141,7 @@ fun NetworkScreen(
                     onShare = onShare,
                 )
             },
+            floatingActionButton = { ExpandNetworkFab(onFeed) },
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(topAppBar.nestedScrollConnection),
@@ -141,6 +155,49 @@ fun NetworkScreen(
                 animatedContentScope = animatedContentScope,
             )
         }
+    }
+}
+
+@Composable
+private fun ExpandNetworkFab(onFeed: () -> Unit) {
+    // TODO:
+    //  display here amount of incoming friend requests to tease
+    //  the user. also display this amount in the tooltip
+    TooltipBox(
+        positionProvider =
+        TooltipDefaults.rememberTooltipPositionProvider(
+            TooltipAnchorPosition.Above,
+        ),
+        tooltip = {
+            PlainTooltip(
+                modifier =
+                Modifier.semantics {
+                    liveRegion = LiveRegionMode.Assertive
+                    paneTitle = "Expand network"
+                },
+            ) {
+                Text("You have 3 friend requests")
+            }
+        },
+        state = rememberTooltipState(),
+    ) {
+        ExtendedFloatingActionButton(
+            onClick = onFeed,
+            icon = {
+                Icon(
+                    painter =
+                    painterResource(
+                        R.drawable.ic_partner_exchange_filled,
+                    ),
+                    contentDescription = null,
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.expand_network),
+                )
+            },
+        )
     }
 }
 
@@ -250,7 +307,7 @@ private fun ScaffoldContent(
                     ) {
                         Text(
                             text =
-                                stringResource(R.string.unknown_error_occurred),
+                            stringResource(R.string.unknown_error_occurred),
                             modifier = Modifier,
                         )
                     }

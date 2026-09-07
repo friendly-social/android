@@ -6,6 +6,9 @@ import friendly.android.FriendlyNavGraph.Home
 
 fun NavHostController.switchHomeTab(tab: Home) {
     val navController = this
+
+    if (popBackStack(tab, inclusive = false)) return
+
     navController.navigate(tab) {
         popUpTo(navController.graph.findStartDestination().id) {
             saveState = true

@@ -500,6 +500,7 @@ fun FriendlyNavGraph(
                         onProfile = { route ->
                             navController.navigate(route)
                         },
+                        onFeed = { navController.navigate(Home.Feed) },
                         onShare = {
                             navController.navigate(Home.ShareProfileSheet)
                         },

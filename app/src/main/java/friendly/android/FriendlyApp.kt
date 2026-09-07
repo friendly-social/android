@@ -91,6 +91,12 @@ val homeNavigationItems = listOf(
     ),
 )
 
+// todo this looks awkward, i think bottom navbar checker will show bb by
+//  default
+private val destinationsWithBottomBar = listOf(
+    Home.Feed,
+)
+
 @Composable
 fun FriendlyApp(
     viewModelFactory: FriendlyViewModelFactory,
@@ -114,9 +120,11 @@ fun FriendlyApp(
     val bottomBarVisible = destinationForBottomBar
         ?.hierarchy
         ?.any { destination ->
-            homeNavigationItems.any { item ->
-                destination.hasRoute(item.destination::class)
-            }
+            val hasHomeTabRoute = homeNavigationItems
+                .any { item -> destination.hasRoute(item.destination::class) }
+            val hasOtherBottomBarRoute = destinationsWithBottomBar
+                .any { item -> destination.hasRoute(item::class) }
+            hasHomeTabRoute || hasOtherBottomBarRoute
         }
         ?: false
 
