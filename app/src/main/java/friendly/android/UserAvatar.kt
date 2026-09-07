@@ -42,7 +42,13 @@ class UserAvatarStyle(
     // The size of single letter, it must not be affected by font settings, so
     // it uses dp instead of sp
     val noAvatarSize: Dp,
+    val shape: UserAvatarShape = DerivedFromId,
 ) {
+    sealed interface UserAvatarShape {
+        data class Certain(val value: Shape) : UserAvatarShape
+        data object DerivedFromId : UserAvatarShape
+    }
+
     companion object {
         val Large: UserAvatarStyle = UserAvatarStyle(
             size = 128.dp,
@@ -67,7 +73,10 @@ fun UserAvatar(
     style: UserAvatarStyle,
     modifier: Modifier = Modifier,
 ) {
-    val shape = getShapeByUserId(userId)
+    val shape = when (style.shape) {
+        is Certain -> style.shape.value
+        is DerivedFromId -> getShapeByUserId(userId)
+    }
     SubcomposeAsyncImage(
         model = uri,
         loading = { Box(Modifier.shimmer()) },
@@ -97,10 +106,14 @@ fun EmptyAvatar(
     style: UserAvatarStyle,
     modifier: Modifier = Modifier,
 ) {
+    val shape = when (style.shape) {
+        is Certain -> style.shape.value
+        is DerivedFromId -> getShapeByUserId(userId)
+    }
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .clip(getShapeByUserId(userId)) // todo still looks strange tbh
+            .clip(shape)
             .background(
                 Color.pastelFromLong(
                     long = userId.long,
@@ -109,7 +122,7 @@ fun EmptyAvatar(
             )
             .size(style.size),
     ) {
-        if (nickname != null) { // todo experiment
+        if (nickname != null) {
             AvatarText(style, nickname)
         }
     }
