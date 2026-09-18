@@ -140,6 +140,12 @@ class FriendlyViewModelFactory(
             val savedStateHandle = extras.createSavedStateHandle()
             return EditInterestsDialogViewModel(savedStateHandle) as T
         }
+        if (modelClass == ActivityScreenViewModel::class) {
+            return ActivityScreenViewModel(
+                authStorage = authStorage,
+                client = client,
+            ) as T
+        }
         error("unknown viewmodel class")
     }
 }

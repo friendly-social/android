@@ -550,6 +550,9 @@ fun FriendlyNavGraph(
                 composable<Home.Activity> {
                     ActivityScreen(
                         contentPadding = contentPadding(Home.Activity),
+                        vm = viewModel<ActivityScreenViewModel>(
+                            factory = viewModelFactory,
+                        ),
                         modifier = Modifier,
                     )
                 }
