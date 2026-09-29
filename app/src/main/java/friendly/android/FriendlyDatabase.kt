@@ -1,26 +1,47 @@
 package friendly.android
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
-import androidx.room.Insert
-import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
+import androidx.room.Upsert
 
-@Database(entities = [NetworkDao.Friend::class], version = 1)
+@Database(
+    entities = [PagingItem::class],
+    version = 1,
+)
 abstract class FriendlyDatabase : RoomDatabase() {
-    abstract fun networkDao(): NetworkDao
+    abstract fun pagingCacheDao(): PagingCacheDao
 }
 
+@Entity(
+    tableName = "paging_item",
+    primaryKeys = ["pagesKey", "itemId"],
+)
+data class PagingItem(
+    val pagesKey: String,
+    val position: Long,
+    val itemId: String,
+    val payload: String,
+)
+
 @Dao
-interface NetworkDao {
-    @Insert
-    fun insertAll(network: List<Friend>)
+interface PagingCacheDao {
+    @Query(
+        "SELECT * FROM paging_item WHERE pagesKey = :key ORDER BY position ASC",
+    )
+    fun pagingSource(key: String): PagingSource<Int, PagingItem>
 
-    @Query("SELECT * FROM friend")
-    fun getAll(): List<Friend>
+    @Query(
+        "SELECT COALESCE(MAX(position), -1) FROM paging_item WHERE pagesKey = :key",
+    )
+    suspend fun maxPosition(key: String): Long
 
-    @Entity
-    data class Friend(@PrimaryKey val userId: Long, val nickname: String)
+    @Upsert
+    suspend fun upsert(items: List<PagingItem>)
+
+    @Query("DELETE FROM paging_item WHERE pagesKey = :key")
+    suspend fun clear(key: String)
 }

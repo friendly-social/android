@@ -20,6 +20,7 @@ class FriendlyViewModelFactory(
     private val authStorage: AuthStorage,
     private val selfProfileStorage: SelfProfileStorage,
     private val client: FriendlyClient,
+    private val database: FriendlyDatabase,
 ) : ViewModelProvider.Factory {
 
     // todo refactor this thing
@@ -144,6 +145,7 @@ class FriendlyViewModelFactory(
             return ActivityScreenViewModel(
                 authStorage = authStorage,
                 client = client,
+                db = database,
             ) as T
         }
         error("unknown viewmodel class")

@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import friendly.sdk.FriendlyClient
 import io.ktor.client.HttpClient
@@ -33,19 +32,12 @@ class MainActivity : ComponentActivity() {
         val localeRepository = LocaleRepository(context.applicationContext)
         val selfProfileStorage = SelfProfileStorage(context)
 
-        val db = Room
+        val database = Room
             .databaseBuilder<FriendlyDatabase>(
                 context = applicationContext,
                 name = "friendly-cache",
             )
             .build()
-
-        val networkRepository = NetworkRepository(
-            dao = db.networkDao(),
-            networkClient = client.network,
-            authStorage = authStorage,
-            scope = lifecycleScope,
-        )
 
         val viewModelFactory = FriendlyViewModelFactory(
             unlinkEmailUseCase = UnlinkEmailUseCase(
@@ -92,6 +84,7 @@ class MainActivity : ComponentActivity() {
             authStorage = authStorage,
             selfProfileStorage = selfProfileStorage,
             client = client,
+            database = database,
         )
 
         val authorization = authStorage.getAuthOrNull()

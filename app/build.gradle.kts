@@ -92,9 +92,14 @@ dependencies {
 
     implementation(libs.friendly.sdk)
     implementation(projects.cards)
+    implementation(projects.cache)
     implementation(projects.markdowntext)
 
     ksp(libs.room.compiler)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.room.paging)
+
+    implementation(libs.paging.common)
+    implementation(libs.paging.compose)
 }

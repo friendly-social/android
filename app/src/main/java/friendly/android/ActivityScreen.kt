@@ -1,21 +1,20 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package friendly.android
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -25,36 +24,14 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingInd
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.room.util.TableInfo
-import friendly.android.UserAvatarStyle.UserAvatarShape
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import friendly.sdk.ActivityDetails
-import friendly.sdk.Nickname
-import friendly.sdk.UserId
-
-sealed interface ActivityScreenUiState {
-    data object Loading : ActivityScreenUiState
-
-    data class Idle(
-        val activity: List<ActivityDetails>,
-        val isRefreshing: Boolean,
-    ) : ActivityScreenUiState
-
-    data class NetworkError(
-        val isRefreshing: Boolean,
-    ) : ActivityScreenUiState
-}
-
-private val ActivityScreenUiState.isRefreshing
-    get() = when (this) {
-        is Loading -> false
-        is Idle -> isRefreshing
-        is NetworkError -> isRefreshing
-    }
 
 @Composable
 fun ActivityScreen(
@@ -62,22 +39,37 @@ fun ActivityScreen(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
-    LaunchedEffect(Unit) { vm.load() }
-
-    val state by vm.state.collectAsState()
-
     val pullToRefreshState = rememberPullToRefreshState()
 
+    val lazyPagingItems = vm.items.collectAsLazyPagingItems()
+
+    val mediatorRefresh = lazyPagingItems.loadState.mediator?.refresh
+    val mediatorAppend = lazyPagingItems.loadState.mediator?.append
+
+    val isAppending = mediatorAppend is LoadState.Loading
+
+    val isRefreshing = mediatorRefresh is LoadState.Loading
+
+    LaunchedEffect(mediatorRefresh) {
+        if (mediatorRefresh is LoadState.Error &&
+            lazyPagingItems.itemCount > 0
+        ) {
+            println("can't refresh…")
+        } else {
+            println("can refresh!")
+        }
+    }
+
     PullToRefreshBox(
-        isRefreshing = state.isRefreshing,
+        isRefreshing = isRefreshing,
         state = pullToRefreshState,
-        onRefresh = vm::refresh,
+        onRefresh = lazyPagingItems::refresh,
         indicator = {
             LoadingIndicator(
                 modifier = Modifier
                     .safeDrawingPadding()
                     .align(Alignment.TopCenter),
-                isRefreshing = state.isRefreshing,
+                isRefreshing = isRefreshing,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 state = pullToRefreshState,
@@ -90,58 +82,56 @@ fun ActivityScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = {},
-                    navigationIcon = {
-                        // todo
-                        IconButton(onClick = {}) {
-                            UserAvatar(
-                                // todo this thing
-                                nickname = Nickname.orThrow("pai y"),
-                                userId = UserId(21),
-                                uri = null,
-                                style = UserAvatarStyle(
-                                    size = 24.dp,
-                                    noAvatarSize = 14.dp,
-                                    shape = UserAvatarShape.Certain(CircleShape),
-                                ),
-                                modifier = Modifier,
-                            )
-                        }
+                    title = {
+                        Text(text = "activity")
                     },
+                    navigationIcon = { },
                 )
             },
-            modifier = modifier
-                .padding(contentPadding)
+            modifier = Modifier
                 .fillMaxSize(),
         ) { innerPadding ->
-            when (val state = state) {
-                is Idle -> {
-                    IdleState(
-                        state = state,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                    )
-                }
+            LazyColumn(
+                modifier = Modifier.padding(innerPadding).fillMaxSize(),
+            ) {
+                item {
+                    Spacer(Modifier.height(12.dp))
 
-                is Loading -> {
-                    Box(
-                        contentAlignment = Center,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                    ) {
-                        CircularProgressIndicator()
+                    val isError = lazyPagingItems.itemCount == 0 &&
+                        mediatorRefresh is LoadState.Error
+
+                    if (isError) {
+                        Text("some error occurred")
                     }
                 }
 
-                is NetworkError -> {
-                    NetworkErrorBox(
-                        onRetry = {},
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
-                    )
+                items(
+                    count = lazyPagingItems.itemCount,
+                    key = lazyPagingItems.itemKey { it.id.long },
+                ) { index ->
+                    val pagingItem = lazyPagingItems.get(index)
+
+                    if (pagingItem != null) {
+                        ActivityDetails(
+                            details = pagingItem,
+                            modifier = Modifier.padding(vertical = 12.dp),
+                        )
+                    }
+                }
+
+                item {
+                    if (isAppending) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                        ) {
+                            LoadingIndicator(
+                                modifier = Modifier.size(32.dp),
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -149,34 +139,7 @@ fun ActivityScreen(
 }
 
 @Composable
-private fun IdleState(
-    state: ActivityScreenUiState.Idle,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .fillMaxSize(),
-    ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            items(state.activity) { item ->
-                ActivityDetails(
-                    details = item,
-                    modifier = Modifier,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ActivityDetails(
-    details: ActivityDetails,
-    modifier: Modifier = Modifier,
-) {
+fun ActivityDetails(details: ActivityDetails, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
     ) {
@@ -187,7 +150,8 @@ fun ActivityDetails(
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Text(
-                    text = "${details.post.owner.nickname.string} | ${details.post.instant}",
+                    text =
+                    "${details.post.owner.nickname.string} | ${details.post.instant}",
                 )
                 Spacer(Modifier.height(8.dp))
             }

@@ -1,6 +1,5 @@
 [versions]
 agp = "9.2.1"
-composeSwipeableCards = "1.1.4"
 kotlinxDatetime = "0.8.0"
 zxing = "3.5.4"
 kotlin = "2.4.10"
@@ -22,10 +21,12 @@ ktorVersion = "3.5.2"
 desugaring = "2.1.5"
 google-services = "4.5.0"
 firebase-bom = "34.18.0"
-room = "2.8.4"
+room = "2.8.5"
 ksp = "2.3.4"
 noties = "4.6.2"
 appcompat = "1.8.0"
+kotlinxCoroutines = "1.11.0"
+paging = "3.4.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -43,6 +44,7 @@ androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "a
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 alexzhirkevich-qrose = { module = "io.github.alexzhirkevich:qrose", version.ref = "alexzhirkevichQrose" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
@@ -74,6 +76,10 @@ room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 
+room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
+
+paging-common = { group = "androidx.paging", name = "paging-common", version.ref = "paging" }
+paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -84,3 +90,4 @@ serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref 
 android-library = { id = "com.android.library", version.ref = "agp" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

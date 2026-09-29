@@ -1,89 +1,100 @@
+@file:OptIn(ExperimentalPagingApi::class)
+
 package friendly.android
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import friendly.sdk.ActivityDetails
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.filter
+import androidx.paging.map
+import friendly.sdk.ActivityDetailsSerializable
+import friendly.sdk.CursorId
 import friendly.sdk.FriendlyClient
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 private data class ActivityScreenVmState(
     val isLoading: Boolean,
     val isRefreshing: Boolean,
     val isNetworkError: Boolean,
-    val activity: List<ActivityDetails>?,
-) {
-    fun toUiState(): ActivityScreenUiState {
-        if (isLoading) return Loading
-        if (isNetworkError) {
-            return ActivityScreenUiState.NetworkError(isRefreshing)
+)
+
+// TODO: think
+//
+// here we need to think about making this bro both reusable and less bloated
+// for the future
+
+fun <T : Any> FriendlyDatabase.cachedPager(
+    pagesKey: String,
+    decode: (PagingItem) -> T,
+    fetch: suspend (cursor: String?, start: Long) -> FetchResult,
+): Flow<PagingData<T>> {
+    val pager = Pager(
+        config = PagingConfig(pageSize = 20, enablePlaceholders = false),
+        remoteMediator = CachedListMediator(pagesKey, this, fetch),
+        pagingSourceFactory = { pagingCacheDao().pagingSource(pagesKey) },
+    )
+    return pager.flow
+        .map { paging ->
+            paging
+                .map { pagingItem ->
+                    decode(pagingItem)
+                } // TODO T?
+                .filter { it != null } // TODO: items failed to decode
         }
-        if (activity != null) {
-            return ActivityScreenUiState
-                .Idle(
-                    activity = activity,
-                    isRefreshing = isRefreshing,
-                )
-        }
-        error("undefined state? idk") // todo idk how should i failfast here...
-    }
 }
 
 class ActivityScreenViewModel(
     private val authStorage: AuthStorage,
     private val client: FriendlyClient,
+    private val db: FriendlyDatabase, // TODO use sep abstraction for that later
 ) : ViewModel() {
-    private val _state = MutableStateFlow(
-        ActivityScreenVmState(
-            isLoading = true,
-            isNetworkError = false,
-            activity = null,
-            isRefreshing = false,
-        ),
-    )
+    private val pagesKey = "activity"
 
-    val state = _state
-        .map(ActivityScreenVmState::toUiState)
-        .stateIn(
-            viewModelScope, Eagerly,
-            ActivityScreenUiState.Idle(
-                listOf(), false,
-            ),
-        )
+    private val json = Json { ignoreUnknownKeys = true }
 
-    fun load() {
-        viewModelScope.launch {
-            val auth = authStorage.getAuth()
-            val list = client.activity.list(auth, null)
-            val activity = list.orThrow()
-            activity.nextId.let(::println) // todo
-            _state.update { old ->
-                old.copy(
-                    isLoading = false,
-                    activity = activity.data,
-                )
+    val items = db.cachedPager(
+        pagesKey = pagesKey,
+        decode = { row ->
+            // TODO: what if we will get a failure here?
+            json
+                .decodeFromString<ActivityDetailsSerializable>(row.payload)
+                .typed()
+        },
+        fetch = { cursor, start ->
+            println("CURSOR TO FETCH: $cursor")
+            val activityListResult = client.activity.list(
+                authorization = authStorage.getAuth(),
+                cursorId = cursor?.let(::CursorId),
+            )
+            when (val activityListResult = activityListResult) {
+                is IOError -> FetchResult.Failure.Io
+                is ServerError -> FetchResult.Failure.Server
+                is Unauthorized -> FetchResult.Failure.Unauthorized
+
+                is Success -> {
+                    val pageResult = PageResult(
+                        items = activityListResult.cursor.data
+                            .mapIndexed { index, item ->
+                                PagingItem(
+                                    pagesKey = pagesKey,
+                                    position = start + index,
+                                    itemId = item.id.toString(),
+                                    payload = json.encodeToString(
+                                        value = item.serializable(),
+                                    ),
+                                )
+                            },
+                        nextCursor = activityListResult.cursor.nextId?.string,
+                    )
+                    FetchResult.Success(pageResult)
+                }
             }
-        }
-    }
-
-    fun refresh() {
-        _state.update {
-            it.copy(isRefreshing = true)
-        }
-        viewModelScope.launch {
-            val auth = authStorage.getAuth()
-            val list = client.activity.list(auth, null)
-            val activity = list.orThrow()
-            activity.nextId.let(::println) // todo
-            _state.update { old ->
-                old.copy(
-                    isRefreshing = false,
-                    activity = activity.data,
-                )
-            }
-        }
-    }
+        },
+    ).cachedIn(viewModelScope)
 }
