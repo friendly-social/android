@@ -1,11 +1,11 @@
 package friendly.android
 
-import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
 import androidx.room.Query
 import androidx.room.RoomDatabase
+import androidx.room.Transaction
 import androidx.room.Upsert
 
 @Database(
@@ -18,30 +18,30 @@ abstract class FriendlyDatabase : RoomDatabase() {
 
 @Entity(
     tableName = "paging_item",
-    primaryKeys = ["pagesKey", "itemId"],
+    primaryKeys = ["queryKey", "pageIndex"],
 )
 data class PagingItem(
-    val pagesKey: String,
-    val position: Long,
-    val itemId: String,
+    val queryKey: String,
+    val pageIndex: Int,
     val payload: String,
 )
 
 @Dao
 interface PagingCacheDao {
     @Query(
-        "SELECT * FROM paging_item WHERE pagesKey = :key ORDER BY position ASC",
+        "SELECT * FROM paging_item WHERE queryKey = :key ORDER BY pageIndex",
     )
-    fun pagingSource(key: String): PagingSource<Int, PagingItem>
+    suspend fun read(key: String): List<PagingItem>
 
-    @Query(
-        "SELECT COALESCE(MAX(position), -1) FROM paging_item WHERE pagesKey = :key",
-    )
-    suspend fun maxPosition(key: String): Long
+    @Query("DELETE FROM paging_item WHERE queryKey = :key")
+    suspend fun clear(key: String)
 
     @Upsert
-    suspend fun upsert(items: List<PagingItem>)
+    suspend fun upsert(entity: PagingItem)
 
-    @Query("DELETE FROM paging_item WHERE pagesKey = :key")
-    suspend fun clear(key: String)
+    @Transaction
+    suspend fun replace(key: String, pages: List<PagingItem>) {
+        clear(key)
+        pages.forEach { page -> upsert(page) }
+    }
 }

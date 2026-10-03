@@ -92,7 +92,7 @@ dependencies {
 
     implementation(libs.friendly.sdk)
     implementation(projects.cards)
-    implementation(projects.cache)
+    implementation(projects.query)
     implementation(projects.markdowntext)
 
     ksp(libs.room.compiler)

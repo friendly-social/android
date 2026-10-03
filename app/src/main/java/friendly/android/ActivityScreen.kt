@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
@@ -24,14 +26,43 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingInd
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import friendly.query.InfiniteQuery
+import friendly.query.InfiniteQueryState
 import friendly.sdk.ActivityDetails
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+
+@Composable
+fun InfiniteQuery<*, *>.setFetchNextOnScroll(
+    queryState: InfiniteQueryState<*>,
+    lazyListState: LazyListState,
+    remainingItemsBeforeLoadingNextPage: Int = 100,
+) {
+    val query = this
+    LaunchedEffect(lazyListState, queryState.hasNext) {
+        val flow = snapshotFlow {
+            lazyListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+        }
+            .filterNotNull()
+            .filter { lastVisibleItemIndex ->
+                val thresholdIndex =
+                    queryState.items.size - remainingItemsBeforeLoadingNextPage
+                lastVisibleItemIndex >= thresholdIndex
+            }
+            .collect {
+                if (queryState.hasNext) {
+                    query.fetchNext()
+                }
+            }
+    }
+}
 
 @Composable
 fun ActivityScreen(
@@ -41,35 +72,26 @@ fun ActivityScreen(
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
 
-    val lazyPagingItems = vm.items.collectAsLazyPagingItems()
+    val activityState by vm.activity.state.collectAsStateWithLifecycle()
 
-    val mediatorRefresh = lazyPagingItems.loadState.mediator?.refresh
-    val mediatorAppend = lazyPagingItems.loadState.mediator?.append
+    val lazyColumnState = rememberLazyListState()
 
-    val isAppending = mediatorAppend is LoadState.Loading
+    val isAppending = activityState.fetch is FetchingNext
+    val isInitiallyLoading = activityState.fetch is Loading
+    val isRefreshing = activityState.fetch is Refreshing
 
-    val isRefreshing = mediatorRefresh is LoadState.Loading
-
-    LaunchedEffect(mediatorRefresh) {
-        if (mediatorRefresh is LoadState.Error &&
-            lazyPagingItems.itemCount > 0
-        ) {
-            println("can't refresh…")
-        } else {
-            println("can refresh!")
-        }
-    }
+    vm.activity.setFetchNextOnScroll(activityState, lazyColumnState)
 
     PullToRefreshBox(
-        isRefreshing = isRefreshing,
+        isRefreshing = isRefreshing || isInitiallyLoading,
         state = pullToRefreshState,
-        onRefresh = lazyPagingItems::refresh,
+        onRefresh = vm.activity::refresh,
         indicator = {
             LoadingIndicator(
                 modifier = Modifier
                     .safeDrawingPadding()
                     .align(Alignment.TopCenter),
-                isRefreshing = isRefreshing,
+                isRefreshing = isRefreshing || isInitiallyLoading,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 state = pullToRefreshState,
@@ -92,31 +114,26 @@ fun ActivityScreen(
                 .fillMaxSize(),
         ) { innerPadding ->
             LazyColumn(
+                state = lazyColumnState,
                 modifier = Modifier.padding(innerPadding).fillMaxSize(),
             ) {
                 item {
                     Spacer(Modifier.height(12.dp))
 
-                    val isError = lazyPagingItems.itemCount == 0 &&
-                        mediatorRefresh is LoadState.Error
-
-                    if (isError) {
+                    if (activityState.error) {
                         Text("some error occurred")
                     }
                 }
 
                 items(
-                    count = lazyPagingItems.itemCount,
-                    key = lazyPagingItems.itemKey { it.id.long },
-                ) { index ->
-                    val pagingItem = lazyPagingItems.get(index)
-
-                    if (pagingItem != null) {
-                        ActivityDetails(
-                            details = pagingItem,
-                            modifier = Modifier.padding(vertical = 12.dp),
-                        )
-                    }
+                    items = activityState.items,
+                    contentType = { "feed" },
+                    key = { item -> item.id.long },
+                ) { item ->
+                    ActivityDetails(
+                        details = item,
+                        modifier = Modifier.padding(vertical = 12.dp),
+                    )
                 }
 
                 item {
@@ -151,7 +168,7 @@ fun ActivityDetails(details: ActivityDetails, modifier: Modifier = Modifier) {
                 )
                 Text(
                     text =
-                    "${details.post.owner.nickname.string} | ${details.post.instant}",
+                        "${details.post.owner.nickname.string} | ${details.post.instant}",
                 )
                 Spacer(Modifier.height(8.dp))
             }
