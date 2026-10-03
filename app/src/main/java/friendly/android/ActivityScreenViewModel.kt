@@ -55,7 +55,7 @@ class ActivityScreenViewModel(
                 is IOError,
                 is ServerError,
                 is Unauthorized,
-                    -> InfiniteQueryFetchResult.Failure
+                -> InfiniteQueryFetchResult.Failure
 
                 is Success -> InfiniteQueryFetchResult.Success(
                     value = result.cursor.data,

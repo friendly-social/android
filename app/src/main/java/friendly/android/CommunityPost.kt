@@ -95,7 +95,7 @@ fun CommunityPost(
     }
 }
 
-// TODO: incorrect temp formatting
+// TODO: make normal global date-time formatting utils
 private fun formatDateTime(instant: Instant): String {
     val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
     val format = LocalDateTime.Format {

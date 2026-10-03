@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -26,18 +27,30 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingInd
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import friendly.query.InfiniteQuery
 import friendly.query.InfiniteQueryState
 import friendly.sdk.ActivityDetails
+import friendly.sdk.FriendlyClient
+import friendly.sdk.FriendlyFilesClient
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 @Composable
 fun InfiniteQuery<*, *>.setFetchNextOnScroll(
@@ -132,7 +145,7 @@ fun ActivityScreen(
                 ) { item ->
                     ActivityDetails(
                         details = item,
-                        modifier = Modifier.padding(vertical = 12.dp),
+                        modifier = Modifier,
                     )
                 }
 
@@ -157,21 +170,70 @@ fun ActivityScreen(
 
 @Composable
 fun ActivityDetails(details: ActivityDetails, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-    ) {
-        when (details) {
-            is ActivityDetails.Reply -> {
-                Text(
-                    text = details.post.text.string.take(50),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-                Text(
-                    text =
-                        "${details.post.owner.nickname.string} | ${details.post.instant}",
-                )
-                Spacer(Modifier.height(8.dp))
-            }
+    val filesClient: FriendlyFilesClient =
+        remember {
+            FriendlyClient.production().files
+        } // TODO: this is a total bullshit tbh
+
+    when (details) {
+        is ActivityDetails.Reply -> {
+            ListItem(
+                onClick = {},
+                leadingContent = {
+                    UserAvatar(
+                        nickname = details.post.owner.nickname,
+                        userId = details.post.owner.id,
+                        uri = details.post.owner.avatar?.let { descriptor ->
+                            filesClient.getEndpoint(descriptor).string.toUri()
+                        },
+                        style = UserAvatarStyle.Small,
+                    )
+                },
+                trailingContent = {
+                    Text(
+                        text = formatDateTime(details.instant),
+                        maxLines = 1,
+                    )
+                },
+                modifier = modifier,
+                content = {
+                    Text(
+                        text = buildAnnotatedString {
+                            append("Reply from ")
+                            withStyle(
+                                style = SpanStyle(fontWeight = Bold),
+                            ) {
+                                append(details.post.owner.nickname.string)
+                            }
+                            append(": \"")
+                            append(details.post.text.string)
+                            append("\"")
+                        },
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+            )
         }
     }
+}
+
+// TODO: make normal global date-time formatting utils
+private fun formatDateTime(instant: Instant): String {
+    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+    val format = LocalDateTime.Format {
+        year()
+        chars("-")
+        monthNumber()
+        chars("-")
+        day()
+
+        chars(" ")
+
+        hour()
+        chars(":")
+        minute()
+    }
+    val formattedDateTime = localDateTime.format(format)
+    return formattedDateTime
 }
