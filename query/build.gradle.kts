@@ -7,6 +7,9 @@ kotlin {
     explicitApi()
 
     compilerOptions {
+        freeCompilerArgs.add("-Xcontext-sensitive-resolution")
+        optIn.add("kotlin.time.ExperimentalTime")
+
         extraWarnings = true
         allWarningsAsErrors = true
         progressiveMode = true

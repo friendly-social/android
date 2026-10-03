@@ -27,4 +27,4 @@ rootProject.name = "friendly-android"
 include(":app")
 include(":cards")
 include(":markdowntext")
-include(":cache")
+include(":query")
