@@ -1,4 +1,7 @@
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(
+    ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+)
 
 package friendly.android
 
@@ -12,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -26,56 +28,22 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import friendly.query.InfiniteQuery
-import friendly.query.InfiniteQueryState
 import friendly.sdk.ActivityDetails
-import friendly.sdk.FriendlyClient
-import friendly.sdk.FriendlyFilesClient
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
-
-@Composable
-fun InfiniteQuery<*, *>.setFetchNextOnScroll(
-    queryState: InfiniteQueryState<*>,
-    lazyListState: LazyListState,
-    remainingItemsBeforeLoadingNextPage: Int = 100,
-) {
-    val query = this
-    LaunchedEffect(lazyListState, queryState.hasNext) {
-        val flow = snapshotFlow {
-            lazyListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
-        }
-            .filterNotNull()
-            .filter { lastVisibleItemIndex ->
-                val thresholdIndex =
-                    queryState.items.size - remainingItemsBeforeLoadingNextPage
-                lastVisibleItemIndex >= thresholdIndex
-            }
-            .collect {
-                if (queryState.hasNext) {
-                    query.fetchNext()
-                }
-            }
-    }
-}
 
 @Composable
 fun ActivityScreen(
@@ -85,7 +53,7 @@ fun ActivityScreen(
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
 
-    val activityState by vm.activity.state.collectAsStateWithLifecycle()
+    val activityState by vm.activity.state.collectAsState()
 
     val lazyColumnState = rememberLazyListState()
 
@@ -144,6 +112,7 @@ fun ActivityScreen(
                     key = { item -> item.id.long },
                 ) { item ->
                     ActivityDetails(
+                        vm = vm,
                         details = item,
                         modifier = Modifier,
                     )
@@ -169,23 +138,22 @@ fun ActivityScreen(
 }
 
 @Composable
-fun ActivityDetails(details: ActivityDetails, modifier: Modifier = Modifier) {
-    val filesClient: FriendlyFilesClient =
-        remember {
-            FriendlyClient.production().files
-        } // TODO: this is a total bullshit tbh
-
+fun ActivityDetails(
+    vm: ActivityScreenViewModel,
+    details: ActivityDetails,
+    modifier: Modifier = Modifier,
+) {
     when (details) {
         is ActivityDetails.Reply -> {
             ListItem(
-                onClick = {},
+                onClick = {
+                    // TODO: trigger navigation to open the reply post
+                },
                 leadingContent = {
                     UserAvatar(
                         nickname = details.post.owner.nickname,
                         userId = details.post.owner.id,
-                        uri = details.post.owner.avatar?.let { descriptor ->
-                            filesClient.getEndpoint(descriptor).string.toUri()
-                        },
+                        uri = details.post.owner.avatar?.let(vm::avatarUri),
                         style = UserAvatarStyle.Small,
                     )
                 },
@@ -199,7 +167,9 @@ fun ActivityDetails(details: ActivityDetails, modifier: Modifier = Modifier) {
                 content = {
                     Text(
                         text = buildAnnotatedString {
-                            append("Reply from ")
+                            // TODO: string resources
+                            append(stringResource(R.string.reply_from))
+                            append(" ")
                             withStyle(
                                 style = SpanStyle(fontWeight = Bold),
                             ) {

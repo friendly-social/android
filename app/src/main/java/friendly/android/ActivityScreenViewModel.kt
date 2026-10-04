@@ -2,6 +2,8 @@
 
 package friendly.android
 
+import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
@@ -12,6 +14,7 @@ import friendly.query.QueryConfig
 import friendly.query.infiniteQuery
 import friendly.sdk.ActivityDetails
 import friendly.sdk.CursorId
+import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -64,4 +67,7 @@ class ActivityScreenViewModel(
             }
         },
     )
+
+    fun avatarUri(descriptor: FileDescriptor): Uri =
+        descriptor.let(client.files::getEndpoint).string.toUri()
 }
