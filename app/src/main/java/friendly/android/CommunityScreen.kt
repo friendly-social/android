@@ -10,51 +10,70 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import friendly.query.InfiniteQueryCacheKey
+import friendly.query.InfiniteQueryClient
+import friendly.query.InfiniteQueryFetchResult
+import friendly.query.QueryConfig
+import friendly.query.infiniteQuery
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
+import friendly.sdk.CursorId
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-
-data class CommunityScreenUiState(val posts: List<CommunityPostDetails>)
+import kotlin.time.Duration.Companion.milliseconds
 
 class CommunityScreenViewModel(
     private val client: FriendlyClient,
     private val authStorage: AuthStorage,
+    private val db: FriendlyDatabase,
 ) : ViewModel() {
-    private val _state: MutableStateFlow<CommunityScreenUiState> =
-        MutableStateFlow(CommunityScreenUiState(listOf()))
+    val infiniteQueryClient =
+        InfiniteQueryClient(
+            cache = roomInfiniteQueryCache(
+                itemSerializable = { item: CommunityPostDetails ->
+                    item.serializable()
+                },
+                cursorSerializable = { cursor: CursorId ->
+                    cursor.serializable()
+                },
+                itemTyped = { it.typed() },
+                cursorTyped = { it.typed() },
+                db = db.pagingCacheDao(),
+            ),
+            queryScope = viewModelScope,
+        )
 
-    val state: StateFlow<CommunityScreenUiState> = _state.asStateFlow()
+    val posts = infiniteQueryClient.infiniteQuery(
+        config = QueryConfig(
+            key = InfiniteQueryCacheKey("community"),
+            retryDelay = 100.milliseconds,
+        ),
+        fetch = { cursor: CursorId? ->
+            val result = client.community.list(
+                authorization = authStorage.getAuth(),
+                cursorId = cursor,
+            )
+            when (result) {
+                is IOError,
+                is ServerError,
+                is Unauthorized,
+                -> InfiniteQueryFetchResult.Failure
 
-    fun fetchAll() {
-        viewModelScope.launch {
-            val authorization = authStorage.getAuth()
-
-            when (val postsList = client.community.list(authorization, null)) {
-                is IOError -> {}
-                is ServerError -> {}
-                is Success -> {
-                    val data = postsList.cursor.data
-                    _state.update { old -> old.copy(posts = data) }
-                }
-
-                is Unauthorized -> TODO()
+                is Success -> InfiniteQueryFetchResult.Success(
+                    value = result.cursor.data,
+                    nextCursor = result.cursor.nextId,
+                )
             }
-        }
-    }
+        },
+    )
 
     fun fileUri(fileDescriptor: FileDescriptor): Uri =
         client.files.getEndpoint(fileDescriptor).string.toUri()
@@ -67,9 +86,7 @@ fun CommunityScreen(
     onPostClick: (CommunityPostDescriptor) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val state = vm.state.collectAsState()
-
-    LaunchedEffect(Unit) { vm.fetchAll() }
+    val posts by vm.posts.state.collectAsState()
 
     Scaffold(
         modifier = modifier.padding(contentPadding),
@@ -83,16 +100,15 @@ fun CommunityScreen(
         ) {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
+                modifier = Modifier.fillMaxSize(),
             ) {
-                items(state.value.posts) { item ->
+                items(posts.items) { item ->
                     CommunityPost(
                         details = item,
-                        avatarUri = (item as? Plain)?.owner?.avatar?.let(
-                            vm::fileUri,
-                        ),
+                        avatarUri = when (item) {
+                            is Plain -> item.owner.avatar?.let(vm::fileUri)
+                            is Deleted -> null
+                        },
                         onClick = onPostClick,
                         modifier = Modifier,
                     )

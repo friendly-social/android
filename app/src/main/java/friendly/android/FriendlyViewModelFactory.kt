@@ -132,7 +132,7 @@ class FriendlyViewModelFactory(
             return NoFriendsBlockingScreenViewModel(addFriendUseCase) as T
         }
         if (modelClass == CommunityScreenViewModel::class) {
-            return CommunityScreenViewModel(client, authStorage) as T
+            return CommunityScreenViewModel(client, authStorage, database) as T
         }
         if (modelClass == CommunityPostScreenViewModel::class) {
             return CommunityPostScreenViewModel(client, authStorage) as T
