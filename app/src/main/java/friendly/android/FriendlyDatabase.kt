@@ -16,32 +16,52 @@ abstract class FriendlyDatabase : RoomDatabase() {
     abstract fun pagingCacheDao(): PagingCacheDao
 }
 
+/**
+ * Represents a single item in a page [pageIndex] of some
+ * query with id [queryKey]. [indexInPage] represents an item index in the page.
+ */
 @Entity(
     tableName = "paging_item",
-    primaryKeys = ["queryKey", "pageIndex"],
+    primaryKeys = ["queryKey", "pageIndex", "indexInPage"],
 )
 data class PagingItem(
     val queryKey: String,
     val pageIndex: Int,
+    val indexInPage: Int,
     val payload: String,
+    val nextCursorPayload: String?,
 )
 
 @Dao
 interface PagingCacheDao {
     @Query(
-        "SELECT * FROM paging_item WHERE queryKey = :key ORDER BY pageIndex",
+        """
+        SELECT * FROM paging_item
+        WHERE queryKey = :key AND pageIndex = :page
+        ORDER BY indexInPage
+        """
     )
-    suspend fun read(key: String): List<PagingItem>
+    suspend fun read(
+        key: String,
+        page: Int,
+    ): List<PagingItem>
 
     @Query("DELETE FROM paging_item WHERE queryKey = :key")
-    suspend fun clear(key: String)
+    suspend fun clear(
+        key: String,
+    )
 
     @Upsert
-    suspend fun upsert(entity: PagingItem)
+    suspend fun upsert(
+        items: List<PagingItem>,
+    )
 
     @Transaction
-    suspend fun replace(key: String, pages: List<PagingItem>) {
+    suspend fun replace(
+        key: String,
+        items: List<PagingItem>,
+    ) {
         clear(key)
-        pages.forEach { page -> upsert(page) }
+        upsert(items)
     }
 }

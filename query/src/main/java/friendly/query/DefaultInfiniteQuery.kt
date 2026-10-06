@@ -1,16 +1,15 @@
 package friendly.query
 
-import kotlinx.coroutines.CoroutineScope
+import friendly.query.InfiniteQueryFetchResult.Success
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
 // TODO:
@@ -28,7 +27,7 @@ public fun <TCursor, TItem> InfiniteQueryClient<TCursor, TItem>.infiniteQuery(
 ): InfiniteQuery<TCursor, TItem> {
     val queryClient = this
 
-    val infiniteQuery = DefaultInfiniteQuery<TCursor, TItem>(
+    val infiniteQuery = DefaultInfiniteQuery(
         config = config,
         queryClient = queryClient,
         fetch = fetch,
@@ -76,7 +75,7 @@ private class DefaultInfiniteQuery<TCursor, TItem>(
                 source = None,
                 error = false,
                 fetch = Idle,
-            )
+            ),
         )
 
     override val state: StateFlow<InfiniteQueryState<TItem>> =
@@ -174,7 +173,7 @@ private class DefaultInfiniteQuery<TCursor, TItem>(
                     }
                     cache.append(
                         key = config.key,
-                        index = _state.value.pages.size - 1,
+                        pageIndex = _state.value.pages.size - 1,
                         page = page,
                     )
                 }
@@ -183,7 +182,11 @@ private class DefaultInfiniteQuery<TCursor, TItem>(
     }
 
     suspend fun run() {
-        val cache = cache.read(config.key)
+        // TODO: we need to read all pages
+        val cache = cache.read(
+            key = config.key,
+            pageIndex = 0,
+        )
 
         if (cache.isNotEmpty()) {
             _state.update { it.copy(pages = cache, source = Cached) }
@@ -193,7 +196,7 @@ private class DefaultInfiniteQuery<TCursor, TItem>(
     }
 }
 
-public inline suspend fun <C, T> fetchWithRetries(
+public suspend inline fun <C, T> fetchWithRetries(
     retries: Int,
     retryDelay: Duration,
     block: () -> InfiniteQueryFetchResult<C, T>,

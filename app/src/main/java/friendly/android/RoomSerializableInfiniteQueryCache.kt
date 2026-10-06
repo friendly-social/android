@@ -4,7 +4,6 @@ import friendly.query.InfiniteQueryCache
 import friendly.query.InfiniteQueryCacheKey
 import friendly.query.InfiniteQueryPage
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
@@ -28,7 +27,7 @@ internal fun <T, S> KSerializer<S>.map(
         fromSerializable(decoder.decodeSerializableValue(this@map))
 }
 
-public inline fun <C, T, reified CS, reified TS> roomInfiniteQueryCache(
+inline fun <C, T, reified CS, reified TS> roomInfiniteQueryCache(
     db: PagingCacheDao,
     noinline itemSerializable: (T) -> TS,
     noinline itemTyped: (TS) -> T,
@@ -49,44 +48,68 @@ public inline fun <C, T, reified CS, reified TS> roomInfiniteQueryCache(
         json = json,
     )
 
-public class RoomSerializableInfiniteQueryCache<C, T>(
+class RoomSerializableInfiniteQueryCache<C, T>(
     private val cursorSerializer: KSerializer<C>,
     private val itemSerializer: KSerializer<T>,
     private val db: PagingCacheDao,
     private val json: Json = Json,
 ) : InfiniteQueryCache<C, T> {
-    private val pageSerializer: KSerializer<CachedPage<C, T>> =
-        CachedPage.serializer(cursorSerializer, itemSerializer)
-
     override suspend fun append(
         key: InfiniteQueryCacheKey,
-        index: Int,
+        pageIndex: Int,
         page: InfiniteQueryPage<C, T>,
     ) {
-        val dto = CachedPage(
-            items = page.items,
-            nextCursor = page.nextCursor,
-        )
-        db.upsert(
-            PagingItem(
-                queryKey = key.string,
-                pageIndex = index,
-                payload = json.encodeToString(pageSerializer, dto),
-            ),
-        )
+        val cacheItems = page.items
+            .mapIndexed { index, pageItem ->
+                PagingItem(
+                    queryKey = key.string,
+                    pageIndex = pageIndex,
+                    indexInPage = index,
+                    payload = json.encodeToString(itemSerializer, pageItem),
+                    nextCursorPayload = page.nextCursor?.let { nextCursor ->
+                        json.encodeToString(cursorSerializer, nextCursor)
+                    },
+                )
+            }
+        db.upsert(cacheItems)
     }
 
     override suspend fun read(
         key: InfiniteQueryCacheKey,
-    ): List<InfiniteQueryPage<C, T>> = db.read(key.string).map { entity ->
-        val dto: CachedPage<C, T> = json.decodeFromString(
-            deserializer = pageSerializer,
-            string = entity.payload,
+        pageIndex: Int,
+    ): List<InfiniteQueryPage<C, T>> {
+        val cachedPagingItems = db.read(
+            key = key.string,
+            page = pageIndex,
         )
-        InfiniteQueryPage(
-            items = dto.items,
-            nextCursor = dto.nextCursor,
-        )
+
+        val cachedPages = cachedPagingItems
+            .groupBy { pagingItem -> pagingItem.pageIndex }
+
+        val pages = cachedPages
+            .map { (pageIndex, page) ->
+                val pageItems = page.map { cachedPageItem ->
+                    json.decodeFromString(
+                        deserializer = itemSerializer,
+                        string = cachedPageItem.payload,
+                    )
+                }
+                val nextCursorPayload = page
+                    .firstOrNull()
+                    ?.nextCursorPayload
+                val nextCursor: C? = nextCursorPayload?.let { payload ->
+                    json.decodeFromString(
+                        deserializer = cursorSerializer,
+                        string = payload,
+                    )
+                }
+                InfiniteQueryPage(
+                    items = pageItems,
+                    nextCursor = nextCursor,
+                )
+            }
+
+        return pages
     }
 
     override suspend fun clear(key: InfiniteQueryCacheKey) {
@@ -97,22 +120,33 @@ public class RoomSerializableInfiniteQueryCache<C, T>(
         key: InfiniteQueryCacheKey,
         pages: List<InfiniteQueryPage<C, T>>,
     ) {
+        val cachedItems = pages
+            .flatMapIndexed { pageIndex, page ->
+                page.items.mapIndexed { indexInPage, item ->
+                    val itemPayload = json.encodeToString(
+                        serializer = itemSerializer,
+                        value = item,
+                    )
+                    val nextCursorPayload =
+                        page.nextCursor?.let { nextCursor ->
+                            json.encodeToString(
+                                serializer = cursorSerializer,
+                                value = nextCursor,
+                            )
+                        }
+                    PagingItem(
+                        queryKey = key.string,
+                        pageIndex = pageIndex,
+                        payload = itemPayload,
+                        indexInPage = indexInPage,
+                        nextCursorPayload = nextCursorPayload,
+                    )
+                }
+            }
+
         db.replace(
             key = key.string,
-            pages = pages.mapIndexed { index, page ->
-                val dto = CachedPage(
-                    items = page.items,
-                    nextCursor = page.nextCursor,
-                )
-                PagingItem(
-                    queryKey = key.string,
-                    pageIndex = index,
-                    payload = json.encodeToString(pageSerializer, dto),
-                )
-            },
+            items = cachedItems,
         )
     }
 }
-
-@Serializable
-private data class CachedPage<C, T>(val items: List<T>, val nextCursor: C?)
