@@ -2,9 +2,10 @@ package friendly.android
 
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
@@ -16,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import friendly.markdowntext.MarkdownText
+import com.mikepenz.markdown.m3.Markdown
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
 import kotlinx.datetime.LocalDateTime
@@ -59,7 +60,7 @@ fun CommunityPost(
                     )
                     Spacer(Modifier.width(4.dp))
                     Column(
-                        modifier = Modifier,
+                        modifier = Modifier.height(IntrinsicSize.Min),
                     ) {
                         Row {
                             Text(
@@ -84,10 +85,20 @@ fun CommunityPost(
                                 )
                             }
                         }
-                        MarkdownText(
-                            markdown = details.text.string,
-                            modifier = Modifier.fillMaxSize(),
+
+                        Markdown(
+                            content = details.text.string,
                         )
+//                        MarkdownText(
+//                            markdown = details.text.string,
+////                            imageLoader = communityPostImageLoader,
+//                            disableLinkMovementMethod = true,
+//                            truncateOnTextOverflow = true,
+//                            modifier = Modifier
+//                                .heightIn(min = 1.dp, max = 256.dp)
+//                                .clipToBounds()
+//                                .fillMaxSize(),
+//                        )
                     }
                 }
             }

@@ -93,7 +93,9 @@ dependencies {
     implementation(libs.friendly.sdk)
     implementation(projects.cards)
     implementation(projects.query)
-    implementation(projects.markdowntext)
+
+    implementation(libs.mikepenz.markdown)
+    implementation(libs.mikepenz.markdown.m3)
 
     ksp(libs.room.compiler)
     implementation(libs.room.runtime)
