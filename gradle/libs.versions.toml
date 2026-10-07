@@ -1,6 +1,7 @@
 [versions]
 agp = "9.2.1"
 kotlinxDatetime = "0.8.0"
+mikepenzMarkdown = "0.45.0"
 zxing = "3.5.4"
 kotlin = "2.4.10"
 coreKtx = "1.19.0"
@@ -27,6 +28,7 @@ noties = "4.6.2"
 appcompat = "1.8.0"
 kotlinxCoroutines = "1.11.0"
 paging = "3.4.2"
+snipmeHighlights = "1.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -50,6 +52,13 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 ktor-logging =  { module = "io.ktor:ktor-client-logging", version.ref = "ktorVersion" }
+
+mikepenz-markdown = { module = "com.mikepenz:multiplatform-markdown-renderer", version.ref = "mikepenzMarkdown" }
+mikepenz-markdown-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "mikepenzMarkdown" }
+mikepenz-markdown-coil3 = { module = "com.mikepenz:multiplatform-markdown-renderer-coil3", version.ref = "mikepenzMarkdown" }
+mikepenz-markdown-code = { module = "com.mikepenz:multiplatform-markdown-renderer-code", version.ref = "mikepenzMarkdown" }
+
+snipme-highlights = { module = "dev.snipme:highlights", version.ref="snipmeHighlights" }
 
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 molecule = { module = "app.cash.molecule:molecule-runtime", version.ref = "molecule" }

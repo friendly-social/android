@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -16,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.core.net.toUri
@@ -55,6 +52,8 @@ class CommunityPostScreenViewModel(
         client.files.getEndpoint(fileDescriptor).string.toUri()
 }
 
+// TODO: this is a completely WIP screen that has to changed very much
+
 @Composable
 fun CommunityPostScreen(
     vm: CommunityPostScreenViewModel,
@@ -91,49 +90,49 @@ fun CommunityPostScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            when (val state = state) {
-                null -> {
-                    CircularProgressIndicator()
-                }
-
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        items(state.upstream) { post ->
-                            CommunityPost(
-                                details = post,
-                                avatarUri = (post as? Plain)?.owner?.avatar
-                                    ?.let(vm::fileUri),
-                                onClick = { onPostClick(post.descriptor) },
-                                modifier = Modifier,
-                            )
-                        }
-
-                        item {
-                            CommunityPost(
-                                details = state.post,
-                                avatarUri = (state.post as? Plain)
-                                    ?.owner
-                                    ?.avatar
-                                    ?.let(vm::fileUri),
-                                onClick = {},
-                                modifier = Modifier,
-                            )
-                        }
-
-                        items(state.replies.data) { reply ->
-                            CommunityPost(
-                                details = reply,
-                                avatarUri = (reply as? Plain)?.owner?.avatar
-                                    ?.let(vm::fileUri),
-                                onClick = { onPostClick(reply.descriptor) },
-                                modifier = Modifier,
-                            )
-                        }
-                    }
-                }
-            }
+            CircularProgressIndicator()
+//            when (val state = state) {
+//                null -> {
+//                }
+//
+//                else -> {
+//                    LazyColumn(
+//                        modifier = Modifier.fillMaxSize(),
+//                    ) {
+//                        items(state.upstream) { post ->
+//                            CommunityPost(
+//                                details = post,
+//                                avatarUri = (post as? Plain)?.owner?.avatar
+//                                    ?.let(vm::fileUri),
+//                                imageTransformer = imageTransformer,
+//                                onClick = { onPostClick(post.descriptor) },
+//                            )
+//                        }
+//
+//                        item {
+//                            CommunityPost(
+//                                details = state.post,
+//                                avatarUri = (state.post as? Plain)
+//                                    ?.owner
+//                                    ?.avatar
+//                                    ?.let(vm::fileUri),
+//                                onClick = {},
+//                                imageTransformer = imageTransformer,
+//                            )
+//                        }
+//
+//                        items(state.replies.data) { reply ->
+//                            CommunityPost(
+//                                details = reply,
+//                                avatarUri = (reply as? Plain)?.owner?.avatar
+//                                    ?.let(vm::fileUri),
+//                                onClick = { onPostClick(reply.descriptor) },
+//                                imageTransformer = imageTransformer,
+//                            )
+//                        }
+//                    }
+//                }
+//            }
         }
     }
 }

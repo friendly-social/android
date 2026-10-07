@@ -96,6 +96,10 @@ dependencies {
 
     implementation(libs.mikepenz.markdown)
     implementation(libs.mikepenz.markdown.m3)
+    implementation(libs.mikepenz.markdown.coil3)
+    implementation(libs.mikepenz.markdown.code)
+
+    implementation(libs.snipme.highlights)
 
     ksp(libs.room.compiler)
     implementation(libs.room.runtime)

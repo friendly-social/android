@@ -65,7 +65,7 @@ class CommunityScreenViewModel(
                 is IOError,
                 is ServerError,
                 is Unauthorized,
-                -> InfiniteQueryFetchResult.Failure
+                    -> InfiniteQueryFetchResult.Failure
 
                 is Success -> InfiniteQueryFetchResult.Success(
                     value = result.cursor.data,
@@ -102,8 +102,12 @@ fun CommunityScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
-                items(posts.items) { item ->
-                    CommunityPost(
+                items(
+                    items = posts.items,
+                    key = { it.id.long },
+                    contentType = { "post-preview" },
+                ) { item ->
+                    CommunityPostPreview(
                         details = item,
                         avatarUri = when (item) {
                             is Plain -> item.owner.avatar?.let(vm::fileUri)
