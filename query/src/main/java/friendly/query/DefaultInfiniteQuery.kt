@@ -1,6 +1,7 @@
 package friendly.query
 
 import friendly.query.InfiniteQueryFetchResult.Success
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,7 +97,7 @@ private class DefaultInfiniteQuery<TCursor, TItem>(
 
     override fun refresh() {
         refreshJob?.cancel()
-        refreshJob = queryScope.launch {
+        refreshJob = queryScope.launch(Dispatchers.IO) {
             _state.update {
                 it.copy(
                     fetch = if (it.pages.isEmpty()) Loading else Refreshing,
@@ -119,7 +120,7 @@ private class DefaultInfiniteQuery<TCursor, TItem>(
                         fetchResult.value,
                         fetchResult.nextCursor,
                     )
-                    _state.update { old ->
+                    _state.update {
                         InternalInfiniteQueryState(
                             pages = listOf(page),
                             source = Fetched,
@@ -139,7 +140,7 @@ private class DefaultInfiniteQuery<TCursor, TItem>(
 
         val nextCursor = _state.value.pages.lastOrNull()?.nextCursor ?: return
 
-        fetchNextJob = queryScope.launch {
+        fetchNextJob = queryScope.launch(Dispatchers.IO) {
             _state.update {
                 it.copy(
                     fetch = FetchingNext,

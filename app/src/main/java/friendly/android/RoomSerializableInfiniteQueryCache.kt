@@ -3,6 +3,8 @@ package friendly.android
 import friendly.query.InfiniteQueryCache
 import friendly.query.InfiniteQueryCacheKey
 import friendly.query.InfiniteQueryPage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -35,7 +37,7 @@ inline fun <C, T, reified CS, reified TS> roomInfiniteQueryCache(
     noinline cursorTyped: (CS) -> C,
     json: Json = Json,
 ): RoomSerializableInfiniteQueryCache<C, T> =
-    RoomSerializableInfiniteQueryCache<C, T>(
+    RoomSerializableInfiniteQueryCache(
         cursorSerializer = serializer<CS>().map(
             cursorSerializable,
             cursorTyped,
@@ -87,7 +89,7 @@ class RoomSerializableInfiniteQueryCache<C, T>(
             .groupBy { pagingItem -> pagingItem.pageIndex }
 
         val pages = cachedPages
-            .map { (pageIndex, page) ->
+            .map { (_, page) ->
                 val pageItems = page.map { cachedPageItem ->
                     json.decodeFromString(
                         deserializer = itemSerializer,
