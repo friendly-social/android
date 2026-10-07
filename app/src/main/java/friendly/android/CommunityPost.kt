@@ -12,11 +12,12 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -37,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
+import coil3.request.error
 import com.mikepenz.markdown.annotator.annotatorSettings
 import com.mikepenz.markdown.annotator.buildMarkdownAnnotatedString
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
@@ -91,6 +93,7 @@ private class PostPreviewImageTransformer(private val imageWidth: Dp) :
             ImageRequest.Builder(context)
                 .data(link)
                 .size(widthPx, heightPx)
+                .error(R.drawable.ic_error)
                 .build()
         }
 
@@ -159,15 +162,10 @@ private fun PlainPostViewer(
     onImageClick: (url: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ListItem(
-        modifier = modifier
-            .clickable(
-                onClick = { println("clicked just on a post") },
-                indication = null,
-                interactionSource = null,
-            ), // todo
+    OutlinedCard(
+        modifier = modifier.padding(horizontal = 6.dp),
     ) {
-        Row {
+        Row(Modifier.padding(8.dp)) {
             UserAvatar(
                 userId = details.owner.id,
                 nickname = details.owner.nickname,
@@ -175,9 +173,7 @@ private fun PlainPostViewer(
                 style = UserAvatarStyle.Small,
                 modifier = Modifier
                     .clickable(
-                        onClick = {
-                            avatarUri?.toString()?.let(onImageClick)
-                        },
+                        onClick = { avatarUri?.toString()?.let(onImageClick) },
                         indication = null,
                         interactionSource = null,
                     ),
@@ -238,6 +234,84 @@ private fun PlainPostViewer(
             }
         }
     }
+}
+
+@Composable
+private fun MarkdownPreviewRenderer(
+    imageTransformer: PostPreviewImageTransformer,
+    details: CommunityPostDetails.Plain,
+    onImageClick: (url: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isDarkTheme = isSystemInDarkTheme()
+
+    val highlightsBuilder = remember(isDarkTheme) {
+        Highlights.Builder().theme(SyntaxThemes.atom(darkMode = isDarkTheme))
+    }
+
+    Markdown(
+        content = details.text.string,
+        annotator = markdownAnnotator(
+            config = markdownAnnotatorConfig(inlineImageAsBlock = false),
+        ),
+        imageTransformer = imageTransformer,
+        typography = markdownTypography(
+            h1 = MaterialTheme.typography.displayMedium,
+            h2 = MaterialTheme.typography.displaySmall,
+            h3 = MaterialTheme.typography.headlineLarge,
+            text = MaterialTheme.typography.bodySmall.copy(fontSize = 8.sp),
+        ),
+        components = markdownComponents(
+            paragraph = { paragraphModel ->
+                PreviewMarkdownParagraph(
+                    model = paragraphModel,
+                    onImageClick = onImageClick,
+                )
+            },
+            codeBlock = {
+                MarkdownHighlightedCodeBlock(
+                    content = it.content,
+                    node = it.node,
+                    highlightsBuilder = highlightsBuilder,
+                    showHeader = true,
+                )
+            },
+            codeFence = {
+                MarkdownHighlightedCodeFence(
+                    content = it.content,
+                    node = it.node,
+                    highlightsBuilder = highlightsBuilder,
+                    showHeader = true,
+                )
+            },
+        ),
+        animations = markdownAnimations(animateTextSize = { this }),
+        modifier = modifier
+            .wrapContentHeight(
+                align = Alignment.Top,
+                unbounded = true,
+            ),
+    )
+}
+
+// TODO: make normal global date-time formatting utils
+private fun formatDateTime(instant: Instant): String {
+    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+    val format = LocalDateTime.Format {
+        year()
+        chars("-")
+        monthNumber()
+        chars("-")
+        day()
+
+        chars(" ")
+
+        hour()
+        chars(":")
+        minute()
+    }
+    val formattedDateTime = localDateTime.format(format)
+    return formattedDateTime
 }
 
 @Composable
@@ -331,82 +405,4 @@ private fun PreviewMarkdownParagraph(
             }
         }
     }
-}
-
-@Composable
-private fun MarkdownPreviewRenderer(
-    imageTransformer: PostPreviewImageTransformer,
-    details: CommunityPostDetails.Plain,
-    onImageClick: (url: String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val isDarkTheme = isSystemInDarkTheme()
-
-    val highlightsBuilder = remember(isDarkTheme) {
-        Highlights.Builder().theme(SyntaxThemes.atom(darkMode = isDarkTheme))
-    }
-
-    Markdown(
-        content = details.text.string,
-        annotator = markdownAnnotator(
-            config = markdownAnnotatorConfig(inlineImageAsBlock = false),
-        ),
-        imageTransformer = imageTransformer,
-        typography = markdownTypography(
-            h1 = MaterialTheme.typography.displayMedium,
-            h2 = MaterialTheme.typography.displaySmall,
-            h3 = MaterialTheme.typography.headlineLarge,
-            text = MaterialTheme.typography.bodySmall.copy(fontSize = 8.sp),
-        ),
-        components = markdownComponents(
-            paragraph = { paragraphModel ->
-                PreviewMarkdownParagraph(
-                    model = paragraphModel,
-                    onImageClick = onImageClick,
-                )
-            },
-            codeBlock = {
-                MarkdownHighlightedCodeBlock(
-                    content = it.content,
-                    node = it.node,
-                    highlightsBuilder = highlightsBuilder,
-                    showHeader = true,
-                )
-            },
-            codeFence = {
-                MarkdownHighlightedCodeFence(
-                    content = it.content,
-                    node = it.node,
-                    highlightsBuilder = highlightsBuilder,
-                    showHeader = true,
-                )
-            },
-        ),
-        animations = markdownAnimations(animateTextSize = { this }),
-        modifier = modifier
-            .wrapContentHeight(
-                align = Alignment.Top,
-                unbounded = true,
-            ),
-    )
-}
-
-// TODO: make normal global date-time formatting utils
-private fun formatDateTime(instant: Instant): String {
-    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val format = LocalDateTime.Format {
-        year()
-        chars("-")
-        monthNumber()
-        chars("-")
-        day()
-
-        chars(" ")
-
-        hour()
-        chars(":")
-        minute()
-    }
-    val formattedDateTime = localDateTime.format(format)
-    return formattedDateTime
 }
