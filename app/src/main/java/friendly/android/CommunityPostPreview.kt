@@ -163,6 +163,7 @@ private fun PlainPostViewer(
     modifier: Modifier = Modifier,
 ) {
     OutlinedCard(
+        onClick = { onClick(details.descriptor) },
         modifier = modifier.padding(horizontal = 6.dp),
     ) {
         Row(Modifier.padding(8.dp)) {

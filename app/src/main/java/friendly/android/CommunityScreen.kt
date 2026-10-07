@@ -123,7 +123,6 @@ fun CommunityScreen(
                             onImageClick = onImageClick,
                             modifier = Modifier,
                         )
-//                        HorizontalDivider()
                     }
                 }
             }

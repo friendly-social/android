@@ -122,4 +122,6 @@
     <string name="activity">Activity</string>
     <string name="expand_network">Expand network</string>
     <string name="reply_from">Reply from</string>
+    <string name="post">Post</string>
+    <string name="replies">Replies</string>
 </resources>
