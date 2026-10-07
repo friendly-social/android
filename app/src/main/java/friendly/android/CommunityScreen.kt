@@ -4,10 +4,13 @@ import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -35,21 +38,20 @@ class CommunityScreenViewModel(
     private val authStorage: AuthStorage,
     private val db: FriendlyDatabase,
 ) : ViewModel() {
-    val infiniteQueryClient =
-        InfiniteQueryClient(
-            cache = roomInfiniteQueryCache(
-                itemSerializable = { item: CommunityPostDetails ->
-                    item.serializable()
-                },
-                cursorSerializable = { cursor: CursorId ->
-                    cursor.serializable()
-                },
-                itemTyped = { it.typed() },
-                cursorTyped = { it.typed() },
-                db = db.pagingCacheDao(),
-            ),
-            queryScope = viewModelScope,
-        )
+    val infiniteQueryClient = InfiniteQueryClient(
+        cache = roomInfiniteQueryCache(
+            itemSerializable = { item: CommunityPostDetails ->
+                item.serializable()
+            },
+            cursorSerializable = { cursor: CursorId ->
+                cursor.serializable()
+            },
+            itemTyped = { it.typed() },
+            cursorTyped = { it.typed() },
+            db = db.pagingCacheDao(),
+        ),
+        queryScope = viewModelScope,
+    )
 
     val posts = infiniteQueryClient.infiniteQuery(
         config = QueryConfig(
@@ -65,7 +67,7 @@ class CommunityScreenViewModel(
                 is IOError,
                 is ServerError,
                 is Unauthorized,
-                    -> InfiniteQueryFetchResult.Failure
+                -> InfiniteQueryFetchResult.Failure
 
                 is Success -> InfiniteQueryFetchResult.Success(
                     value = result.cursor.data,
@@ -83,6 +85,7 @@ class CommunityScreenViewModel(
 fun CommunityScreen(
     vm: CommunityScreenViewModel,
     contentPadding: PaddingValues,
+    onImageClick: (url: String) -> Unit,
     onPostClick: (CommunityPostDescriptor) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -99,23 +102,30 @@ fun CommunityScreen(
                 .fillMaxSize(),
         ) {
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxSize(),
             ) {
-                items(
+                item { Spacer(Modifier.height(32.dp)) }
+
+                itemsIndexed(
                     items = posts.items,
-                    key = { it.id.long },
-                    contentType = { "post-preview" },
-                ) { item ->
-                    CommunityPostPreview(
-                        details = item,
-                        avatarUri = when (item) {
-                            is Plain -> item.owner.avatar?.let(vm::fileUri)
-                            is Deleted -> null
-                        },
-                        onClick = onPostClick,
-                        modifier = Modifier,
-                    )
+                    key = { _, item -> item.id.long },
+                    contentType = { _, _ -> "post-preview" },
+                ) { index, item ->
+                    Column {
+                        CommunityPostPreview(
+                            details = item,
+                            avatarUri = when (item) {
+                                is Plain -> item.owner.avatar?.let(vm::fileUri)
+                                is Deleted -> null
+                            },
+                            onClick = onPostClick,
+                            onImageClick = onImageClick,
+                            modifier = Modifier,
+                        )
+                        HorizontalDivider()
+                    }
                 }
             }
         }

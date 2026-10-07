@@ -513,13 +513,18 @@ fun FriendlyNavGraph(
 
                 composable<Home.Community> {
                     CommunityScreen(
-                        contentPadding = contentPadding(Home.Community),
                         vm = viewModel<CommunityScreenViewModel>(
                             factory = viewModelFactory,
                         ),
+                        contentPadding = contentPadding(Home.Community),
                         onPostClick = { descriptor ->
                             navController.navigate(
                                 Home.CommunityPost(descriptor.serializable()),
+                            )
+                        },
+                        onImageClick = { uri: String ->
+                            navController.navigate(
+                                route = Home.PictureViewerDialog(uri),
                             )
                         },
                         modifier = Modifier,
