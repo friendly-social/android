@@ -45,15 +45,13 @@ private data class InternalInfiniteQueryState<C, T>(
     val error: Boolean,
     val fetch: InfiniteQueryState.FetchStatus,
 ) {
-    fun toUserState(): InfiniteQueryState<T> {
-        return InfiniteQueryState(
-            items = pages.flatten(),
-            source = source,
-            error = error,
-            fetch = fetch,
-            hasNext = pages.hasNext,
-        )
-    }
+    fun toUserState(): InfiniteQueryState<T> = InfiniteQueryState(
+        items = pages.flatten(),
+        source = source,
+        error = error,
+        fetch = fetch,
+        hasNext = pages.hasNext,
+    )
 }
 
 private class DefaultInfiniteQuery<TCursor, TItem>(
@@ -93,7 +91,6 @@ private class DefaultInfiniteQuery<TCursor, TItem>(
                     hasNext = false,
                 ),
             )
-
 
     override fun refresh() {
         refreshJob?.cancel()
@@ -135,8 +132,9 @@ private class DefaultInfiniteQuery<TCursor, TItem>(
     }
 
     override fun fetchNext() {
-        if (fetchNextJob?.isActive == true || refreshJob?.isActive == true)
+        if (fetchNextJob?.isActive == true || refreshJob?.isActive == true) {
             return
+        }
 
         val nextCursor = _state.value.pages.lastOrNull()?.nextCursor ?: return
 

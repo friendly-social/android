@@ -39,28 +39,18 @@ interface PagingCacheDao {
         SELECT * FROM paging_item
         WHERE queryKey = :key AND pageIndex = :page
         ORDER BY indexInPage
-        """
+        """,
     )
-    suspend fun read(
-        key: String,
-        page: Int,
-    ): List<PagingItem>
+    suspend fun read(key: String, page: Int): List<PagingItem>
 
     @Query("DELETE FROM paging_item WHERE queryKey = :key")
-    suspend fun clear(
-        key: String,
-    )
+    suspend fun clear(key: String)
 
     @Upsert
-    suspend fun upsert(
-        items: List<PagingItem>,
-    )
+    suspend fun upsert(items: List<PagingItem>)
 
     @Transaction
-    suspend fun replace(
-        key: String,
-        items: List<PagingItem>,
-    ) {
+    suspend fun replace(key: String, items: List<PagingItem>) {
         clear(key)
         upsert(items)
     }

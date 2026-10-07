@@ -3,8 +3,6 @@ package friendly.android
 import friendly.query.InfiniteQueryCache
 import friendly.query.InfiniteQueryCacheKey
 import friendly.query.InfiniteQueryPage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
