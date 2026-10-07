@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import friendly.sdk.ActivityDetails
+import friendly.sdk.CommunityPostDescriptor
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -49,6 +50,7 @@ import kotlin.time.Instant
 fun ActivityScreen(
     vm: ActivityScreenViewModel,
     contentPadding: PaddingValues,
+    onActivityClick: (CommunityPostDescriptor) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
@@ -112,6 +114,7 @@ fun ActivityScreen(
                     key = { item -> item.id.long },
                 ) { item ->
                     ActivityDetails(
+                        onActivityClick = onActivityClick,
                         vm = vm,
                         details = item,
                         modifier = Modifier,
@@ -139,6 +142,7 @@ fun ActivityScreen(
 
 @Composable
 fun ActivityDetails(
+    onActivityClick: (CommunityPostDescriptor) -> Unit,
     vm: ActivityScreenViewModel,
     details: ActivityDetails,
     modifier: Modifier = Modifier,
@@ -146,9 +150,7 @@ fun ActivityDetails(
     when (details) {
         is ActivityDetails.Reply -> {
             ListItem(
-                onClick = {
-                    // TODO: trigger navigation to open the reply post
-                },
+                onClick = { onActivityClick(details.post.descriptor) },
                 leadingContent = {
                     UserAvatar(
                         nickname = details.post.owner.nickname,

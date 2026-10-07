@@ -548,17 +548,20 @@ fun FriendlyNavGraph(
                             )
                         },
                         onBack = { navController.popBackStack() },
-                        modifier = Modifier,
                     )
                 }
 
                 composable<Home.Activity> {
                     ActivityScreen(
-                        contentPadding = contentPadding(Home.Activity),
                         vm = viewModel<ActivityScreenViewModel>(
                             factory = viewModelFactory,
                         ),
-                        modifier = Modifier,
+                        onActivityClick = { descriptor ->
+                            navController.navigate(
+                                Home.CommunityPost(descriptor.serializable()),
+                            )
+                        },
+                        contentPadding = contentPadding(Home.Activity),
                     )
                 }
 
