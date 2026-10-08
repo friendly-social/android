@@ -2,8 +2,11 @@ package friendly.android
 
 import android.net.Uri
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,17 +14,23 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
@@ -29,7 +38,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -63,12 +74,15 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
+import friendly.sdk.UserDetails
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.roundToInt
 import kotlin.time.Instant
+
+private const val REPLY_PREVIEWS_LIMIT = 5
 
 private class PostPreviewImageTransformer(private val imageWidth: Dp) :
     ImageTransformer by Coil3ImageTransformerImpl {
@@ -131,6 +145,7 @@ private class PostPreviewImageTransformer(private val imageWidth: Dp) :
 
 @Composable
 fun CommunityPostPreview(
+    vm: CommunityScreenViewModel,
     details: CommunityPostDetails,
     avatarUri: Uri?,
     onClick: (CommunityPostDescriptor) -> Unit,
@@ -144,6 +159,7 @@ fun CommunityPostPreview(
 
         is CommunityPostDetails.Plain -> {
             PlainPostViewer(
+                vm = vm,
                 details = details,
                 onClick = onClick,
                 onImageClick = onImageClick,
@@ -156,6 +172,7 @@ fun CommunityPostPreview(
 
 @Composable
 private fun PlainPostViewer(
+    vm: CommunityScreenViewModel,
     details: CommunityPostDetails.Plain,
     avatarUri: Uri?,
     onClick: (CommunityPostDescriptor) -> Unit,
@@ -185,7 +202,10 @@ private fun PlainPostViewer(
             Column(
                 modifier = Modifier.fillMaxSize(),
             ) {
-                Row {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     Text(
                         text = details.owner.nickname.string,
                         color = MaterialTheme.colorScheme.secondary,
@@ -202,11 +222,13 @@ private fun PlainPostViewer(
                         color = MaterialTheme.colorScheme.secondary,
                     )
 
-                    Spacer(Modifier.width(6.dp))
 
                     if (details.edited) {
+                        Spacer(Modifier.weight(1f))
+
                         Text(
-                            text = "[ed1t3d]",
+                            text = "edited",
+                            fontStyle = FontStyle.Italic,
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
@@ -232,8 +254,84 @@ private fun PlainPostViewer(
                             .fillMaxWidth(),
                     )
                 }
+
+                Spacer(Modifier.height(8.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    ReplyPreviews(vm, details.replyPreviews)
+
+                    Spacer(Modifier.weight(1f))
+
+                    IconButton(
+                        onClick = {},
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                R.drawable.ic_chat_bubble_outlined,
+                            ),
+                            contentDescription = null,
+                        )
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun ReplyPreviews(
+    vm: CommunityScreenViewModel,
+    replyPreviews: List<UserDetails>,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(
+            space = (-8).dp,
+            alignment = Alignment.CenterHorizontally,
+        ),
+        modifier = modifier,
+    ) {
+        val moreThanLimit = replyPreviews.size > REPLY_PREVIEWS_LIMIT
+
+        for (commonFriend in replyPreviews.take(REPLY_PREVIEWS_LIMIT)) {
+            UserAvatar(
+                userId = commonFriend.id,
+                nickname = commonFriend.nickname,
+                uri = commonFriend.avatar?.let(vm::fileUri),
+                style = UserAvatarStyle(32.dp, noAvatarSize = 14.dp),
+            )
+        }
+
+        if (moreThanLimit) {
+            MorePreviewsStub(replyPreviews.size - REPLY_PREVIEWS_LIMIT)
+        }
+    }
+}
+
+@Composable
+private fun MorePreviewsStub(
+    previewsLeft: Int,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        contentAlignment = Center,
+        modifier = modifier
+            .size(32.dp)
+            .background(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = CircleShape,
+            ),
+    ) {
+        Text(
+            text = "$previewsLeft+",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
     }
 }
 

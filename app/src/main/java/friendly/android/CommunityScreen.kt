@@ -60,6 +60,7 @@ fun CommunityScreen(
                     ) { index, item ->
                         Column {
                             CommunityPostPreview(
+                                vm = vm,
                                 details = item,
                                 avatarUri = when (item) {
                                     is Plain -> item.owner.avatar?.let(
