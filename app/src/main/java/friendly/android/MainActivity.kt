@@ -37,6 +37,7 @@ class MainActivity : ComponentActivity() {
                 context = applicationContext,
                 name = "friendly-cache",
             )
+            .fallbackToDestructiveMigration(true)
             .build()
 
         val viewModelFactory = FriendlyViewModelFactory(

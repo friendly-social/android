@@ -166,6 +166,11 @@ fun FriendlyApp(
                                 .dropBottom()
                                 .plusBottom(navigationBarsPadding)
 
+                        is Home.CommunityPost ->
+                            innerPadding
+                                .dropBottom()
+                                .plusBottom(navigationBarsPadding)
+
                         is Home.PictureViewerDialog -> PaddingValues(0.dp)
 
                         else -> innerPadding

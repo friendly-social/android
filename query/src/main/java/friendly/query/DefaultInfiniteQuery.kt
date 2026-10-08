@@ -21,7 +21,7 @@ import kotlin.time.Duration
 //       isn't cache-fault-tolerant
 
 public fun <TCursor, TItem> InfiniteQueryClient<TCursor, TItem>.infiniteQuery(
-    config: QueryConfig,
+    config: InfiniteQueryConfig,
     fetch: suspend (
         cursor: TCursor?,
     ) -> InfiniteQueryFetchResult<TCursor, TItem>,
@@ -56,7 +56,7 @@ private data class InternalInfiniteQueryState<C, T>(
 
 private class DefaultInfiniteQuery<TCursor, TItem>(
     queryClient: InfiniteQueryClient<TCursor, TItem>,
-    private val config: QueryConfig,
+    private val config: InfiniteQueryConfig,
     private val fetch: suspend (
         cursor: TCursor?,
     ) -> InfiniteQueryFetchResult<TCursor, TItem>,
@@ -195,7 +195,13 @@ private class DefaultInfiniteQuery<TCursor, TItem>(
     }
 }
 
-public suspend inline fun <C, T> fetchWithRetries(
+private val List<InfiniteQueryPage<*, *>>.hasNext: Boolean
+    get() = lastOrNull()?.nextCursor != null
+
+private fun <C, T> List<InfiniteQueryPage<C, T>>.flatten(): List<T> =
+    this.flatMap { page -> page.items }
+
+private suspend inline fun <C, T> fetchWithRetries(
     retries: Int,
     retryDelay: Duration,
     block: () -> InfiniteQueryFetchResult<C, T>,
@@ -212,9 +218,3 @@ public suspend inline fun <C, T> fetchWithRetries(
 
     return block()
 }
-
-private val List<InfiniteQueryPage<*, *>>.hasNext: Boolean
-    get() = lastOrNull()?.nextCursor != null
-
-private fun <C, T> List<InfiniteQueryPage<C, T>>.flatten(): List<T> =
-    this.flatMap { page -> page.items }

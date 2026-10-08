@@ -1,6 +1,5 @@
 package friendly.android
 
-import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -38,21 +37,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.m3.Markdown
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
-import friendly.sdk.FileDescriptor
-import friendly.sdk.FriendlyClient
-import friendly.sdk.FriendlyCommunityClient.DetailsResult
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -61,31 +49,6 @@ import kotlin.time.Instant
 
 // TODO:
 //  show reply previews below each post
-
-class CommunityPostScreenViewModel(
-    private val client: FriendlyClient,
-    private val authStorage: AuthStorage,
-) : ViewModel() {
-    private val _state = MutableStateFlow<DetailsResult.Success?>(null)
-
-    val state: StateFlow<DetailsResult.Success?> = _state.asStateFlow()
-
-    fun fetch(descriptor: CommunityPostDescriptor) {
-        viewModelScope.launch {
-            val authorization = authStorage.getAuth()
-            val postDetails = client.community.details(
-                authorization = authorization,
-                descriptor = descriptor,
-            )
-            _state.update { postDetails.orThrow() }
-        }
-    }
-
-    fun fileUri(fileDescriptor: FileDescriptor): Uri =
-        client.files.getEndpoint(fileDescriptor).string.toUri()
-}
-
-// TODO: this is a completely WIP screen that has to changed very much
 
 @Composable
 fun CommunityPostScreen(
@@ -96,19 +59,20 @@ fun CommunityPostScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // TODO: this bro looks strange
-    val state by vm.state.collectAsState()
+    val postDetails = vm.query.data.collectAsState()
 
-    LaunchedEffect(Unit) { vm.fetch(descriptor) }
+    // TODO: display here a bit more rich state after tests
 
-    when (val state = state) {
+    LaunchedEffect(Unit) { vm.runQueries() }
+
+    when (val item = postDetails.value.item) {
         null -> {
             CircularProgressIndicator()
         }
 
         else -> {
             Content(
-                postDetailsResult = state,
+                post = item,
                 onPostClick = onPostClick,
                 onBack = onBack,
                 vm = vm,
@@ -122,7 +86,7 @@ fun CommunityPostScreen(
 
 @Composable
 private fun Content(
-    postDetailsResult: DetailsResult.Success,
+    post: CommunityPost,
     onPostClick: (CommunityPostDescriptor) -> Unit,
     onBack: () -> Unit,
     vm: CommunityPostScreenViewModel,
@@ -142,27 +106,27 @@ private fun Content(
         modifier = modifier,
     ) { innerPadding ->
         Column(
-            modifier = modifier
-                .fillMaxSize()
+            modifier = Modifier
                 .padding(innerPadding)
+                .fillMaxSize()
                 .padding(horizontal = 16.dp)
                 .nestedScroll(topAppBarBehavior.nestedScrollConnection)
                 .verticalScroll(rememberScrollState()),
         ) {
             UpstreamPosts(
-                upstream = postDetailsResult.upstream,
+                upstream = post.upstream,
                 onClick = onPostClick,
                 vm = vm,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            when (val post = postDetailsResult.post) {
+            when (val details = post.details) {
                 is CommunityPostDetails.Deleted -> TODO()
 
                 is CommunityPostDetails.Plain -> {
                     MainPostContent(
-                        isRoot = postDetailsResult.upstream.isEmpty(),
-                        post = post,
+                        isRoot = post.upstream.isEmpty(),
+                        post = details,
                         vm = vm,
                         modifier = Modifier,
                     )
@@ -179,8 +143,7 @@ private fun Content(
             Spacer(Modifier.height(16.dp))
 
             Replies(
-                // todo use an infinite query for that later !!!
-                replies = postDetailsResult.replies.data,
+                replies = post.replies.data,
                 onClick = onPostClick,
                 vm = vm,
                 modifier = Modifier.fillMaxWidth(),

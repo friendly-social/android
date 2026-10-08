@@ -7,10 +7,10 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.ExperimentalPagingApi
-import friendly.query.InfiniteQueryCacheKey
 import friendly.query.InfiniteQueryClient
+import friendly.query.InfiniteQueryConfig
 import friendly.query.InfiniteQueryFetchResult
-import friendly.query.QueryConfig
+import friendly.query.QueryKey
 import friendly.query.infiniteQuery
 import friendly.sdk.ActivityDetails
 import friendly.sdk.CursorId
@@ -44,8 +44,8 @@ class ActivityScreenViewModel(
         )
 
     val activity = infiniteQueryClient.infiniteQuery(
-        config = QueryConfig(
-            key = InfiniteQueryCacheKey("activity"),
+        config = InfiniteQueryConfig(
+            key = QueryKey("activity"),
             retryDelay = 100.milliseconds,
         ),
         fetch = { cursor ->

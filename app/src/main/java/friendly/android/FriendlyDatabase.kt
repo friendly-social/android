@@ -3,17 +3,35 @@ package friendly.android
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.Upsert
 
 @Database(
-    entities = [PagingItem::class],
-    version = 1,
+    entities = [PagingItem::class, QueryItem::class],
+    version = 2,
 )
 abstract class FriendlyDatabase : RoomDatabase() {
     abstract fun pagingCacheDao(): PagingCacheDao
+    abstract fun queryItemDao(): QueryItemDao
+}
+
+@Entity(
+    tableName = "query_item",
+    primaryKeys = ["queryKey"],
+)
+data class QueryItem(val queryKey: String, val payload: String)
+
+@Dao
+interface QueryItemDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun set(item: QueryItem)
+
+    @Query("SELECT * FROM query_item WHERE queryKey = :key")
+    suspend fun read(key: String): QueryItem?
 }
 
 /**

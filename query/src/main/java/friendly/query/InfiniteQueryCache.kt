@@ -2,20 +2,20 @@ package friendly.query
 
 public interface InfiniteQueryCache<C, T> {
     public suspend fun read(
-        key: InfiniteQueryCacheKey,
+        key: QueryKey,
         pageIndex: Int,
     ): List<InfiniteQueryPage<C, T>>
 
     public suspend fun replace(
-        key: InfiniteQueryCacheKey,
+        key: QueryKey,
         pages: List<InfiniteQueryPage<C, T>>,
     )
 
     public suspend fun append(
-        key: InfiniteQueryCacheKey,
+        key: QueryKey,
         pageIndex: Int,
         page: InfiniteQueryPage<C, T>,
     )
 
-    public suspend fun clear(key: InfiniteQueryCacheKey)
+    public suspend fun clear(key: QueryKey)
 }

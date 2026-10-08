@@ -543,9 +543,18 @@ fun FriendlyNavGraph(
                         descriptor = descriptor,
                         contentPadding = contentPadding(route),
                         onPostClick = { descriptor ->
+                            val descriptorSerializable =
+                                descriptor.serializable()
                             navController.navigate(
-                                Home.CommunityPost(descriptor.serializable()),
-                            )
+                                Home.CommunityPost(descriptorSerializable),
+                            ) {
+                                popUpTo(
+                                    Home.CommunityPost(descriptorSerializable),
+                                ) {
+                                    inclusive = true
+                                    saveState = true
+                                }
+                            }
                         },
                         onBack = { navController.popBackStack() },
                     )
