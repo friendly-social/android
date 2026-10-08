@@ -1,6 +1,6 @@
 package friendly.android
 
-import friendly.sdk.FileDescriptor
+import friendly.sdk.FilePreuploadDescriptor
 import friendly.sdk.FriendlyClient
 import friendly.sdk.InterestList
 import friendly.sdk.Nickname
@@ -23,7 +23,7 @@ class RegisterUseCase(
         description: UserDescription,
         interests: InterestList,
         socialLink: SocialLink,
-        avatar: FileDescriptor?,
+        avatar: FilePreuploadDescriptor?,
     ): RegistrationResult {
         val authorizationResult = client.auth.generate(
             nickname = nickname,
@@ -43,7 +43,7 @@ class RegisterUseCase(
                     nickname = nickname,
                     userId = authorization.id,
                     description = description,
-                    avatar = avatar,
+                    avatar = avatar?.regular(),
                     interests = interests,
                     socialLink = socialLink,
                 )

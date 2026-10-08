@@ -10,7 +10,7 @@ activityCompose = "1.13.0"
 # Will use alpha version till the material3-expressive release
 composeBomAlpha = "2026.08.01"
 ktlint = "14.2.0"
-friendlySdk = "2026.3.13"
+friendlySdk = "2026.3.14"
 navigation = "2.10.0"
 molecule = "2.2.0"
 serialization = "1.11.0"

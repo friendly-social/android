@@ -132,7 +132,7 @@ class RegisterScreenViewModel(
                 description = description,
                 interests = interests,
                 socialLink = socialLink,
-                avatar = avatarFileDescriptor,
+                avatar = avatarFileDescriptor?.preupload(),
             )
             when (result) {
                 NetworkError -> {
@@ -190,7 +190,8 @@ class RegisterScreenViewModel(
                 _state.update { old ->
                     old.copy(
                         avatar = Uploaded(uri),
-                        avatarFileDescriptor = uploadingResult.fileDescriptor,
+                        avatarFileDescriptor =
+                        uploadingResult.fileDescriptor.regular(),
                     )
                 }
             }

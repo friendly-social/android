@@ -5,9 +5,14 @@ import android.database.Cursor
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
+import friendly.sdk.FileAccessHash
 import friendly.sdk.FileDescriptor
+import friendly.sdk.FileId
+import friendly.sdk.FilePreuploadAccessHash
+import friendly.sdk.FilePreuploadDescriptor
+import friendly.sdk.FilePreuploadId
 import friendly.sdk.FriendlyClient
-import friendly.sdk.FriendlyFilesClient.UploadFileResult
+import friendly.sdk.FriendlyFilesClient.PreuploadFileResult
 import io.ktor.http.ContentType
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.ProducerScope
@@ -17,6 +22,17 @@ import kotlinx.io.asSource
 import kotlinx.io.buffered
 import java.io.InputStream
 
+// todo: remove once sdk will be updated
+fun FilePreuploadDescriptor.regular() = FileDescriptor(
+    id = FileId(this.id.long),
+    accessHash = FileAccessHash.orThrow(this.accessHash.string),
+)
+
+fun FileDescriptor.preupload() = FilePreuploadDescriptor(
+    id = FilePreuploadId(this.id.long),
+    accessHash = FilePreuploadAccessHash.orThrow(this.accessHash.string),
+)
+
 class AvatarUploadUseCase(
     private val client: FriendlyClient,
     private val context: Context,
@@ -25,7 +41,8 @@ class AvatarUploadUseCase(
     value class UploadingPercentage(val float: Float)
 
     sealed interface UploadingResult {
-        data class Success(val fileDescriptor: FileDescriptor) : UploadingResult
+        data class Success(val fileDescriptor: FilePreuploadDescriptor) :
+            UploadingResult
 
         data object CompressionFailure : UploadingResult
 
@@ -45,7 +62,8 @@ class AvatarUploadUseCase(
             ?: error("Couldn't read $avatarUri from the storage")
 
         val fileName = getFileName(avatarUri)
-        val fileDescriptorUploadResult = CompletableDeferred<UploadFileResult>()
+        val fileDescriptorUploadResult =
+            CompletableDeferred<PreuploadFileResult>()
         val compressor = AvatarAdjuster(
             uri = avatarUri,
             inputStream = inputStream,
@@ -67,15 +85,15 @@ class AvatarUploadUseCase(
         }
 
         return when (val result = fileDescriptorUploadResult.await()) {
-            is UploadFileResult.IOError -> {
+            is IOError -> {
                 UploadingResult.IOError(result.cause)
             }
 
-            is UploadFileResult.ServerError -> {
+            is ServerError -> {
                 UploadingResult.ServerError
             }
 
-            is UploadFileResult.Success -> {
+            is Success -> {
                 UploadingResult.Success(result.descriptor)
             }
         }
@@ -85,8 +103,8 @@ class AvatarUploadUseCase(
         fileName: String,
         size: Long,
         inputStream: InputStream,
-    ): UploadFileResult {
-        val uploadResult = client.files.upload(
+    ): PreuploadFileResult {
+        val uploadResult = client.files.preupload(
             filename = fileName,
             contentType = ContentType.Image.Any,
             size = size,
