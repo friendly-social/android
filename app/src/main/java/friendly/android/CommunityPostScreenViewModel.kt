@@ -12,6 +12,7 @@ import friendly.query.QueryKey
 import friendly.query.query
 import friendly.query.save
 import friendly.sdk.CommunityPostDescriptor
+import friendly.sdk.CommunityPostDetails
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
 import friendly.sdk.FriendlyCommunityClient.DetailsResult
@@ -50,7 +51,7 @@ class CommunityPostScreenViewModel(
                 is DetailsResult.IOError,
                 is DetailsResult.ServerError,
                 is DetailsResult.Unauthorized,
-                    -> QueryFetchResult.Failure
+                -> QueryFetchResult.Failure
 
                 is DetailsResult.Success -> {
                     val post = CommunityPost(
@@ -77,31 +78,13 @@ class CommunityPostScreenViewModel(
                             if (jobs[reply.descriptor] == null) {
                                 launch {
                                     queryClient.save(
-                                        key = QueryKey("community-post-${reply.id.long}"),
+                                        key = QueryKey(
+                                            "community-post-${reply.id.long}",
+                                        ),
                                         retries = 3,
                                         retryDelay = 300.milliseconds,
                                         fetch = {
-                                            val detailsResult =
-                                                client.community.details(
-                                                    authorization = authStorage.getAuth(),
-                                                    descriptor = reply.descriptor,
-                                                )
-                                            when (detailsResult) {
-                                                is DetailsResult.IOError,
-                                                is DetailsResult.ServerError,
-                                                is DetailsResult.Unauthorized,
-                                                    -> QueryFetchResult.Failure
-
-                                                is DetailsResult.Success -> {
-                                                    QueryFetchResult.Success(
-                                                        CommunityPost(
-                                                            details = detailsResult.post,
-                                                            replies = detailsResult.replies,
-                                                            upstream = detailsResult.upstream,
-                                                        ),
-                                                    )
-                                                }
-                                            }
+                                            fetchCommunityPostDetails(reply)
                                         },
                                     )
                                 }
@@ -109,6 +92,38 @@ class CommunityPostScreenViewModel(
                         }
                     }
                 }
+        }
+    }
+
+    // TODO: has to be refactored a bit
+    private suspend fun fetchCommunityPostDetails(
+        reply: CommunityPostDetails,
+    ): QueryFetchResult<CommunityPost> {
+        val detailsResult =
+            client.community.details(
+                authorization =
+                authStorage.getAuth(),
+                descriptor =
+                reply.descriptor,
+            )
+        return when (detailsResult) {
+            is DetailsResult.IOError,
+            is DetailsResult.ServerError,
+            is DetailsResult.Unauthorized,
+            -> QueryFetchResult.Failure
+
+            is DetailsResult.Success -> {
+                QueryFetchResult.Success(
+                    CommunityPost(
+                        details =
+                        detailsResult.post,
+                        replies =
+                        detailsResult.replies,
+                        upstream =
+                        detailsResult.upstream,
+                    ),
+                )
+            }
         }
     }
 
