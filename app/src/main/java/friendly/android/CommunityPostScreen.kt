@@ -1,6 +1,7 @@
 package friendly.android
 
 import android.net.Uri
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -170,6 +171,13 @@ private fun Content(
 
             Spacer(Modifier.height(16.dp))
 
+            Text(
+                text = stringResource(R.string.replies),
+                style = MaterialTheme.typography.headlineMedium,
+            )
+
+            Spacer(Modifier.height(16.dp))
+
             Replies(
                 // todo use an infinite query for that later !!!
                 replies = postDetailsResult.replies.data,
@@ -235,18 +243,20 @@ private fun MainPostContent(
             }
 
             false -> {
-                HorizontalDivider()
                 SegmentedListItem(
                     shapes = endingListItemShape(),
                     colors = ListItemDefaults.segmentedColors(
                         containerColor =
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        MaterialTheme.colorScheme.surfaceContainerLow,
                         contentColor = MaterialTheme.colorScheme.onSurface,
                     ),
                 ) {
                     Column(
                         modifier = Modifier
-                            .padding(16.dp)
+                            .padding(
+                                horizontal = 4.dp,
+                                vertical = 4.dp,
+                            )
                             .fillMaxSize(),
                     ) {
                         Row(
@@ -260,10 +270,17 @@ private fun MainPostContent(
                                 style = UserAvatarStyle.Small,
                             )
                             Spacer(Modifier.width(4.dp))
-                            Text(
-                                text = post.owner.nickname.string,
-                                style = MaterialTheme.typography.labelLarge,
-                            )
+                            Column {
+                                Text(
+                                    text = post.owner.nickname.string,
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = formatDateTime(post.instant),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                            }
                         }
 
                         Spacer(Modifier.height(8.dp))
@@ -271,8 +288,7 @@ private fun MainPostContent(
                         Markdown(
                             content = post.text.string,
                             imageTransformer = Coil3ImageTransformerImpl,
-                            modifier = Modifier
-                                .fillMaxSize(),
+                            modifier = Modifier.fillMaxSize(),
                         )
 
                         Spacer(Modifier.height(8.dp))
@@ -294,7 +310,10 @@ fun Replies(
     vm: CommunityPostScreenViewModel,
     modifier: Modifier,
 ) {
-    Column(modifier = modifier) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier,
+    ) {
         for (reply in replies) {
             Reply(
                 reply = reply,
@@ -351,15 +370,13 @@ fun Upstream(
                 shapes = ListItemDefaults.segmentedShapes(index, count),
                 colors = ListItemDefaults.segmentedColors(
                     containerColor =
-                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                    MaterialTheme.colorScheme.surfaceContainerLow,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                 ),
             ) {
-                Column(
-                    modifier = Modifier.padding(8.dp),
-                ) {
+                Column(modifier = Modifier.padding(4.dp)) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment = Alignment.Top,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         UserAvatar(
@@ -369,15 +386,17 @@ fun Upstream(
                             style = UserAvatarStyle.Small,
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = upstream.owner.nickname.string,
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = formatDateTime(upstream.instant),
-                            style = MaterialTheme.typography.labelLarge,
-                        )
+                        Column {
+                            Text(
+                                text = upstream.owner.nickname.string,
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = formatDateTime(upstream.instant),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
                     }
 
                     Spacer(Modifier.height(8.dp))
@@ -385,9 +404,7 @@ fun Upstream(
                     Markdown(
                         content = upstream.text.string,
                         imageTransformer = Coil3ImageTransformerImpl,
-                        modifier = modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
+                        modifier = modifier.fillMaxSize(),
                     )
                 }
             }
@@ -425,16 +442,18 @@ fun Reply(
                             uri = reply.owner.avatar?.let(vm::fileUri),
                             style = UserAvatarStyle.Small,
                         )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = reply.owner.nickname.string,
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = formatDateTime(reply.instant),
-                            style = MaterialTheme.typography.labelLarge,
-                        )
+                        Spacer(Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = reply.owner.nickname.string,
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = formatDateTime(reply.instant),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
                     }
 
                     Spacer(Modifier.height(8.dp))
@@ -443,8 +462,7 @@ fun Reply(
                         content = reply.text.string,
                         imageTransformer = Coil3ImageTransformerImpl,
                         modifier = modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
+                            .fillMaxSize(),
                     )
                 }
             }
