@@ -10,14 +10,10 @@ import friendly.query.QueryClient
 import friendly.query.QueryFetchResult
 import friendly.query.QueryKey
 import friendly.query.query
-import friendly.query.save
-import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
-import friendly.sdk.FriendlyCommunityClient.DetailsResult
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.filter
+import friendly.sdk.FriendlyCommunityClient.Details2Result
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -46,14 +42,14 @@ class CommunityPostScreenViewModel(
         retryDelay = 300.milliseconds,
         fetch = {
             val detailsResult = client.community
-                .details(authStorage.getAuth(), descriptor)
+                .details2(authStorage.getAuth(), descriptor)
             when (detailsResult) {
-                is DetailsResult.IOError,
-                is DetailsResult.ServerError,
-                is DetailsResult.Unauthorized,
+                is Details2Result.IOError,
+                is Details2Result.ServerError,
+                is Details2Result.Unauthorized,
                 -> QueryFetchResult.Failure
 
-                is DetailsResult.Success -> {
+                is Details2Result.Success -> {
                     val post = CommunityPost(
                         details = detailsResult.post,
                         upstream = detailsResult.upstream,
@@ -67,31 +63,32 @@ class CommunityPostScreenViewModel(
 
     fun runQueries() {
         viewModelScope.launch {
-            val jobs = mutableMapOf<CommunityPostDescriptor, Job>()
-
-            query.data
-                .filter { it.fetch is Idle }
-                .collect { state ->
-                    state.item?.let { post ->
-                        val replies = post.replies.data
-                        for (reply in replies) {
-                            if (jobs[reply.descriptor] == null) {
-                                launch {
-                                    queryClient.save(
-                                        key = QueryKey(
-                                            "community-post-${reply.id.long}",
-                                        ),
-                                        retries = 3,
-                                        retryDelay = 300.milliseconds,
-                                        fetch = {
-                                            fetchCommunityPostDetails(reply)
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+            // TODO: use other way of their prefetching
+//            val jobs = mutableMapOf<CommunityPostDescriptor, Job>()
+//
+//            query.data
+//                .filter { it.fetch is Idle }
+//                .collect { state ->
+//                    state.item?.let { post ->
+//                        val replies = post.replies.data
+//                        for (reply in replies) {
+//                            if (jobs[reply.descriptor] == null) {
+//                                launch {
+//                                    queryClient.save(
+//                                        key = QueryKey(
+//                                            "community-post-${reply.id.long}",
+//                                        ),
+//                                        retries = 3,
+//                                        retryDelay = 300.milliseconds,
+//                                        fetch = {
+//                                            fetchCommunityPostDetails(reply)
+//                                        },
+//                                    )
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
         }
     }
 
@@ -100,19 +97,19 @@ class CommunityPostScreenViewModel(
         reply: CommunityPostDetails,
     ): QueryFetchResult<CommunityPost> {
         val detailsResult =
-            client.community.details(
+            client.community.details2(
                 authorization =
                 authStorage.getAuth(),
                 descriptor =
                 reply.descriptor,
             )
         return when (detailsResult) {
-            is DetailsResult.IOError,
-            is DetailsResult.ServerError,
-            is DetailsResult.Unauthorized,
+            is Details2Result.IOError,
+            is Details2Result.ServerError,
+            is Details2Result.Unauthorized,
             -> QueryFetchResult.Failure
 
-            is DetailsResult.Success -> {
+            is Details2Result.Success -> {
                 QueryFetchResult.Success(
                     CommunityPost(
                         details =

@@ -16,12 +16,14 @@ import friendly.query.save
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
 import friendly.sdk.CommunityPostDetailsSerializable
+import friendly.sdk.CommunityPostReply
+import friendly.sdk.CommunityPostReplySerializable
 import friendly.sdk.Cursor
 import friendly.sdk.CursorId
 import friendly.sdk.CursorSerializable
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
-import friendly.sdk.FriendlyCommunityClient.DetailsResult
+import friendly.sdk.FriendlyCommunityClient.Details2Result
 import friendly.sdk.FriendlyCommunityClient.ListResult.IOError
 import friendly.sdk.FriendlyCommunityClient.ListResult.ServerError
 import friendly.sdk.FriendlyCommunityClient.ListResult.Success
@@ -38,7 +40,7 @@ import kotlin.time.Duration.Companion.milliseconds
 data class CommunityPost(
     val details: CommunityPostDetails,
     val upstream: List<CommunityPostDetails>,
-    val replies: Cursor<CommunityPostDetails>,
+    val replies: Cursor<CommunityPostReply>,
 ) {
     fun serializable(): CommunityPostSerializable = CommunityPostSerializable(
         details = details.serializable(),
@@ -53,7 +55,7 @@ data class CommunityPost(
 data class CommunityPostSerializable(
     val details: CommunityPostDetailsSerializable,
     val upstream: List<CommunityPostDetailsSerializable>,
-    val replies: CursorSerializable<CommunityPostDetailsSerializable>,
+    val replies: CursorSerializable<CommunityPostReplySerializable>,
 ) {
     fun typed(): CommunityPost = CommunityPost(
         details = details.typed(),
@@ -178,14 +180,14 @@ class CommunityScreenViewModel(
         descriptor: CommunityPostDescriptor,
     ): QueryFetchResult<CommunityPost> {
         val detailsResult = client.community
-            .details(authStorage.getAuth(), descriptor)
+            .details2(authStorage.getAuth(), descriptor)
         return when (detailsResult) {
-            is DetailsResult.IOError,
-            is DetailsResult.ServerError,
-            is DetailsResult.Unauthorized,
+            is Details2Result.IOError,
+            is Details2Result.ServerError,
+            is Details2Result.Unauthorized,
             -> QueryFetchResult.Failure
 
-            is DetailsResult.Success -> {
+            is Details2Result.Success -> {
                 val post = CommunityPost(
                     details = detailsResult.post,
                     upstream = detailsResult.upstream,

@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -82,7 +81,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.math.roundToInt
 import kotlin.time.Instant
 
-private const val REPLY_PREVIEWS_LIMIT = 5
+private const val REPLY_PREVIEWS_LIMIT = 8
 
 private class PostPreviewImageTransformer(private val imageWidth: Dp) :
     ImageTransformer by Coil3ImageTransformerImpl {
@@ -181,7 +180,7 @@ private fun PlainPostViewer(
 ) {
     OutlinedCard(
         onClick = { onClick(details.descriptor) },
-        modifier = modifier.padding(horizontal = 6.dp),
+        modifier = modifier,
     ) {
         Row(Modifier.padding(8.dp)) {
             UserAvatar(
@@ -222,7 +221,6 @@ private fun PlainPostViewer(
                         color = MaterialTheme.colorScheme.secondary,
                     )
 
-
                     if (details.edited) {
                         Spacer(Modifier.weight(1f))
 
@@ -254,29 +252,27 @@ private fun PlainPostViewer(
                             .fillMaxWidth(),
                     )
                 }
-
-                Spacer(Modifier.height(8.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    ReplyPreviews(vm, details.replyPreviews)
-
-                    Spacer(Modifier.weight(1f))
-
-                    IconButton(
-                        onClick = {},
-                    ) {
-                        Icon(
-                            painter = painterResource(
-                                R.drawable.ic_chat_bubble_outlined,
-                            ),
-                            contentDescription = null,
-                        )
-                    }
-                }
             }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 16.dp,
+                ),
+        ) {
+            ReplyPreviews(vm, details.replyPreviews)
+
+            Spacer(Modifier.width(8.dp))
+
+            Icon(
+                painter = painterResource(R.drawable.ic_reply),
+                contentDescription = null,
+            )
         }
     }
 }
@@ -302,7 +298,7 @@ private fun ReplyPreviews(
                 userId = commonFriend.id,
                 nickname = commonFriend.nickname,
                 uri = commonFriend.avatar?.let(vm::fileUri),
-                style = UserAvatarStyle(32.dp, noAvatarSize = 14.dp),
+                style = UserAvatarStyle(24.dp, noAvatarSize = 14.dp),
             )
         }
 

@@ -1,6 +1,9 @@
 package friendly.android
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -9,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -29,7 +34,6 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -37,18 +41,21 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.m3.Markdown
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
+import friendly.sdk.CommunityPostReply
+import friendly.sdk.UserDetails
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
+import kotlin.collections.take
 import kotlin.time.Instant
 
-// TODO:
-//  show reply previews below each post
+private const val REPLY_PREVIEWS_LIMIT = 8
 
 @Composable
 fun CommunityPostScreen(
@@ -268,7 +275,7 @@ private fun endingListItemShape(): ListItemShapes =
 
 @Composable
 fun Replies(
-    replies: List<CommunityPostDetails>,
+    replies: List<CommunityPostReply>,
     onClick: (CommunityPostDescriptor) -> Unit,
     vm: CommunityPostScreenViewModel,
     modifier: Modifier,
@@ -377,43 +384,77 @@ fun Upstream(
 
 @Composable
 fun Reply(
-    reply: CommunityPostDetails,
+    reply: CommunityPostReply,
     onClick: (CommunityPostDescriptor) -> Unit,
     vm: CommunityPostScreenViewModel,
     modifier: Modifier = Modifier,
 ) {
     when (reply) {
-        is CommunityPostDetails.Deleted -> {
-            Text("This reply has been deleted, but the ui is work in progress")
+        is CommunityPostReply.Single -> {
+            SingleReply(
+                onClick = onClick,
+                reply = reply,
+                vm = vm,
+                modifier = modifier,
+            )
         }
 
-        is CommunityPostDetails.Plain -> {
-            OutlinedCard(
-                onClick = { onClick(reply.descriptor) },
+        is CommunityPostReply.Thread -> {
+            ReplyThread(
+                reply = reply,
+                onClick = onClick,
+                vm = vm,
                 modifier = modifier,
-            ) {
+            )
+        }
+    }
+}
+
+@Composable
+private fun SingleReply(
+    onClick: (CommunityPostDescriptor) -> Unit,
+    reply: CommunityPostReply.Single,
+    vm: CommunityPostScreenViewModel,
+    modifier: Modifier,
+) {
+    OutlinedCard(
+        onClick = { onClick(reply.post.descriptor) },
+        modifier = modifier,
+    ) {
+        when (val replyPost = reply.post) {
+            is Deleted -> {
+                Text(
+                    "This reply has been deleted, but the ui is work in progress",
+                )
+            }
+
+            is Plain -> {
                 Column(
-                    modifier = Modifier.padding(8.dp),
+                    modifier = Modifier
+                        .padding(
+                            horizontal = 8.dp,
+                            vertical = 8.dp,
+                        ),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         UserAvatar(
-                            nickname = reply.owner.nickname,
-                            userId = reply.owner.id,
-                            uri = reply.owner.avatar?.let(vm::fileUri),
+                            nickname = replyPost.owner.nickname,
+                            userId = replyPost.owner.id,
+                            uri = replyPost.owner.avatar?.let(vm::fileUri),
                             style = UserAvatarStyle.Small,
                         )
                         Spacer(Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = reply.owner.nickname.string,
+                                text = replyPost.owner.nickname.string,
                                 style = MaterialTheme.typography.labelLarge,
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                text = formatDateTime(reply.instant),
+                                text = formatDateTime(replyPost.instant),
                                 style = MaterialTheme.typography.labelSmall,
                             )
                         }
@@ -422,13 +463,121 @@ fun Reply(
                     Spacer(Modifier.height(8.dp))
 
                     Markdown(
-                        content = reply.text.string,
+                        content = replyPost.text.string,
                         imageTransformer = Coil3ImageTransformerImpl,
                         modifier = modifier
                             .fillMaxSize(),
                     )
+
+                    Spacer(Modifier.height(4.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        ReplyPreviews(
+                            vm = vm,
+                            replyPreviews = replyPost.replyPreviews,
+                            modifier = Modifier,
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        Icon(
+                            painter = painterResource(R.drawable.ic_reply),
+                            contentDescription = null,
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ReplyThread(
+    reply: CommunityPostReply.Thread,
+    onClick: (CommunityPostDescriptor) -> Unit,
+    vm: CommunityPostScreenViewModel,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedCard(
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        reply.thread.forEachIndexed { index, replyPost ->
+            when (replyPost) {
+                is Deleted -> {
+                    Text(
+                        "This reply has been deleted, but the ui is work in progress",
+                    )
+                }
+
+                is Plain -> {
+                    Column(
+                        modifier = Modifier
+                            .clickable(
+                                onClick = { onClick(replyPost.descriptor) },
+                            )
+                            .padding(8.dp),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            UserAvatar(
+                                nickname = replyPost.owner.nickname,
+                                userId = replyPost.owner.id,
+                                uri = replyPost.owner.avatar?.let(vm::fileUri),
+                                style = UserAvatarStyle.Small,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = replyPost.owner.nickname.string,
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = formatDateTime(replyPost.instant),
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        Markdown(
+                            content = replyPost.text.string,
+                            imageTransformer = Coil3ImageTransformerImpl,
+                            modifier = modifier
+                                .fillMaxSize(),
+                        )
+
+                        Spacer(Modifier.height(4.dp))
+
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            if (index == reply.thread.size - 1) {
+                                ReplyPreviews(
+                                    vm = vm,
+                                    replyPreviews = replyPost.replyPreviews,
+                                    modifier = Modifier,
+                                )
+                                Spacer(Modifier.width(8.dp))
+                            }
+
+                            Icon(
+                                painter = painterResource(R.drawable.ic_reply),
+                                contentDescription = null,
+                            )
+                        }
+                    }
+                }
+            }
+            HorizontalDivider()
         }
     }
 }
@@ -474,4 +623,58 @@ private fun formatDateTime(instant: Instant): String {
     }
     val formattedDateTime = localDateTime.format(format)
     return formattedDateTime
+}
+
+@Composable
+private fun ReplyPreviews(
+    vm: CommunityPostScreenViewModel,
+    replyPreviews: List<UserDetails>,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(
+            space = (-8).dp,
+            alignment = Alignment.CenterHorizontally,
+        ),
+        modifier = modifier,
+    ) {
+        val moreThanLimit = replyPreviews.size > REPLY_PREVIEWS_LIMIT
+
+        for (commonFriend in replyPreviews.take(REPLY_PREVIEWS_LIMIT)) {
+            UserAvatar(
+                userId = commonFriend.id,
+                nickname = commonFriend.nickname,
+                uri = commonFriend.avatar?.let(vm::fileUri),
+                style = UserAvatarStyle(24.dp, noAvatarSize = 14.dp),
+            )
+        }
+
+        if (moreThanLimit) {
+            MorePreviewsStub(replyPreviews.size - REPLY_PREVIEWS_LIMIT)
+        }
+    }
+}
+
+@Composable
+private fun MorePreviewsStub(
+    previewsLeft: Int,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        contentAlignment = Center,
+        modifier = modifier
+            .size(32.dp)
+            .background(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = CircleShape,
+            ),
+    ) {
+        Text(
+            text = "$previewsLeft+",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+    }
 }

@@ -49,7 +49,8 @@ fun CommunityScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier
-                        .fillMaxSize(),
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
                 ) {
                     item { HeadingSupportingText() }
 
@@ -58,21 +59,20 @@ fun CommunityScreen(
                         key = { _, item -> item.id.long },
                         contentType = { _, _ -> "post-preview" },
                     ) { index, item ->
-                        Column {
-                            CommunityPostPreview(
-                                vm = vm,
-                                details = item,
-                                avatarUri = when (item) {
-                                    is Plain -> item.owner.avatar?.let(
-                                        vm::fileUri,
-                                    )
-                                    is Deleted -> null
-                                },
-                                onClick = onPostClick,
-                                onImageClick = onImageClick,
-                                modifier = Modifier,
-                            )
-                        }
+                        CommunityPostPreview(
+                            vm = vm,
+                            details = item,
+                            avatarUri = when (item) {
+                                is Plain -> item.owner.avatar?.let(
+                                    vm::fileUri,
+                                )
+
+                                is Deleted -> null
+                            },
+                            onClick = onPostClick,
+                            onImageClick = onImageClick,
+                            modifier = Modifier,
+                        )
                     }
 
                     item { BottomSupportingText() }
