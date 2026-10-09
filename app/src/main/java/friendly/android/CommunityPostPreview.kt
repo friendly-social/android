@@ -113,7 +113,7 @@ private class PostPreviewImageTransformer(private val imageWidth: Dp) :
         val painter = rememberAsyncImagePainter(model = request)
 
         val imageData = ImageData(
-            alignment = Alignment.Center,
+            alignment = Center,
             painter = painter,
             modifier = Modifier
                 .width(imageWidth)
@@ -472,13 +472,14 @@ private fun PreviewMarkdownParagraph(
                 Image(
                     painter = imageData.painter,
                     contentDescription = imageData.contentDescription,
-                    modifier = imageData.modifier
-                        .clickable(onClick = { onImageClick(url) }),
                     alignment = imageData.alignment,
                     contentScale = imageData.contentScale,
                     alpha = imageData.alpha,
                     colorFilter = imageData.colorFilter,
+                    modifier = imageData.modifier
+                        .clickable(onClick = { onImageClick(url) }),
                 )
+                Spacer(Modifier.height(8.dp))
             }
 
             cursor = image.end
