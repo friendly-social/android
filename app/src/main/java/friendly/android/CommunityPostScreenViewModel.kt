@@ -10,10 +10,13 @@ import friendly.query.QueryClient
 import friendly.query.QueryFetchResult
 import friendly.query.QueryKey
 import friendly.query.query
+import friendly.query.save
 import friendly.sdk.CommunityPostDetails
+import friendly.sdk.CommunityPostReply
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
 import friendly.sdk.FriendlyCommunityClient.Details2Result
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -61,38 +64,41 @@ class CommunityPostScreenViewModel(
         },
     )
 
+    // TODO: has to be refactored & simplified a bit
     fun runQueries() {
         viewModelScope.launch {
-            // TODO: use other way of their prefetching
-//            val jobs = mutableMapOf<CommunityPostDescriptor, Job>()
-//
-//            query.data
-//                .filter { it.fetch is Idle }
-//                .collect { state ->
-//                    state.item?.let { post ->
-//                        val replies = post.replies.data
-//                        for (reply in replies) {
-//                            if (jobs[reply.descriptor] == null) {
-//                                launch {
-//                                    queryClient.save(
-//                                        key = QueryKey(
-//                                            "community-post-${reply.id.long}",
-//                                        ),
-//                                        retries = 3,
-//                                        retryDelay = 300.milliseconds,
-//                                        fetch = {
-//                                            fetchCommunityPostDetails(reply)
-//                                        },
-//                                    )
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
+            query.data
+                .filter { it.fetch is Idle }
+                .collect { state ->
+                    state.item?.let { post ->
+                        val replies = post.replies.data
+                        for (reply in replies) {
+                            val postToFetch = when (reply) {
+                                is CommunityPostReply.Single ->
+                                    reply.post
+
+                                is CommunityPostReply.Thread ->
+                                    reply.thread.last()
+                            }
+
+                            launch {
+                                queryClient.save(
+                                    key = QueryKey(
+                                        "community-post-${postToFetch.id.long}",
+                                    ),
+                                    retries = 3,
+                                    retryDelay = 300.milliseconds,
+                                    fetch = {
+                                        fetchCommunityPostDetails(postToFetch)
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
         }
     }
 
-    // TODO: has to be refactored a bit
     private suspend fun fetchCommunityPostDetails(
         reply: CommunityPostDetails,
     ): QueryFetchResult<CommunityPost> {
