@@ -32,6 +32,9 @@ interface QueryItemDao {
 
     @Query("SELECT * FROM query_item WHERE queryKey = :key")
     suspend fun read(key: String): QueryItem?
+
+    @Query("DELETE FROM query_item")
+    suspend fun clearAll()
 }
 
 /**
@@ -63,6 +66,9 @@ interface PagingCacheDao {
 
     @Query("DELETE FROM paging_item WHERE queryKey = :key")
     suspend fun clear(key: String)
+
+    @Query("DELETE FROM paging_item")
+    suspend fun clearAll()
 
     @Upsert
     suspend fun upsert(items: List<PagingItem>)

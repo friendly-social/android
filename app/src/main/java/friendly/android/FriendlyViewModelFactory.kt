@@ -52,6 +52,7 @@ class FriendlyViewModelFactory(
                 logout = LogoutUseCase(
                     authStorage = authStorage,
                     selfProfileStorage = selfProfileStorage,
+                    db = database,
                 ),
             ) as T
         }
