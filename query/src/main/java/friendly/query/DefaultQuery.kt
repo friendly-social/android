@@ -105,6 +105,7 @@ private class DefaultQuery<T>(
                             error = false,
                         )
                     }
+                    cache.store(key, fetched)
                 }
             }
         }
@@ -121,8 +122,6 @@ public fun <T> QueryClient<T>.save(
     val client = this
     val cache = client.cache
     client.scope.launch(Dispatchers.IO) {
-        if (cache.get(key) != null) return@launch
-
         val fetchResult = fetchWithRetries(retries, retryDelay) { fetch() }
         when (fetchResult) {
             is Failure -> {}

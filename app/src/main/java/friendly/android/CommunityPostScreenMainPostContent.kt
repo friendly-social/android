@@ -18,9 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
-import com.mikepenz.markdown.m3.Markdown
-import com.mikepenz.markdown.model.rememberMarkdownState
 import friendly.sdk.CommunityPostDetails
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -41,6 +38,8 @@ fun CommunityPostScreenMainPostContent(
     ) {
         when (isRoot) {
             true -> {
+                Spacer(Modifier.height(8.dp))
+
                 Row(
                     verticalAlignment = Alignment.Top,
                     modifier = Modifier,
@@ -132,16 +131,18 @@ fun CommunityPostScreenMainPostContent(
 
                         Spacer(Modifier.height(8.dp))
 
-                        val markdownState = rememberMarkdownState(
-                            retainState = true,
-                            immediate = true,
-                            content = post.text.string,
-                        )
-                        Markdown(
-                            markdownState = markdownState,
-                            imageTransformer = Coil3ImageTransformerImpl,
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                        BoxWithConstraints(
+                            modifier = modifier
+                                .fillMaxWidth(),
+                        ) {
+                            val imageWidth = maxWidth
+                            CommunityPostMarkdown(
+                                markdown = post.text.string,
+                                imageWidth = imageWidth,
+                                onImageClick = onImageClick,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
 
                         Spacer(Modifier.height(8.dp))
                     }

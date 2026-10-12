@@ -1,6 +1,10 @@
 package friendly.android
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,12 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,11 +29,13 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import friendly.query.QueryState
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
 import friendly.sdk.CommunityPostReply
@@ -54,6 +62,7 @@ fun CommunityPostScreen(
         else -> {
             Content(
                 post = item,
+                state = postDetails.value,
                 onPostClick = onPostClick,
                 onBack = onBack,
                 onImageClick = onImageClick,
@@ -70,6 +79,7 @@ fun CommunityPostScreen(
 @Composable
 private fun Content(
     post: CommunityPost,
+    state: QueryState<CommunityPost>,
     onPostClick: (CommunityPostDescriptor) -> Unit,
     onBack: () -> Unit,
     onImageClick: (String) -> Unit,
@@ -93,78 +103,110 @@ private fun Content(
         },
         modifier = modifier,
     ) { innerPadding ->
-        LazyColumn(
-            state = lazyColumnState,
+        Box(
             modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .nestedScroll(topAppBarBehavior.nestedScrollConnection),
+                .padding(innerPadding),
         ) {
-            itemsIndexed(
-                items = post.upstream,
-                key = { _, item -> item.id.long },
-            ) { index, upstream ->
-                UpstreamPost(
-                    index = index,
-                    count = post.upstream.size,
-                    upstream = upstream,
-                    onClick = onPostClick,
-                    onImageClick = onImageClick,
-                    vm = vm,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                HorizontalDivider()
+            ScaffoldContent(
+                lazyColumnState = lazyColumnState,
+                post = post,
+                onPostClick = onPostClick,
+                onImageClick = onImageClick,
+                vm = vm,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .nestedScroll(topAppBarBehavior.nestedScrollConnection),
+            )
+
+            AnimatedVisibility(
+                visible = state.fetch !is QueryState.FetchStatus.Idle,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier.align(Alignment.TopCenter),
+            ) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
+        }
+    }
+}
 
-            item {
-                when (val details = post.details) {
-                    is CommunityPostDetails.Deleted -> {
-                        CommunityPostScreenMainPostDeleted(
-                            post = details,
-                            modifier = Modifier,
-                        )
-                    }
+@Composable
+private fun ScaffoldContent(
+    lazyColumnState: LazyListState,
+    post: CommunityPost,
+    onPostClick: (CommunityPostDescriptor) -> Unit,
+    onImageClick: (String) -> Unit,
+    vm: CommunityPostScreenViewModel,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        state = lazyColumnState,
+        modifier = modifier,
+    ) {
+        itemsIndexed(
+            items = post.upstream,
+            key = { _, item -> item.id.long },
+        ) { index, upstream ->
+            UpstreamPost(
+                index = index,
+                count = post.upstream.size,
+                upstream = upstream,
+                onClick = onPostClick,
+                onImageClick = onImageClick,
+                vm = vm,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            HorizontalDivider()
+        }
 
-                    is CommunityPostDetails.Plain -> {
-                        CommunityPostScreenMainPostContent(
-                            isRoot = post.upstream.isEmpty(),
-                            post = details,
-                            onImageClick = onImageClick,
-                            vm = vm,
-                        )
-                    }
+        item {
+            when (val details = post.details) {
+                is CommunityPostDetails.Deleted -> {
+                    CommunityPostScreenMainPostDeleted(
+                        post = details,
+                        modifier = Modifier,
+                    )
+                }
+
+                is CommunityPostDetails.Plain -> {
+                    CommunityPostScreenMainPostContent(
+                        isRoot = post.upstream.isEmpty(),
+                        post = details,
+                        onImageClick = onImageClick,
+                        vm = vm,
+                    )
                 }
             }
-
-            item {
-                Spacer(Modifier.height(16.dp))
-
-                Text(
-                    text = stringResource(R.string.replies),
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-
-                Spacer(Modifier.height(16.dp))
-            }
-
-            itemsIndexed(
-                items = post.replies.data,
-                key = { _, item -> item.listKey() },
-            ) { _, reply ->
-                ReplyPost(
-                    reply = reply,
-                    onClick = onPostClick,
-                    vm = vm,
-                    onImageClick = onImageClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                )
-            }
-
-            item { Spacer(Modifier.fillParentMaxHeight(0.8f)) }
         }
+
+        item {
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = stringResource(R.string.replies),
+                style = MaterialTheme.typography.headlineMedium,
+            )
+
+            Spacer(Modifier.height(16.dp))
+        }
+
+        itemsIndexed(
+            items = post.replies.data,
+            key = { _, item -> item.listKey() },
+        ) { _, reply ->
+            ReplyPost(
+                reply = reply,
+                onClick = onPostClick,
+                vm = vm,
+                onImageClick = onImageClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+            )
+        }
+
+        item { Spacer(Modifier.fillParentMaxHeight(0.8f)) }
     }
 }
 

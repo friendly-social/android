@@ -73,25 +73,29 @@ class CommunityPostScreenViewModel(
                     state.item?.let { post ->
                         val replies = post.replies.data
                         for (reply in replies) {
-                            val postToFetch = when (reply) {
+                            val postsToFetch = when (reply) {
                                 is CommunityPostReply.Single ->
-                                    reply.post
+                                    listOf(reply.post)
 
                                 is CommunityPostReply.Thread ->
-                                    reply.thread.last()
+                                    reply.thread
                             }
 
-                            launch {
-                                queryClient.save(
-                                    key = QueryKey(
-                                        "community-post-${postToFetch.id.long}",
-                                    ),
-                                    retries = 3,
-                                    retryDelay = 300.milliseconds,
-                                    fetch = {
-                                        fetchCommunityPostDetails(postToFetch)
-                                    },
-                                )
+                            for (postToFetch in postsToFetch) {
+                                launch {
+                                    queryClient.save(
+                                        key = QueryKey(
+                                            "community-post-${postToFetch.id.long}",
+                                        ),
+                                        retries = 3,
+                                        retryDelay = 300.milliseconds,
+                                        fetch = {
+                                            fetchCommunityPostDetails(
+                                                postToFetch,
+                                            )
+                                        },
+                                    )
+                                }
                             }
                         }
                     }

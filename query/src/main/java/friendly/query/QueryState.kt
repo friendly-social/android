@@ -10,7 +10,6 @@ public data class QueryState<T>(
         public data object Idle : FetchStatus
         public data object Loading : FetchStatus
         public data object Refreshing : FetchStatus
-        public data object FetchingNext : FetchStatus
     }
 
     public sealed interface Source {
