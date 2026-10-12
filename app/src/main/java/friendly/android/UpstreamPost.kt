@@ -42,7 +42,7 @@ fun UpstreamPost(
         is CommunityPostDetails.Deleted -> {
             SegmentedListItem(
                 onClick = { onClick(upstream.descriptor) },
-                shapes = ListItemDefaults.segmentedShapes(index, count),
+                shapes = ListItemDefaults.segmentedShapes(index, count + 1),
                 colors = ListItemDefaults.segmentedColors(
                     containerColor =
                     MaterialTheme.colorScheme.surfaceContainerLow,
@@ -58,14 +58,9 @@ fun UpstreamPost(
         }
 
         is CommunityPostDetails.Plain -> {
-            val markdownState = rememberMarkdownState(
-                retainState = true,
-                immediate = true,
-                content = upstream.text.string,
-            )
             SegmentedListItem(
                 onClick = { onClick(upstream.descriptor) },
-                shapes = ListItemDefaults.segmentedShapes(index, count),
+                shapes = ListItemDefaults.segmentedShapes(index, count + 1),
                 colors = ListItemDefaults.segmentedColors(
                     containerColor =
                     MaterialTheme.colorScheme.surfaceContainerLow,
