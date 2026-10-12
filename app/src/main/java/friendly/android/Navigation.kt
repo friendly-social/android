@@ -2,6 +2,8 @@ package friendly.android
 
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
+import android.view.Window
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -12,10 +14,13 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -754,6 +759,12 @@ fun FriendlyNavGraph(
                 ) { backStackEntry ->
                     val route: Home.PictureViewerDialog = backStackEntry
                         .toRoute()
+
+                    val localView = LocalView.current
+                    SideEffect {
+                        localView.parentWindow?.setWindowAnimations(-1)
+                    }
+
                     PictureViewerDialog(
                         onDismiss = { navController.popBackStack() },
                         uri = route.uri.toUri(),
@@ -827,6 +838,9 @@ fun FriendlyNavGraph(
         }
     }
 }
+
+private val View.parentWindow: Window?
+    get() = (this.parent as? DialogWindowProvider)?.window
 
 private fun determineInitialHomeDestination(
     notificationDestination: NotificationDestinationExtra?,
