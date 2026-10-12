@@ -19,8 +19,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import friendly.sdk.CommunityPostDescriptor
+import friendly.sdk.CommunityPostDetails
 import friendly.sdk.CommunityPostReply
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -59,6 +62,39 @@ fun ReplyPost(
     }
 }
 
+@Composable
+private fun DeletedSingleReply(
+    reply: CommunityPostDetails.Deleted,
+    vm: CommunityPostScreenViewModel,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+    ) {
+        Text(
+            style = MaterialTheme.typography.labelMedium,
+            text = formatDateTime(reply.instant),
+            modifier = Modifier,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.reply_deleted_by_author_text),
+            fontStyle = FontStyle.Italic,
+            modifier = Modifier,
+        )
+        Spacer(Modifier.height(4.dp))
+        Row(
+            horizontalArrangement = Arrangement.End,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            CommunityPostScreenReplyPreviews(
+                vm = vm,
+                replyPreviews = reply.replyPreviews,
+                modifier = Modifier,
+            )
+        }
+    }
+}
 
 @Composable
 private fun SingleReply(
@@ -74,8 +110,13 @@ private fun SingleReply(
     ) {
         when (val replyPost = reply.post) {
             is Deleted -> {
-                Text(
-                    "This reply has been deleted, but the ui is work in progress",
+                DeletedSingleReply(
+                    reply = replyPost,
+                    vm = vm,
+                    modifier = Modifier.padding(
+                        vertical = 8.dp,
+                        horizontal = 8.dp,
+                    ),
                 )
             }
 
@@ -167,8 +208,13 @@ private fun ReplyThread(
         reply.thread.forEachIndexed { index, replyPost ->
             when (replyPost) {
                 is Deleted -> {
-                    Text(
-                        "This reply has been deleted, but the ui is work in progress",
+                    DeletedSingleReply(
+                        reply = replyPost,
+                        vm = vm,
+                        modifier = Modifier.padding(
+                            vertical = 8.dp,
+                            horizontal = 8.dp,
+                        ),
                     )
                 }
 

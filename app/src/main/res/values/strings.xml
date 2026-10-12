@@ -126,4 +126,6 @@
     <string name="replies">Replies</string>
     <string name="community_expand_network_to_fill_the_feed">Expand your network by adding more friends to fill the feed</string>
     <string name="here_you_will_see_the_posts_from_your_network">Here you will see the posts from your Network</string>
+    <string name="post_deleted_by_author_text">The post has been deleted by the author</string>
+    <string name="reply_deleted_by_author_text">This reply has been deleted by the author</string>
 </resources>

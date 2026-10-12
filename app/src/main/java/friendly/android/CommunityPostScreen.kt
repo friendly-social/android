@@ -120,7 +120,10 @@ private fun Content(
             item {
                 when (val details = post.details) {
                     is CommunityPostDetails.Deleted -> {
-                        Text("This reply has been deleted, but the ui is work in progress")
+                        CommunityPostScreenMainPostDeleted(
+                            post = details,
+                            modifier = Modifier,
+                        )
                     }
 
                     is CommunityPostDetails.Plain -> {

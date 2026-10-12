@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -31,27 +29,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.LocalPlatformContext
-import coil3.compose.rememberAsyncImagePainter
-import coil3.request.ImageRequest
-import coil3.request.error
 import com.mikepenz.markdown.annotator.annotatorSettings
 import com.mikepenz.markdown.annotator.buildMarkdownAnnotatedString
-import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.compose.LocalImageTransformer
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.components.markdownComponents
@@ -61,10 +47,6 @@ import com.mikepenz.markdown.compose.elements.MarkdownParagraph
 import com.mikepenz.markdown.compose.elements.MarkdownText
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownTypography
-import com.mikepenz.markdown.model.ImageData
-import com.mikepenz.markdown.model.ImageTransformer
-import com.mikepenz.markdown.model.ImageWidth
-import com.mikepenz.markdown.model.PlaceholderConfig
 import com.mikepenz.markdown.model.markdownAnimations
 import com.mikepenz.markdown.model.markdownAnnotator
 import com.mikepenz.markdown.model.markdownAnnotatorConfig
@@ -79,7 +61,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
-import kotlin.math.roundToInt
 import kotlin.time.Instant
 
 private const val REPLY_PREVIEWS_LIMIT = 8

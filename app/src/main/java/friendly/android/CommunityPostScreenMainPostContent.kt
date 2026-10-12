@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
@@ -75,7 +74,7 @@ fun CommunityPostScreenMainPostContent(
 
                 BoxWithConstraints(
                     modifier = modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
                 ) {
                     val imageWidth = maxWidth
 
@@ -95,7 +94,7 @@ fun CommunityPostScreenMainPostContent(
                     shapes = endingListItemShape(),
                     colors = ListItemDefaults.segmentedColors(
                         containerColor =
-                            MaterialTheme.colorScheme.surfaceContainerLow,
+                        MaterialTheme.colorScheme.surfaceContainerLow,
                         contentColor = MaterialTheme.colorScheme.onSurface,
                     ),
                 ) {
@@ -133,7 +132,6 @@ fun CommunityPostScreenMainPostContent(
 
                         Spacer(Modifier.height(8.dp))
 
-
                         val markdownState = rememberMarkdownState(
                             retainState = true,
                             immediate = true,
@@ -152,10 +150,6 @@ fun CommunityPostScreenMainPostContent(
         }
     }
 }
-
-@Composable
-private fun endingListItemShape(): ListItemShapes =
-    ListItemDefaults.segmentedShapes(1, 2)
 
 // TODO: make normal global date-time formatting utils
 private fun formatDateTime(instant: Instant): String {

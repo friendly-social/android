@@ -1,5 +1,6 @@
 package friendly.android
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.model.rememberMarkdownState
 import friendly.sdk.CommunityPostDescriptor
@@ -35,11 +38,23 @@ fun UpstreamPost(
     vm: CommunityPostScreenViewModel,
     modifier: Modifier = Modifier,
 ) {
-
     when (upstream) {
         is CommunityPostDetails.Deleted -> {
-            // TODO
-            Text("This reply has been deleted, but the ui is work in progress")
+            SegmentedListItem(
+                onClick = { onClick(upstream.descriptor) },
+                shapes = ListItemDefaults.segmentedShapes(index, count),
+                colors = ListItemDefaults.segmentedColors(
+                    containerColor =
+                    MaterialTheme.colorScheme.surfaceContainerLow,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+            ) {
+                DeletedSingleUpstreamPost(
+                    deleted = upstream,
+                    vm = vm,
+                    modifier = Modifier,
+                )
+            }
         }
 
         is CommunityPostDetails.Plain -> {
@@ -53,7 +68,7 @@ fun UpstreamPost(
                 shapes = ListItemDefaults.segmentedShapes(index, count),
                 colors = ListItemDefaults.segmentedColors(
                     containerColor =
-                        MaterialTheme.colorScheme.surfaceContainerLow,
+                    MaterialTheme.colorScheme.surfaceContainerLow,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                 ),
             ) {
@@ -86,7 +101,7 @@ fun UpstreamPost(
 
                     BoxWithConstraints(
                         modifier = modifier
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
                     ) {
                         val imageWidth = maxWidth
 
@@ -121,4 +136,38 @@ private fun formatDateTime(instant: Instant): String {
     }
     val formattedDateTime = localDateTime.format(format)
     return formattedDateTime
+}
+
+@Composable
+private fun DeletedSingleUpstreamPost(
+    deleted: CommunityPostDetails.Deleted,
+    vm: CommunityPostScreenViewModel,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+    ) {
+        Text(
+            style = MaterialTheme.typography.labelMedium,
+            text = formatDateTime(deleted.instant),
+            modifier = Modifier,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.post_deleted_by_author_text),
+            fontStyle = FontStyle.Italic,
+            modifier = Modifier,
+        )
+        Spacer(Modifier.height(4.dp))
+        Row(
+            horizontalArrangement = Arrangement.End,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            CommunityPostScreenReplyPreviews(
+                vm = vm,
+                replyPreviews = deleted.replyPreviews,
+                modifier = Modifier,
+            )
+        }
+    }
 }
