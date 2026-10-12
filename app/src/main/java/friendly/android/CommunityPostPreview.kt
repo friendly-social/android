@@ -68,6 +68,7 @@ import com.mikepenz.markdown.model.PlaceholderConfig
 import com.mikepenz.markdown.model.markdownAnimations
 import com.mikepenz.markdown.model.markdownAnnotator
 import com.mikepenz.markdown.model.markdownAnnotatorConfig
+import com.mikepenz.markdown.model.rememberMarkdownState
 import com.mikepenz.markdown.utils.MARKDOWN_TAG_IMAGE_URL
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxThemes
@@ -82,65 +83,6 @@ import kotlin.math.roundToInt
 import kotlin.time.Instant
 
 private const val REPLY_PREVIEWS_LIMIT = 8
-
-private class PostPreviewImageTransformer(private val imageWidth: Dp) :
-    ImageTransformer by Coil3ImageTransformerImpl {
-    // Plans on aspect ratio here:
-    // 1. to make pictures fit this square with blurred background
-    // 2. make pictures possible for taking several possible aspect ratios,
-    // and force them take specified ratios when they stop looking convenient
-    val ratio = 1f
-
-    @Composable
-    override fun transform(link: String): ImageData {
-        val context = LocalPlatformContext.current
-        val density = LocalDensity.current
-
-        val widthPx = with(density) {
-            imageWidth.roundToPx().coerceAtLeast(1)
-        }
-
-        val heightPx = (widthPx / ratio).roundToInt().coerceAtLeast(1)
-
-        val request = remember(link, context, widthPx, heightPx) {
-            ImageRequest.Builder(context)
-                .data(link)
-                .size(widthPx, heightPx)
-                .error(R.drawable.ic_error)
-                .build()
-        }
-
-        val painter = rememberAsyncImagePainter(model = request)
-
-        val imageData = ImageData(
-            alignment = Center,
-            painter = painter,
-            modifier = Modifier
-                .width(imageWidth)
-                .aspectRatio(ratio)
-                .clip(RoundedCornerShape(12.dp)),
-            contentScale = ContentScale.Crop,
-        )
-        return imageData
-    }
-
-    @Composable
-    override fun intrinsicSize(painter: Painter): Size = Size.Unspecified
-
-    override fun placeholderConfig(
-        link: String,
-        density: Density,
-        containerSize: Size,
-        imageWidth: ImageWidth,
-        imageSize: Size,
-        imageSizeChanged: ((String, Size) -> Unit)?,
-    ): PlaceholderConfig = PlaceholderConfig(
-        size = Size(
-            width = this.imageWidth.value,
-            height = this.imageWidth.value / ratio,
-        ),
-    )
-}
 
 @Composable
 fun CommunityPostPreview(
@@ -241,7 +183,7 @@ private fun PlainPostViewer(
                     val imageWidth = maxWidth
 
                     val imageTransformer = remember(imageWidth) {
-                        PostPreviewImageTransformer(imageWidth)
+                        SquarePictureMarkdownImageTransformer(imageWidth)
                     }
 
                     MarkdownPreviewRenderer(
@@ -333,11 +275,17 @@ private fun MorePreviewsStub(
 
 @Composable
 private fun MarkdownPreviewRenderer(
-    imageTransformer: PostPreviewImageTransformer,
+    imageTransformer: SquarePictureMarkdownImageTransformer,
     details: CommunityPostDetails.Plain,
     onImageClick: (url: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val markdownState = rememberMarkdownState(
+        retainState = true,
+        immediate = true,
+        content = details.text.string,
+    )
+
     val isDarkTheme = isSystemInDarkTheme()
 
     val highlightsBuilder = remember(isDarkTheme) {
@@ -345,7 +293,8 @@ private fun MarkdownPreviewRenderer(
     }
 
     Markdown(
-        content = details.text.string,
+        markdownState = markdownState,
+//        content = details.text.string,
         annotator = markdownAnnotator(
             config = markdownAnnotatorConfig(inlineImageAsBlock = false),
         ),
@@ -409,8 +358,8 @@ private fun formatDateTime(instant: Instant): String {
     return formattedDateTime
 }
 
-@Composable
-private fun PreviewMarkdownParagraph(
+@Composable // TODO: make this private
+fun PreviewMarkdownParagraph(
     model: MarkdownComponentModel,
     onImageClick: (link: String) -> Unit,
 ) {

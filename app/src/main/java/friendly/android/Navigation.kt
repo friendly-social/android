@@ -547,6 +547,11 @@ fun FriendlyNavGraph(
                         ),
                         descriptor = descriptor,
                         contentPadding = contentPadding(route),
+                        onImageClick = { uri: String ->
+                            navController.navigate(
+                                route = Home.PictureViewerDialog(uri),
+                            )
+                        },
                         onPostClick = { descriptor ->
                             val descriptorSerializable =
                                 descriptor.serializable()

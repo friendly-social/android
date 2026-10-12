@@ -1,0 +1,269 @@
+package friendly.android
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import friendly.sdk.CommunityPostDescriptor
+import friendly.sdk.CommunityPostReply
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
+
+@Composable
+fun ReplyPost(
+    reply: CommunityPostReply,
+    onClick: (CommunityPostDescriptor) -> Unit,
+    onImageClick: (String) -> Unit,
+    vm: CommunityPostScreenViewModel,
+    modifier: Modifier = Modifier,
+) {
+    when (reply) {
+        is CommunityPostReply.Single -> {
+            SingleReply(
+                onClick = onClick,
+                reply = reply,
+                vm = vm,
+                onImageClick = onImageClick,
+                modifier = modifier,
+            )
+        }
+
+        is CommunityPostReply.Thread -> {
+            ReplyThread(
+                reply = reply,
+                onClick = onClick,
+                vm = vm,
+                onImageClick = onImageClick,
+                modifier = modifier,
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun SingleReply(
+    onClick: (CommunityPostDescriptor) -> Unit,
+    reply: CommunityPostReply.Single,
+    vm: CommunityPostScreenViewModel,
+    onImageClick: (String) -> Unit,
+    modifier: Modifier,
+) {
+    OutlinedCard(
+        onClick = { onClick(reply.post.descriptor) },
+        modifier = modifier,
+    ) {
+        when (val replyPost = reply.post) {
+            is Deleted -> {
+                Text(
+                    "This reply has been deleted, but the ui is work in progress",
+                )
+            }
+
+            is Plain -> {
+                Column(
+                    modifier = Modifier
+                        .padding(
+                            horizontal = 8.dp,
+                            vertical = 8.dp,
+                        ),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        UserAvatar(
+                            nickname = replyPost.owner.nickname,
+                            userId = replyPost.owner.id,
+                            uri = replyPost.owner.avatar?.let(vm::fileUri),
+                            style = UserAvatarStyle.Small,
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = replyPost.owner.nickname.string,
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = formatDateTime(replyPost.instant),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    BoxWithConstraints(
+                        modifier = modifier
+                            .fillMaxWidth(),
+                    ) {
+                        val imageWidth = maxWidth
+
+                        CommunityPostMarkdown(
+                            markdown = replyPost.text.string,
+                            imageWidth = imageWidth,
+                            onImageClick = onImageClick,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+
+                    Spacer(Modifier.height(4.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        CommunityPostScreenReplyPreviews(
+                            vm = vm,
+                            replyPreviews = replyPost.replyPreviews,
+                            modifier = Modifier,
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        Icon(
+                            painter = painterResource(R.drawable.ic_reply),
+                            contentDescription = null,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReplyThread(
+    reply: CommunityPostReply.Thread,
+    onClick: (CommunityPostDescriptor) -> Unit,
+    vm: CommunityPostScreenViewModel,
+    onImageClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedCard(
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        reply.thread.forEachIndexed { index, replyPost ->
+            when (replyPost) {
+                is Deleted -> {
+                    Text(
+                        "This reply has been deleted, but the ui is work in progress",
+                    )
+                }
+
+                is Plain -> {
+                    Column(
+                        modifier = Modifier
+                            .clickable(
+                                onClick = { onClick(replyPost.descriptor) },
+                            )
+                            .padding(8.dp),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            UserAvatar(
+                                nickname = replyPost.owner.nickname,
+                                userId = replyPost.owner.id,
+                                uri = replyPost.owner.avatar?.let(vm::fileUri),
+                                style = UserAvatarStyle.Small,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = replyPost.owner.nickname.string,
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = formatDateTime(replyPost.instant),
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        BoxWithConstraints(
+                            modifier = modifier
+                                .fillMaxWidth(),
+                        ) {
+                            val imageWidth = maxWidth
+
+                            CommunityPostMarkdown(
+                                markdown = replyPost.text.string,
+                                imageWidth = imageWidth,
+                                onImageClick = onImageClick,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+
+                        Spacer(Modifier.height(4.dp))
+
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            if (index == reply.thread.size - 1) {
+                                CommunityPostScreenReplyPreviews(
+                                    vm = vm,
+                                    replyPreviews = replyPost.replyPreviews,
+                                    modifier = Modifier,
+                                )
+                                Spacer(Modifier.width(8.dp))
+                            }
+
+                            Icon(
+                                painter = painterResource(R.drawable.ic_reply),
+                                contentDescription = null,
+                            )
+                        }
+                    }
+                }
+            }
+            HorizontalDivider()
+        }
+    }
+}
+
+// TODO: make normal global date-time formatting utils
+private fun formatDateTime(instant: Instant): String {
+    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+    val format = LocalDateTime.Format {
+        year()
+        chars("-")
+        monthNumber()
+        chars("-")
+        day()
+
+        chars(" ")
+
+        hour()
+        chars(":")
+        minute()
+    }
+    val formattedDateTime = localDateTime.format(format)
+    return formattedDateTime
+}
