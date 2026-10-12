@@ -106,13 +106,10 @@ class CommunityPostScreenViewModel(
     private suspend fun fetchCommunityPostDetails(
         reply: CommunityPostDetails,
     ): QueryFetchResult<CommunityPost> {
-        val detailsResult =
-            client.community.details2(
-                authorization =
-                authStorage.getAuth(),
-                descriptor =
-                reply.descriptor,
-            )
+        val detailsResult = client.community.details2(
+            authorization = authStorage.getAuth(),
+            descriptor = reply.descriptor,
+        )
         return when (detailsResult) {
             is Details2Result.IOError,
             is Details2Result.ServerError,
@@ -122,12 +119,9 @@ class CommunityPostScreenViewModel(
             is Details2Result.Success -> {
                 QueryFetchResult.Success(
                     CommunityPost(
-                        details =
-                        detailsResult.post,
-                        replies =
-                        detailsResult.replies,
-                        upstream =
-                        detailsResult.upstream,
+                        details = detailsResult.post,
+                        replies = detailsResult.replies,
+                        upstream = detailsResult.upstream,
                     ),
                 )
             }
