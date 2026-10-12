@@ -30,9 +30,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -105,7 +106,12 @@ private fun PlainPostViewer(
         onClick = { onClick(details.descriptor) },
         modifier = modifier,
     ) {
-        Row(Modifier.padding(8.dp)) {
+        Row(
+            modifier = Modifier.padding(
+                horizontal = 8.dp,
+                vertical = 4.dp,
+            ),
+        ) {
             UserAvatar(
                 userId = details.owner.id,
                 nickname = details.owner.nickname,
@@ -130,27 +136,29 @@ private fun PlainPostViewer(
                 ) {
                     Text(
                         text = details.owner.nickname.string,
-                        color = MaterialTheme.colorScheme.secondary,
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold,
                     )
 
                     Spacer(Modifier.width(4.dp))
+                    Text("·", color = Color.Gray)
+                    Spacer(Modifier.width(4.dp))
 
                     Text(
                         text = formatDateTime(details.instant),
-                        fontSize = 12.sp,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.secondary,
                     )
 
                     if (details.edited) {
-                        Spacer(Modifier.weight(1f))
+                        Spacer(Modifier.width(4.dp))
+                        Text("·", color = Color.Gray)
+                        Spacer(Modifier.width(4.dp))
 
                         Text(
-                            text = "edited",
-                            fontStyle = FontStyle.Italic,
+                            text = stringResource(R.string.edited),
                             style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary,
                         )
                     }
                 }
@@ -183,10 +191,8 @@ private fun PlainPostViewer(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(
-                    horizontal = 16.dp,
-                    vertical = 16.dp,
-                ),
+                .padding(top = 4.dp, bottom = 8.dp)
+                .padding(horizontal = 16.dp),
         ) {
             ReplyPreviews(vm, details.replyPreviews)
 
@@ -275,7 +281,6 @@ private fun MarkdownPreviewRenderer(
 
     Markdown(
         markdownState = markdownState,
-//        content = details.text.string,
         annotator = markdownAnnotator(
             config = markdownAnnotatorConfig(inlineImageAsBlock = false),
         ),
