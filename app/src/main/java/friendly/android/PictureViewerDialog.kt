@@ -13,7 +13,6 @@ import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntSize
@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 
 // TODO: introduce double-click gestures
 
@@ -81,7 +82,7 @@ fun PictureViewerDialog(
                 .pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {
-                            awaitFirstDown(requireUnconsumed = true)
+                            awaitFirstDown(requireUnconsumed = false)
 
                             do {
                                 val event = awaitPointerEvent()
@@ -93,6 +94,10 @@ fun PictureViewerDialog(
                                     snapOnDrag(scale, zoom, offset, pan)
                                 }
                             } while (event.changes.any { it.pressed })
+
+                            scope.launch {
+                                dismissOnThreshold(offset, scale, onDismiss)
+                            }
 
                             scope.launch {
                                 snapBackOnReleaseIn(
@@ -107,6 +112,17 @@ fun PictureViewerDialog(
                 },
         )
     }
+}
+
+private fun AwaitPointerEventScope.dismissOnThreshold(
+    offset: Animatable<Offset, AnimationVector2D>,
+    scale: Animatable<Float, AnimationVector1D>,
+    onDismiss: () -> Unit,
+) {
+    val afterThreshold =
+        offset.value.y.absoluteValue > (size.height / 2)
+    val defaultScale = scale.value == 1f
+    if (afterThreshold && defaultScale) onDismiss()
 }
 
 @Composable
