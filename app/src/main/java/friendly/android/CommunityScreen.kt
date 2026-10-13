@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -93,14 +94,7 @@ fun ScaffoldContent(
         modifier = modifier,
     ) {
         if (posts.items.isNotEmpty()) {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-            ) {
-                item { HeadingSupportingText() }
-
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
                 itemsIndexed(
                     items = posts.items,
                     key = { _, item -> item.id.long },
@@ -110,19 +104,24 @@ fun ScaffoldContent(
                         vm = vm,
                         details = item,
                         avatarUri = when (item) {
-                            is Plain ->
-                                item.owner.avatar
-                                    ?.let(vm::fileUri)
-
+                            is Plain -> item.owner.avatar?.let(vm::fileUri)
                             is Deleted -> null
                         },
                         onClick = onPostClick,
                         onImageClick = onImageClick,
                         modifier = Modifier,
                     )
+
+                    HorizontalDivider()
                 }
 
-                item { BottomSupportingText() }
+                item {
+                    BottomSupportingText(
+                        modifier = Modifier
+                            .padding(vertical = 16.dp)
+                            .fillMaxWidth(),
+                    )
+                }
             }
         } else {
             Column(
@@ -130,6 +129,7 @@ fun ScaffoldContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxSize(),
             ) {
+                Spacer(Modifier.height(16.dp))
                 Text(
                     text = stringResource(R.string.the_feed_is_empty),
                     style = MaterialTheme.typography.labelLarge,
@@ -149,33 +149,10 @@ fun ScaffoldContent(
 }
 
 @Composable
-private fun HeadingSupportingText() {
+private fun BottomSupportingText(modifier: Modifier = Modifier) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Spacer(Modifier.height(12.dp))
-        Text(
-            text = stringResource(R.string.feed),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = stringResource(
-                R.string.here_you_will_see_the_posts_from_your_network,
-            ),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.secondary,
-        )
-    }
-}
-
-@Composable
-private fun BottomSupportingText() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
     ) {
         Text(
             text = stringResource(
@@ -184,6 +161,5 @@ private fun BottomSupportingText() {
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.secondary,
         )
-        Spacer(Modifier.height(12.dp))
     }
 }

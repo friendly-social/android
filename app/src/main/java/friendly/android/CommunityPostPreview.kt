@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -110,9 +109,12 @@ private fun PlainPostViewer(
     onImageClick: (url: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedCard(
-        onClick = { onClick(details.descriptor) },
-        modifier = modifier,
+    Column(
+        modifier = modifier
+            .clickable(
+                onClick = { onClick(details.descriptor) },
+            )
+            .padding(vertical = 8.dp),
     ) {
         Row(
             modifier = Modifier.padding(
@@ -174,7 +176,7 @@ private fun PlainPostViewer(
                 var previewBoxHeight by remember { mutableIntStateOf(0) }
 
                 BoxWithConstraints(
-                    modifier = modifier
+                    modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(max = MaxPreviewHeight)
                         .clipToBounds()
