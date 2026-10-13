@@ -160,7 +160,9 @@ fun EmailCodeSheet(
                             ),
                         )
                         Icon(
-                            painter = painterResource(R.drawable.ic_content_paste),
+                            painter = painterResource(
+                                R.drawable.ic_content_paste,
+                            ),
                             contentDescription = null,
                             modifier = Modifier.size(
                                 ButtonDefaults.iconSizeFor(
