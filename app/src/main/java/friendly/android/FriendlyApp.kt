@@ -55,14 +55,14 @@ val homeNavigationItems = listOf(
         selectedIconResource = R.drawable.ic_interests_filled,
         unselectedIconResource = R.drawable.ic_interests_outlined,
         destination = Home.Community,
-        badge = BadgeKind.TextAccent("Q3"),
+        badge = BadgeKind.None,
     ),
     HomeNavigationItem(
         titleResource = R.string.activity,
         selectedIconResource = R.drawable.ic_inbox_filled,
         unselectedIconResource = R.drawable.ic_inbox_outlined,
         destination = Home.Activity,
-        badge = BadgeKind.TextAccent("Q3"),
+        badge = BadgeKind.None,
     ),
 //    HomeNavigationItem(
 //        titleResource = R.string.feed,
