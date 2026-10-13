@@ -60,14 +60,6 @@ fun PictureViewerDialog(
                 color = Color.Black.copy(alpha = 0.4f),
             ),
     ) {
-        TopBar(
-            onDismiss = onDismiss,
-            modifier = Modifier
-                .statusBarsPadding()
-                .align(Alignment.TopCenter)
-                .fillMaxWidth(),
-        )
-
         AsyncImage(
             model = uri,
             contentDescription = null,
@@ -110,6 +102,14 @@ fun PictureViewerDialog(
                         }
                     }
                 },
+        )
+
+        TopBar(
+            onDismiss = onDismiss,
+            modifier = Modifier
+                .statusBarsPadding()
+                .align(Alignment.TopCenter)
+                .fillMaxWidth(),
         )
     }
 }
