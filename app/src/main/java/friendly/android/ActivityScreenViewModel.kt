@@ -16,6 +16,7 @@ import friendly.sdk.ActivityDetails
 import friendly.sdk.CursorId
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 class ActivityScreenViewModel(
@@ -70,4 +71,14 @@ class ActivityScreenViewModel(
 
     fun avatarUri(descriptor: FileDescriptor): Uri =
         descriptor.let(client.files::getEndpoint).string.toUri()
+
+    fun markRead(activityDetails: ActivityDetails) {
+        viewModelScope.launch {
+            client.activity.read(
+                authorization = authStorage.getAuth(),
+                id = activityDetails.id,
+            )
+            launch { activity.refresh() }
+        }
+    }
 }

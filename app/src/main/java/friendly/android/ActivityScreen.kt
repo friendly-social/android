@@ -19,11 +19,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -32,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -85,22 +86,16 @@ fun ActivityScreen(
             .fillMaxSize(),
     ) {
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(text = "activity")
-                    },
-                    navigationIcon = { },
-                )
-            },
             modifier = Modifier
                 .fillMaxSize(),
         ) { innerPadding ->
             LazyColumn(
                 state = lazyColumnState,
-                modifier = Modifier.padding(innerPadding).fillMaxSize(),
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
             ) {
-                item {
+                item(key = "header") {
                     Spacer(Modifier.height(12.dp))
 
                     if (activityState.error) {
@@ -114,14 +109,19 @@ fun ActivityScreen(
                     key = { item -> item.id.long },
                 ) { item ->
                     ActivityDetails(
-                        onActivityClick = onActivityClick,
+                        onActivityClick = { activity ->
+                            vm.markRead(activity)
+                            if (activity is Reply) {
+                                onActivityClick(activity.post.descriptor)
+                            }
+                        },
                         vm = vm,
                         details = item,
                         modifier = Modifier,
                     )
                 }
 
-                item {
+                item("bottom") {
                     if (isAppending) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -142,15 +142,20 @@ fun ActivityScreen(
 
 @Composable
 fun ActivityDetails(
-    onActivityClick: (CommunityPostDescriptor) -> Unit,
+    onActivityClick: (ActivityDetails) -> Unit,
     vm: ActivityScreenViewModel,
     details: ActivityDetails,
     modifier: Modifier = Modifier,
 ) {
+    val itemContainerColor = if (details.isRead) {
+        Color.Unspecified
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
     when (details) {
         is ActivityDetails.Reply -> {
             ListItem(
-                onClick = { onActivityClick(details.post.descriptor) },
+                onClick = { onActivityClick(details) },
                 leadingContent = {
                     UserAvatar(
                         nickname = details.post.owner.nickname,
@@ -165,6 +170,9 @@ fun ActivityDetails(
                         maxLines = 1,
                     )
                 },
+                colors = ListItemDefaults.colors(
+                    containerColor = itemContainerColor,
+                ),
                 modifier = modifier,
                 content = {
                     Text(
