@@ -77,7 +77,6 @@ fun PictureViewerDialog(
                     translationX = offset.value.x,
                     translationY = offset.value.y,
                 )
-                .aspectRatio(1f)
                 .fillMaxWidth()
                 .pointerInput(Unit) {
                     awaitPointerEventScope {
