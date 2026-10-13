@@ -87,6 +87,19 @@ class VerifyEmailAuthCodeSheetViewModel(
         }
     }
 
+    fun pasteCode(string: String) {
+        val cleanString = string.trim().replace("-", "")
+        if (cleanString.isDigitsOnly() && cleanString.length == 8) {
+            _state.update { old ->
+                old.copy(
+                    codeVerificationFailed = false,
+                    codeValue = cleanString,
+                    codeValid = true,
+                )
+            }
+        }
+    }
+
     fun verifyCode() {
         _state.update { old ->
             old.copy(isVerifying = true)

@@ -38,6 +38,7 @@ fun ConfirmEmailCodeSheet(
 
     EmailCodeSheet(
         onCode = vm::updateCode,
+        onPastedCode = vm::pasteCode,
         onDismiss = onDismiss,
         submitCode = vm::verifyCode,
         state = state,

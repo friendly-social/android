@@ -5,21 +5,28 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import friendly.sdk.Email
+import kotlinx.coroutines.launch
 
 sealed interface EmailCodeSheetUiState {
     val email: Email
@@ -59,11 +66,15 @@ private val EmailCodeSheetUiState.isCodeFieldError: Boolean
 @Composable
 fun EmailCodeSheet(
     onCode: (String) -> Unit,
+    onPastedCode: (String) -> Unit,
     onDismiss: () -> Unit,
     submitCode: () -> Unit,
     state: EmailCodeSheetUiState,
     modifier: Modifier = Modifier,
 ) {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+
     ModalBottomSheet(
         sheetState = rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
@@ -125,9 +136,50 @@ fun EmailCodeSheet(
                     Button(
                         contentPadding = ButtonDefaults.MediumContentPadding,
                         shape = ButtonDefaults.squareShape,
+                        onClick = {
+                            scope.launch {
+                                val clipEntry = clipboard.getClipEntry()
+                                val firstTextItem =
+                                    clipEntry?.clipData?.getItemAt(0)?.text
+
+                                firstTextItem
+                                    ?.let(CharSequence::toString)
+                                    ?.let(onPastedCode)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(ButtonDefaults.MediumContainerHeight),
+                    ) {
+                        Text(text = "Paste")
+                        Spacer(
+                            modifier = Modifier.width(
+                                ButtonDefaults.iconSpacingFor(
+                                    ButtonDefaults.MediumContainerHeight,
+                                ),
+                            ),
+                        )
+                        Icon(
+                            painter = painterResource(R.drawable.ic_content_paste),
+                            contentDescription = null,
+                            modifier = Modifier.size(
+                                ButtonDefaults.iconSizeFor(
+                                    ButtonDefaults.MediumContainerHeight,
+                                ),
+                            ),
+                        )
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Button(
+                        contentPadding = ButtonDefaults.MediumContentPadding,
+                        shape = ButtonDefaults.squareShape,
                         enabled = state.codeValid,
                         onClick = submitCode,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(ButtonDefaults.MediumContainerHeight),
                     ) {
                         Text(text = stringResource(R.string.proceed))
                     }

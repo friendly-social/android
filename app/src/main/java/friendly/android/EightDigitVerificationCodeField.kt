@@ -22,7 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -30,6 +33,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -72,6 +77,16 @@ fun EightDigitVerificationCodeField(
         }
     }
 
+    var fieldValue by remember {
+        mutableStateOf(TextFieldValue(value, TextRange(value.length)))
+    }
+
+    LaunchedEffect(value) {
+        if (fieldValue.text != value) {
+            fieldValue = TextFieldValue(value, TextRange(value.length))
+        }
+    }
+
     Box(
         contentAlignment = Center,
         modifier = modifier.offset {
@@ -87,11 +102,24 @@ fun EightDigitVerificationCodeField(
                 }
             }
             BasicTextField(
-                value = value,
-                onValueChange = { new ->
-                    val valid =
-                        new.isDigitsOnly() && new.length <= SegmentsAmount
-                    if (valid) onValueChange(new)
+                value = fieldValue,
+                onValueChange = { newValue ->
+                    if (fieldValue.text != newValue.text) {
+                        val isDigitsOnly = newValue.text.isDigitsOnly()
+                        val validLength = newValue.text.length <= SegmentsAmount
+                        val valid = isDigitsOnly && validLength
+                        if (valid) {
+                            fieldValue = TextFieldValue(
+                                text = newValue.text,
+                                selection = TextRange(newValue.text.length),
+                            )
+                            onValueChange(newValue.text)
+                        }
+                    } else {
+                        fieldValue = fieldValue.copy(
+                            selection = TextRange(fieldValue.text.length),
+                        )
+                    }
                 },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = NumberPassword,

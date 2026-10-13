@@ -46,6 +46,7 @@ fun VerifyEmailAuthCodeSheet(
     EmailCodeSheet(
         onCode = vm::updateCode,
         onDismiss = onDismiss,
+        onPastedCode = vm::pasteCode,
         submitCode = vm::verifyCode,
         state = state,
         modifier = modifier,
