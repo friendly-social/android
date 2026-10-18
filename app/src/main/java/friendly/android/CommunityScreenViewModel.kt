@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import friendly.query.CacheResult
 import friendly.query.InfiniteQueryClient
 import friendly.query.InfiniteQueryConfig
 import friendly.query.InfiniteQueryFetchResult
@@ -88,10 +89,17 @@ class RoomSerializableQueryCache<T>(
         dao.set(queryItem)
     }
 
-    override suspend fun get(key: QueryKey): T? {
+    override suspend fun get(key: QueryKey): CacheResult<T?> {
         val queryItem = dao.read(key.string)
-        return queryItem?.payload?.let { payload ->
-            json.decodeFromString(itemSerializer, payload)
+        return try {
+            val cacheData = queryItem?.payload?.let { payload ->
+                json.decodeFromString(itemSerializer, payload)
+            }
+            CacheResult.Success(cacheData)
+        } catch (_: IllegalArgumentException) {
+            CacheResult.Corrupted
+        } catch (exception: Exception) {
+            throw exception
         }
     }
 }

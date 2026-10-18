@@ -154,48 +154,116 @@ fun ActivityDetails(
     }
     when (details) {
         is ActivityDetails.Reply -> {
-            ListItem(
-                onClick = { onActivityClick(details) },
-                leadingContent = {
-                    UserAvatar(
-                        nickname = details.post.owner.nickname,
-                        userId = details.post.owner.id,
-                        uri = details.post.owner.avatar?.let(vm::avatarUri),
-                        style = UserAvatarStyle.Small,
-                    )
-                },
-                trailingContent = {
-                    Text(
-                        text = formatDateTime(details.instant),
-                        maxLines = 1,
-                    )
-                },
-                colors = ListItemDefaults.colors(
-                    containerColor = itemContainerColor,
-                ),
+            ReplyActivityListItem(
+                onActivityClick = onActivityClick,
+                details = details,
+                vm = vm,
+                itemContainerColor = itemContainerColor,
                 modifier = modifier,
-                content = {
-                    Text(
-                        text = buildAnnotatedString {
-                            // TODO: string resources
-                            append(stringResource(R.string.reply_from))
-                            append(" ")
-                            withStyle(
-                                style = SpanStyle(fontWeight = Bold),
-                            ) {
-                                append(details.post.owner.nickname.string)
-                            }
-                            append(": \"")
-                            append(details.post.text.string)
-                            append("\"")
-                        },
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
             )
         }
+
+        is ActivityDetails.IndirectReplies ->
+            IndirectReplyActivityListItem(
+                onActivityClick = onActivityClick,
+                details = details,
+                vm = vm,
+                itemContainerColor = itemContainerColor,
+                modifier = modifier,
+            )
     }
+}
+
+@Composable
+private fun IndirectReplyActivityListItem(
+    onActivityClick: (ActivityDetails) -> Unit,
+    details: ActivityDetails.IndirectReplies,
+    vm: ActivityScreenViewModel,
+    itemContainerColor: Color,
+    modifier: Modifier,
+) {
+    ListItem(
+        onClick = { onActivityClick(details) },
+        leadingContent = {
+            UserAvatar(
+                nickname = details.post.owner.nickname,
+                userId = details.post.owner.id,
+                uri = details.post.owner.avatar?.let(vm::avatarUri),
+                style = Small,
+            )
+        },
+        trailingContent = {
+            Text(
+                text = formatDateTime(details.instant),
+                maxLines = 1,
+            )
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = itemContainerColor,
+        ),
+        content = {
+            Text(
+                text = buildAnnotatedString {
+                    append(stringResource(R.string.new_activity_under))
+                    append(" \"")
+                    append(details.post.text.string)
+                    append("\"")
+                },
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun ReplyActivityListItem(
+    onActivityClick: (ActivityDetails) -> Unit,
+    details: ActivityDetails.Reply,
+    vm: ActivityScreenViewModel,
+    itemContainerColor: Color,
+    modifier: Modifier,
+) {
+    ListItem(
+        onClick = { onActivityClick(details) },
+        leadingContent = {
+            UserAvatar(
+                nickname = details.post.owner.nickname,
+                userId = details.post.owner.id,
+                uri = details.post.owner.avatar?.let(vm::avatarUri),
+                style = Small,
+            )
+        },
+        trailingContent = {
+            Text(
+                text = formatDateTime(details.instant),
+                maxLines = 1,
+            )
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = itemContainerColor,
+        ),
+        content = {
+            Text(
+                text = buildAnnotatedString {
+                    append(stringResource(R.string.reply_from))
+                    append(" ")
+                    withStyle(
+                        style = SpanStyle(fontWeight = Bold),
+                    ) {
+                        append(details.post.owner.nickname.string)
+                    }
+                    append(": \"")
+                    append(details.post.text.string)
+                    append("\"")
+                },
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        modifier = modifier,
+    )
 }
 
 // TODO: make normal global date-time formatting utils

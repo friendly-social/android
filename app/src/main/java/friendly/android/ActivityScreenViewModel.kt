@@ -24,25 +24,24 @@ class ActivityScreenViewModel(
     private val client: FriendlyClient,
     private val db: FriendlyDatabase,
 ) : ViewModel() {
-    private val infiniteQueryClient =
-        InfiniteQueryClient(
-            cache = roomInfiniteQueryCache(
-                itemSerializable = { item: ActivityDetails ->
-                    item.serializable()
-                },
-                itemTyped = {
-                    it.typed()
-                },
-                cursorSerializable = { cursor: CursorId ->
-                    cursor.serializable()
-                },
-                cursorTyped = {
-                    it.typed()
-                },
-                db = db.pagingCacheDao(),
-            ),
-            queryScope = viewModelScope,
-        )
+    private val infiniteQueryClient = InfiniteQueryClient(
+        cache = roomInfiniteQueryCache(
+            itemSerializable = { item: ActivityDetails ->
+                item.serializable()
+            },
+            itemTyped = {
+                it.typed()
+            },
+            cursorSerializable = { cursor: CursorId ->
+                cursor.serializable()
+            },
+            cursorTyped = {
+                it.typed()
+            },
+            db = db.pagingCacheDao(),
+        ),
+        queryScope = viewModelScope,
+    )
 
     val activity = infiniteQueryClient.infiniteQuery(
         config = InfiniteQueryConfig(

@@ -1,5 +1,6 @@
 package friendly.android
 
+import friendly.query.CacheResult
 import friendly.query.InfiniteQueryCache
 import friendly.query.InfiniteQueryPage
 import friendly.query.QueryKey
@@ -57,7 +58,7 @@ class RoomSerializableInfiniteQueryCache<C, T>(
     override suspend fun read(
         key: QueryKey,
         pageIndex: Int,
-    ): List<InfiniteQueryPage<C, T>> {
+    ): CacheResult<List<InfiniteQueryPage<C, T>>> {
         val cachedPagingItems = db.read(
             key = key.string,
             page = pageIndex,
@@ -66,8 +67,8 @@ class RoomSerializableInfiniteQueryCache<C, T>(
         val cachedPages = cachedPagingItems
             .groupBy { pagingItem -> pagingItem.pageIndex }
 
-        val pages = cachedPages
-            .map { (_, page) ->
+        return try {
+            val pages = cachedPages.map { (_, page) ->
                 val pageItems = page.map { cachedPageItem ->
                     json.decodeFromString(
                         deserializer = itemSerializer,
@@ -88,8 +89,12 @@ class RoomSerializableInfiniteQueryCache<C, T>(
                     nextCursor = nextCursor,
                 )
             }
-
-        return pages
+            CacheResult.Success(pages)
+        } catch (_: IllegalArgumentException) {
+            CacheResult.Corrupted
+        } catch (exception: Exception) {
+            throw exception
+        }
     }
 
     override suspend fun clear(key: QueryKey) {

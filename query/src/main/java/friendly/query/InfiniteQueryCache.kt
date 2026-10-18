@@ -4,7 +4,7 @@ public interface InfiniteQueryCache<C, T> {
     public suspend fun read(
         key: QueryKey,
         pageIndex: Int,
-    ): List<InfiniteQueryPage<C, T>>
+    ): CacheResult<List<InfiniteQueryPage<C, T>>>
 
     public suspend fun replace(
         key: QueryKey,

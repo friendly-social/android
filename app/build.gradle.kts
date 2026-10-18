@@ -1,5 +1,4 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
-import org.jetbrains.kotlin.konan.properties.propertyString
 
 plugins {
     alias(libs.plugins.android.application)
@@ -18,7 +17,11 @@ android {
         applicationId = "friendly.android"
         minSdk = 29
         targetSdk = 37
-        compileSdk = 37
+        compileSdk {
+            version = release(37) {
+                minorApiLevel = 1
+            }
+        }
         versionCode = 3
         versionName = "1.0"
     }
@@ -30,11 +33,11 @@ android {
             val localProperties =
                 gradleLocalProperties(rootProject.projectDir, providers)
 
-            storePassword = localProperties.propertyString("keystorePassword")
+            storePassword = localProperties.getProperty("keystorePassword")
                 ?: System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = localProperties.propertyString("keystoreKeyAlias")
+            keyAlias = localProperties.getProperty("keystoreKeyAlias")
                 ?: System.getenv("KEYSTORE_KEY_ALIAS")
-            keyPassword = localProperties.propertyString("keystoreKeyPassword")
+            keyPassword = localProperties.getProperty("keystoreKeyPassword")
                 ?: System.getenv("KEYSTORE_KEY_PASSWORD")
         }
     }

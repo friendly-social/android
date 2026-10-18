@@ -67,10 +67,10 @@ private class DefaultQuery<T>(
         scope.launch(Dispatchers.IO) {
             val cached = cache.get(key)
 
-            if (cached != null) {
+            if (cached is Success && cached.data != null) {
                 _data.update {
                     QueryState(
-                        item = cached,
+                        item = cached.data,
                         fetch = Idle,
                         source = Cached,
                         error = false,

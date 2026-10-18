@@ -182,13 +182,15 @@ private class DefaultInfiniteQuery<TCursor, TItem>(
 
     suspend fun run() {
         // TODO: we need to read all pages
-        val cache = cache.read(
+        val cache = this@DefaultInfiniteQuery.cache.read(
             key = config.key,
             pageIndex = 0,
         )
 
-        if (cache.isNotEmpty()) {
-            _state.update { it.copy(pages = cache, source = Cached) }
+        if (cache is CacheResult.Success && cache.data.isNotEmpty()) {
+            _state.update {
+                it.copy(pages = cache.data, source = Cached)
+            }
         }
 
         refresh()

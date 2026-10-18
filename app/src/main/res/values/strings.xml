@@ -129,4 +129,5 @@
     <string name="post_deleted_by_author_text">The post has been deleted by the author</string>
     <string name="reply_deleted_by_author_text">This reply has been deleted by the author</string>
     <string name="edited">edited</string>
+    <string name="new_activity_under">New activity under</string>
 </resources>
