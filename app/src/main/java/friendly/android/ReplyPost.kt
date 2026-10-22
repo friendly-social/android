@@ -11,14 +11,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
@@ -123,10 +121,7 @@ private fun SingleReply(
             is Plain -> {
                 Column(
                     modifier = Modifier
-                        .padding(
-                            horizontal = 8.dp,
-                            vertical = 8.dp,
-                        ),
+                        .padding(16.dp),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -180,13 +175,6 @@ private fun SingleReply(
                             replyPreviews = replyPost.replyPreviews,
                             modifier = Modifier,
                         )
-
-                        Spacer(Modifier.width(8.dp))
-
-                        Icon(
-                            painter = painterResource(R.drawable.ic_reply),
-                            contentDescription = null,
-                        )
                     }
                 }
             }
@@ -224,7 +212,7 @@ private fun ReplyThread(
                             .clickable(
                                 onClick = { onClick(replyPost.descriptor) },
                             )
-                            .padding(8.dp),
+                            .padding(16.dp),
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -280,11 +268,6 @@ private fun ReplyThread(
                                 )
                                 Spacer(Modifier.width(8.dp))
                             }
-
-                            Icon(
-                                painter = painterResource(R.drawable.ic_reply),
-                                contentDescription = null,
-                            )
                         }
                     }
                 }

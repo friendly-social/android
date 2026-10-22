@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,7 +37,6 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -116,114 +114,121 @@ private fun PlainPostViewer(
             )
             .padding(vertical = 8.dp),
     ) {
-        Row(
-            modifier = Modifier.padding(
-                horizontal = 8.dp,
-                vertical = 4.dp,
-            ),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
         ) {
-            UserAvatar(
-                userId = details.owner.id,
-                nickname = details.owner.nickname,
-                uri = avatarUri,
-                style = UserAvatarStyle.Small,
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .clickable(
-                        onClick = { avatarUri?.toString()?.let(onImageClick) },
-                        indication = null,
-                        interactionSource = null,
-                    ),
-            )
-
-            Spacer(Modifier.width(6.dp))
-
-            Column(
-                modifier = Modifier.fillMaxSize(),
+                    .fillMaxWidth(),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = details.owner.nickname.string,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                    )
+                UserAvatar(
+                    userId = details.owner.id,
+                    nickname = details.owner.nickname,
+                    uri = avatarUri,
+                    style = UserAvatarStyle(24.dp, 16.dp),
+                    modifier = Modifier
+                        .clickable(
+                            onClick = {
+                                avatarUri?.toString()?.let(onImageClick)
+                            },
+                            indication = null,
+                            interactionSource = null,
+                        ),
+                )
 
+                Spacer(Modifier.width(8.dp))
+
+                Text(
+                    text = details.owner.nickname.string,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                Spacer(Modifier.width(4.dp))
+                Text("·", color = Color.Gray)
+                Spacer(Modifier.width(4.dp))
+
+                Text(
+                    text = formatDateTime(details.instant),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+
+                if (details.edited) {
                     Spacer(Modifier.width(4.dp))
                     Text("·", color = Color.Gray)
                     Spacer(Modifier.width(4.dp))
 
                     Text(
-                        text = formatDateTime(details.instant),
+                        text = stringResource(R.string.edited),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.secondary,
                     )
+                }
+            }
 
-                    if (details.edited) {
-                        Spacer(Modifier.width(4.dp))
-                        Text("·", color = Color.Gray)
-                        Spacer(Modifier.width(4.dp))
+            var previewBoxHeight by remember { mutableIntStateOf(0) }
 
-                        Text(
-                            text = stringResource(R.string.edited),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary,
-                        )
-                    }
+            Spacer(Modifier.height(8.dp))
+
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = MaxPreviewHeight)
+                    .clipToBounds()
+                    .onSizeChanged { previewBoxHeight = it.height },
+            ) {
+                val imageWidth = maxWidth
+
+                val imageTransformer = remember(imageWidth) {
+                    SquarePictureMarkdownImageTransformer(imageWidth)
                 }
 
-                var previewBoxHeight by remember { mutableIntStateOf(0) }
+                Box {
+                    MarkdownPreviewRenderer(
+                        imageTransformer = imageTransformer,
+                        details = details,
+                        onImageClick = onImageClick,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                    )
 
-                BoxWithConstraints(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = MaxPreviewHeight)
-                        .clipToBounds()
-                        .onSizeChanged { previewBoxHeight = it.height },
-                ) {
-                    val imageWidth = maxWidth
-
-                    val imageTransformer = remember(imageWidth) {
-                        SquarePictureMarkdownImageTransformer(imageWidth)
-                    }
-
-                    Box {
-                        MarkdownPreviewRenderer(
-                            imageTransformer = imageTransformer,
-                            details = details,
-                            onImageClick = onImageClick,
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                        )
-
-                        with(LocalDensity.current) {
-                            if (previewBoxHeight.toDp() == MaxPreviewHeight) {
-                                FadeGradientOverlay()
-                            }
+                    with(LocalDensity.current) {
+                        if (previewBoxHeight.toDp() == MaxPreviewHeight) {
+                            FadeGradientOverlay()
                         }
                     }
                 }
             }
         }
 
-        Row(
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp, bottom = 8.dp)
-                .padding(horizontal = 16.dp),
-        ) {
-            ReplyPreviews(vm, details.replyPreviews)
+        Spacer(Modifier.height(16.dp))
 
-            Spacer(Modifier.width(8.dp))
+        if (details.replyPreviews.isNotEmpty()) {
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            ) {
+                ReplyPreviews(vm, details.replyPreviews)
 
-            Icon(
-                painter = painterResource(R.drawable.ic_reply),
-                contentDescription = null,
-            )
+                Spacer(Modifier.width(4.dp))
+
+                Text(
+                    text = stringResource(R.string.replied),
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
         }
+
+        Spacer(Modifier.height(8.dp))
     }
 }
 

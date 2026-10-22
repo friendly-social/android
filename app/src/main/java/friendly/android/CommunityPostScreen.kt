@@ -3,7 +3,6 @@ package friendly.android
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -80,7 +79,6 @@ fun CommunityPostScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Content(
     post: CommunityPost,
@@ -95,7 +93,7 @@ private fun Content(
         .enterAlwaysScrollBehavior()
 
     val lazyColumnState = rememberLazyListState(
-        initialFirstVisibleItemIndex = post.upstream.size,
+        initialFirstVisibleItemIndex = post.upstream.size + 1,
     )
 
     Scaffold(
@@ -149,6 +147,8 @@ private fun ScaffoldContent(
         state = lazyColumnState,
         modifier = modifier,
     ) {
+        item { Spacer(Modifier.height(8.dp)) }
+
         itemsIndexed(
             items = post.upstream,
             key = { _, item -> item.id.long },
