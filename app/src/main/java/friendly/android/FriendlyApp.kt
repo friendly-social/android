@@ -5,12 +5,17 @@ import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -22,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +38,14 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.HazeProgressive
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.blur.HazeColorEffect
+import dev.chrisbanes.haze.blur.hazeBlur
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import friendly.android.FriendlyNavGraph.Home
 import friendly.android.HomeNavigationItem.BadgeKind
 import friendly.sdk.Authorization
@@ -76,13 +90,13 @@ val homeNavigationItems = listOf(
         unselectedIconResource = R.drawable.ic_group_unfilled,
         destination = Home.Network,
     ),
-    HomeNavigationItem(
-        titleResource = R.string.chat,
-        selectedIconResource = R.drawable.ic_chat_bubble_filled,
-        unselectedIconResource = R.drawable.ic_chat_bubble_outlined,
-        destination = Home.Chat,
-        badge = BadgeKind.TextAccent("Q4"),
-    ),
+//    HomeNavigationItem(
+//        titleResource = R.string.chat,
+//        selectedIconResource = R.drawable.ic_chat_bubble_filled,
+//        unselectedIconResource = R.drawable.ic_chat_bubble_outlined,
+//        destination = Home.Chat,
+//        badge = BadgeKind.TextAccent("Q4"),
+//    ),
     HomeNavigationItem(
         titleResource = R.string.profile,
         selectedIconResource = R.drawable.ic_person_filled,
@@ -130,56 +144,101 @@ fun FriendlyApp(
 
     val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues()
 
+    val hazeState = rememberHazeState()
+
     FriendlyTheme {
-        Scaffold(
-            bottomBar = {
-                AnimatedVisibility(
-                    visible = bottomBarVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { it },
-                        animationSpec = tween(300, easing = EaseInOutCubic),
-                    ),
-                    exit = slideOutVertically(
-                        targetOffsetY = { it },
-                        animationSpec = tween(300, easing = EaseInOutCubic),
-                    ),
-                ) {
-                    BottomNavigationBar(
-                        navController = navController,
-                        navigationItems = homeNavigationItems,
-                    )
-                }
-            },
-            modifier = modifier.fillMaxSize(),
-            contentWindowInsets = WindowInsets.navigationBars,
-        ) { innerPadding: PaddingValues ->
-            FriendlyNavGraph(
-                navController = navController,
-                viewModelFactory = viewModelFactory,
-                authorization = authorization,
-                hasFirstFriend = hasFirstFriend,
-                notificationDestination = notificationDestination,
-                contentPadding = { destination ->
-                    when (destination) {
-                        is Home.EditProfile ->
-                            innerPadding
-                                .dropBottom()
-                                .plusBottom(navigationBarsPadding)
+        val backgroundColor = MaterialTheme.colorScheme.background
 
-                        is Home.CommunityPost ->
-                            innerPadding
-                                .dropBottom()
-                                .plusBottom(navigationBarsPadding)
-
-                        is Home.PictureViewerDialog -> PaddingValues(0.dp)
-
-                        else -> innerPadding
+        Box(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            Scaffold(
+                bottomBar = {
+                    AnimatedVisibility(
+                        visible = bottomBarVisible,
+                        enter = slideInVertically(
+                            initialOffsetY = { it },
+                            animationSpec = tween(300, easing = EaseInOutCubic),
+                        ),
+                        exit = slideOutVertically(
+                            targetOffsetY = { it },
+                            animationSpec = tween(300, easing = EaseInOutCubic),
+                        ),
+                    ) {
+                        BottomNavigationBar(
+                            navController = navController,
+                            navigationItems = homeNavigationItems,
+                        )
                     }
                 },
-                modifier = Modifier.consumeWindowInsets(innerPadding),
-            )
+                modifier = modifier
+                    .fillMaxSize()
+                    .hazeSource(hazeState),
+                contentWindowInsets = WindowInsets.navigationBars,
+            ) { innerPadding: PaddingValues ->
+                FriendlyNavGraph(
+                    navController = navController,
+                    viewModelFactory = viewModelFactory,
+                    authorization = authorization,
+                    hasFirstFriend = hasFirstFriend,
+                    notificationDestination = notificationDestination,
+                    contentPadding = { destination ->
+                        when (destination) {
+                            is Home.EditProfile ->
+                                innerPadding
+                                    .dropBottom()
+                                    .plusBottom(navigationBarsPadding)
+
+                            is Home.CommunityPost ->
+                                innerPadding
+                                    .dropBottom()
+                                    .plusBottom(navigationBarsPadding)
+
+                            is Home.PictureViewerDialog -> PaddingValues(0.dp)
+
+                            else -> innerPadding
+                        }
+                    },
+                    modifier = Modifier.consumeWindowInsets(innerPadding),
+                )
+            }
+            StatusBarBlurBox(hazeState, backgroundColor)
         }
     }
+}
+
+@Composable
+private fun BoxScope.StatusBarBlurBox(
+    hazeState: HazeState,
+    backgroundColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .windowInsetsTopHeight(WindowInsets.statusBars)
+            .hazeBlur(
+                input = HazeInput.Sources(hazeState),
+                style = HazeBlurStyle {
+                    blurEnabled(true)
+                    blurRadius(10.dp)
+                    noiseFactor(1f)
+                    colorEffects(
+                        effects = listOf(
+                            HazeColorEffect.tint(color = backgroundColor),
+                        ),
+                    )
+                    fallbackColorEffect(HazeColorEffect.tint(backgroundColor))
+                    progressive(
+                        HazeProgressive.verticalGradient(
+                            startIntensity = 0.5f,
+                            endIntensity = 0f,
+                        ),
+                    )
+                },
+            )
+            .align(TopCenter),
+    )
 }
 
 @Composable

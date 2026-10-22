@@ -1,5 +1,9 @@
 [versions]
 agp = "9.2.1"
+haze = "2.0.1"
+hazeBlur = "2.0.1"
+hazeBlurMaterials = "2.0.1"
+hazeGlass = "2.0.1"
 kotlinxDatetime = "0.8.0"
 mikepenzMarkdown = "0.46.0"
 zxing = "3.5.4"
@@ -47,6 +51,11 @@ androidx-navigation-compose = { module = "androidx.navigation:navigation-compose
 alexzhirkevich-qrose = { module = "io.github.alexzhirkevich:qrose", version.ref = "alexzhirkevichQrose" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze-blur = { module = "dev.chrisbanes.haze:haze-blur", version.ref = "hazeBlur" }
+haze-glass = { module = "dev.chrisbanes.haze:haze-glass", version.ref = "hazeGlass" }
+haze-blur-materials = { module = "dev.chrisbanes.haze:haze-blur-materials", version.ref = "hazeBlurMaterials" }
 
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
