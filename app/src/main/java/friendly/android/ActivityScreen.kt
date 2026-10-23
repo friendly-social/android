@@ -1,8 +1,3 @@
-@file:OptIn(
-    ExperimentalMaterial3ExpressiveApi::class,
-    ExperimentalMaterial3ExpressiveApi::class,
-)
-
 package friendly.android
 
 import androidx.compose.foundation.layout.Column
@@ -17,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
@@ -41,11 +35,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import friendly.sdk.ActivityDetails
 import friendly.sdk.CommunityPostDescriptor
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 
 @Composable
 fun ActivityScreen(
@@ -111,8 +100,14 @@ fun ActivityScreen(
                     ActivityDetails(
                         onActivityClick = { activity ->
                             vm.markRead(activity)
-                            if (activity is Reply) {
-                                onActivityClick(activity.post.descriptor)
+                            when (activity) {
+                                is IndirectReplies ->
+                                    onActivityClick(activity.post.descriptor)
+
+                                is NewReply ->
+                                    onActivityClick(activity.post.descriptor)
+
+                                is NewRequest -> {}
                             }
                         },
                         vm = vm,
@@ -153,7 +148,7 @@ fun ActivityDetails(
         MaterialTheme.colorScheme.primaryContainer
     }
     when (details) {
-        is ActivityDetails.Reply -> {
+        is ActivityDetails.NewReply -> {
             ReplyActivityListItem(
                 onActivityClick = onActivityClick,
                 details = details,
@@ -171,7 +166,85 @@ fun ActivityDetails(
                 itemContainerColor = itemContainerColor,
                 modifier = modifier,
             )
+
+        is ActivityDetails.NewRequest -> {
+            NewFriendRequestListItem(
+                onActivityClick = onActivityClick,
+                details = details,
+                vm = vm,
+                itemContainerColor = itemContainerColor,
+                modifier = modifier,
+            )
+        }
     }
+}
+
+@Composable
+private fun NewFriendRequestListItem(
+    onActivityClick: (ActivityDetails) -> Unit,
+    details: ActivityDetails.NewRequest,
+    vm: ActivityScreenViewModel,
+    itemContainerColor: Color,
+    modifier: Modifier,
+) {
+    ListItem(
+        onClick = { onActivityClick(details) },
+        leadingContent = {
+            UserAvatar(
+                nickname = details.from.nickname,
+                userId = details.from.id,
+                uri = details.from.avatar?.let(vm::avatarUri),
+                style = Small,
+            )
+        },
+        trailingContent = { RelativeTimestampText(instant = details.instant) },
+        colors = ListItemDefaults.colors(
+            containerColor = itemContainerColor,
+        ),
+        content = { FriendRuquestText(details) },
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun FriendRuquestText(details: ActivityDetails.NewRequest) {
+    Text(
+        text = buildAnnotatedString {
+            when (details.isMutual) {
+                false -> {
+                    append(
+                        stringResource(R.string.new_friend_request_from),
+                    )
+                    append(" \"")
+                    withStyle(
+                        style = SpanStyle(fontWeight = Bold),
+                    ) {
+                        append(details.from.nickname.string)
+                    }
+                    append("\"")
+                }
+
+                true -> {
+                    append("\"")
+                    withStyle(
+                        style = SpanStyle(fontWeight = Bold),
+                    ) {
+                        append(details.from.nickname.string)
+                    }
+                    append("\" ")
+                    append(
+                        stringResource(
+                            R.string.accepted_your_friend_request,
+                        ),
+                    )
+                }
+            }
+
+
+        },
+        maxLines = 3,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 @Composable
@@ -192,12 +265,7 @@ private fun IndirectReplyActivityListItem(
                 style = Small,
             )
         },
-        trailingContent = {
-            Text(
-                text = formatDateTime(details.instant),
-                maxLines = 1,
-            )
-        },
+        trailingContent = { RelativeTimestampText(instant = details.instant) },
         colors = ListItemDefaults.colors(
             containerColor = itemContainerColor,
         ),
@@ -220,7 +288,7 @@ private fun IndirectReplyActivityListItem(
 @Composable
 private fun ReplyActivityListItem(
     onActivityClick: (ActivityDetails) -> Unit,
-    details: ActivityDetails.Reply,
+    details: ActivityDetails.NewReply,
     vm: ActivityScreenViewModel,
     itemContainerColor: Color,
     modifier: Modifier,
@@ -235,12 +303,7 @@ private fun ReplyActivityListItem(
                 style = Small,
             )
         },
-        trailingContent = {
-            Text(
-                text = formatDateTime(details.instant),
-                maxLines = 1,
-            )
-        },
+        trailingContent = { RelativeTimestampText(instant = details.instant) },
         colors = ListItemDefaults.colors(
             containerColor = itemContainerColor,
         ),
@@ -264,24 +327,4 @@ private fun ReplyActivityListItem(
         },
         modifier = modifier,
     )
-}
-
-// TODO: make normal global date-time formatting utils
-private fun formatDateTime(instant: Instant): String {
-    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val format = LocalDateTime.Format {
-        year()
-        chars("-")
-        monthNumber()
-        chars("-")
-        day()
-
-        chars(" ")
-
-        hour()
-        chars(":")
-        minute()
-    }
-    val formattedDateTime = localDateTime.format(format)
-    return formattedDateTime
 }

@@ -21,11 +21,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 
 @Composable
 fun UpstreamPost(
@@ -84,8 +79,8 @@ fun UpstreamPost(
                                 style = MaterialTheme.typography.labelLarge,
                             )
                             Spacer(Modifier.height(4.dp))
-                            Text(
-                                text = formatDateTime(upstream.instant),
+                            RelativeTimestampText(
+                                instant = upstream.instant,
                                 style = MaterialTheme.typography.labelSmall,
                             )
                         }
@@ -112,26 +107,6 @@ fun UpstreamPost(
     }
 }
 
-// TODO: make normal global date-time formatting utils
-private fun formatDateTime(instant: Instant): String {
-    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val format = LocalDateTime.Format {
-        year()
-        chars("-")
-        monthNumber()
-        chars("-")
-        day()
-
-        chars(" ")
-
-        hour()
-        chars(":")
-        minute()
-    }
-    val formattedDateTime = localDateTime.format(format)
-    return formattedDateTime
-}
-
 @Composable
 private fun DeletedSingleUpstreamPost(
     deleted: CommunityPostDetails.Deleted,
@@ -141,10 +116,9 @@ private fun DeletedSingleUpstreamPost(
     Column(
         modifier = modifier,
     ) {
-        Text(
+        RelativeTimestampText(
+            instant = deleted.instant,
             style = MaterialTheme.typography.labelMedium,
-            text = formatDateTime(deleted.instant),
-            modifier = Modifier,
         )
         Spacer(Modifier.height(4.dp))
         Text(

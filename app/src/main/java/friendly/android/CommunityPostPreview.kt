@@ -63,11 +63,6 @@ import dev.snipme.highlights.model.SyntaxThemes
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
 import friendly.sdk.UserDetails
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 
 private val MaxPreviewHeight = 640.dp
 
@@ -153,8 +148,8 @@ private fun PlainPostViewer(
                 Text("·", color = Color.Gray)
                 Spacer(Modifier.width(4.dp))
 
-                Text(
-                    text = formatDateTime(details.instant),
+                RelativeTimestampText(
+                    instant = details.instant,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary,
                 )
@@ -344,26 +339,6 @@ private fun MarkdownPreviewRenderer(
                 unbounded = true,
             ),
     )
-}
-
-// TODO: make normal global date-time formatting utils
-private fun formatDateTime(instant: Instant): String {
-    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val format = LocalDateTime.Format {
-        year()
-        chars("-")
-        monthNumber()
-        chars("-")
-        day()
-
-        chars(" ")
-
-        hour()
-        chars(":")
-        minute()
-    }
-    val formattedDateTime = localDateTime.format(format)
-    return formattedDateTime
 }
 
 @Composable // TODO: make this private

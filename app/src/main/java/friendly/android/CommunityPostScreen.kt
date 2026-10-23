@@ -211,7 +211,7 @@ private fun ScaffoldContent(
             )
         }
 
-        item { Spacer(Modifier.fillParentMaxHeight(0.8f)) }
+        item { Spacer(Modifier.fillParentMaxHeight(0.3f)) }
     }
 }
 

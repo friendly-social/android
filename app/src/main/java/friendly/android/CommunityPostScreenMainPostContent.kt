@@ -19,11 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import friendly.sdk.CommunityPostDetails
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 
 @Composable
 fun CommunityPostScreenMainPostContent(
@@ -62,8 +57,8 @@ fun CommunityPostScreenMainPostContent(
 
                         Spacer(Modifier.height(4.dp))
 
-                        Text(
-                            text = formatDateTime(post.instant),
+                        RelativeTimestampText(
+                            instant = post.instant,
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -122,8 +117,8 @@ fun CommunityPostScreenMainPostContent(
                                     style = MaterialTheme.typography.labelLarge,
                                 )
                                 Spacer(Modifier.height(4.dp))
-                                Text(
-                                    text = formatDateTime(post.instant),
+                                RelativeTimestampText(
+                                    instant = post.instant,
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                             }
@@ -150,24 +145,4 @@ fun CommunityPostScreenMainPostContent(
             }
         }
     }
-}
-
-// TODO: make normal global date-time formatting utils
-private fun formatDateTime(instant: Instant): String {
-    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val format = LocalDateTime.Format {
-        year()
-        chars("-")
-        monthNumber()
-        chars("-")
-        day()
-
-        chars(" ")
-
-        hour()
-        chars(":")
-        minute()
-    }
-    val formattedDateTime = localDateTime.format(format)
-    return formattedDateTime
 }

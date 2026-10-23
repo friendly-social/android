@@ -13,11 +13,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import friendly.sdk.CommunityPostDetails
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 
 @Composable
 fun CommunityPostScreenMainPostDeleted(
@@ -34,10 +29,9 @@ fun CommunityPostScreenMainPostDeleted(
         modifier = modifier,
     ) {
         Column {
-            Text(
+            RelativeTimestampText(
+                instant = post.instant,
                 style = MaterialTheme.typography.labelSmall,
-                text = formatDateTime(post.instant),
-                modifier = Modifier,
             )
             Spacer(Modifier.height(4.dp))
             Text(
@@ -47,24 +41,4 @@ fun CommunityPostScreenMainPostDeleted(
             )
         }
     }
-}
-
-// TODO: make normal global date-time formatting utils
-private fun formatDateTime(instant: Instant): String {
-    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val format = LocalDateTime.Format {
-        year()
-        chars("-")
-        monthNumber()
-        chars("-")
-        day()
-
-        chars(" ")
-
-        hour()
-        chars(":")
-        minute()
-    }
-    val formattedDateTime = localDateTime.format(format)
-    return formattedDateTime
 }
