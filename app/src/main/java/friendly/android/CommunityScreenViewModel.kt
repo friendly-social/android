@@ -30,7 +30,10 @@ import friendly.sdk.FriendlyCommunityClient.ListResult.ServerError
 import friendly.sdk.FriendlyCommunityClient.ListResult.Success
 import friendly.sdk.FriendlyCommunityClient.ListResult.Unauthorized
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -104,6 +107,10 @@ class RoomSerializableQueryCache<T>(
     }
 }
 
+sealed interface CommunityScreenEvent {
+    data object DataFetched : CommunityScreenEvent
+}
+
 class CommunityScreenViewModel(
     private val client: FriendlyClient,
     private val authStorage: AuthStorage,
@@ -134,6 +141,7 @@ class CommunityScreenViewModel(
                 authorization = authStorage.getAuth(),
                 cursorId = cursor,
             )
+            _events.emit(DataFetched)
             when (result) {
                 is IOError,
                 is ServerError,
@@ -157,6 +165,10 @@ class CommunityScreenViewModel(
         scope = viewModelScope,
     )
 
+    private val _events = MutableSharedFlow<CommunityScreenEvent>()
+    val events: SharedFlow<CommunityScreenEvent> =
+        _events.shareIn(viewModelScope, Eagerly)
+
     fun runQueries() {
         viewModelScope.launch {
             val jobs = mutableMapOf<CommunityPostDescriptor, Job>()
@@ -167,7 +179,7 @@ class CommunityScreenViewModel(
                     for (item in state.items) {
                         if (jobs.containsKey(item.descriptor)) continue
 
-                        jobs[item.descriptor] = launch {
+                        jobs[item.descriptor] = this@launch.launch {
                             queryClient.save(
                                 retries = 3,
                                 retryDelay = 300.milliseconds,
