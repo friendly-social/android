@@ -239,8 +239,6 @@ private fun FriendRuquestText(details: ActivityDetails.NewRequest) {
                     )
                 }
             }
-
-
         },
         maxLines = 3,
         overflow = TextOverflow.Ellipsis,

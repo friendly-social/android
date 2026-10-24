@@ -125,7 +125,7 @@ private fun PlainPostViewer(
                     userId = details.owner.id,
                     nickname = details.owner.nickname,
                     uri = avatarUri,
-                    style = UserAvatarStyle(24.dp, 16.dp),
+                    style = UserAvatarStyle.Small,
                     modifier = Modifier
                         .clickable(
                             onClick = {
@@ -214,7 +214,7 @@ private fun PlainPostViewer(
             ) {
                 ReplyPreviews(vm, details.replyPreviews)
 
-                Spacer(Modifier.width(4.dp))
+                Spacer(Modifier.width(8.dp))
 
                 Text(
                     text = stringResource(R.string.replied),
@@ -271,7 +271,10 @@ private fun ReplyPreviews(
                 userId = commonFriend.id,
                 nickname = commonFriend.nickname,
                 uri = commonFriend.avatar?.let(vm::fileUri),
-                style = UserAvatarStyle(24.dp, noAvatarSize = 14.dp),
+                style = UserAvatarStyle(
+                    30.dp,
+                    noAvatarSize = 20.dp,
+                ),
             )
         }
     }
@@ -411,7 +414,7 @@ fun PreviewMarkdownParagraph(
                     modifier = imageData.modifier
                         .clickable(onClick = { onImageClick(url) }),
                 )
-                Spacer(Modifier.height(8.dp))
+//                Spacer(Modifier.height(8.dp))
             }
 
             cursor = image.end

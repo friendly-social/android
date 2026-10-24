@@ -8,10 +8,7 @@ import android.icu.text.RelativeDateTimeFormatter.RelativeUnit.HOURS
 import android.icu.text.RelativeDateTimeFormatter.RelativeUnit.MINUTES
 import kotlin.time.Instant
 
-fun formatInstantRelatively(
-    now: Instant,
-    target: Instant,
-): String {
+fun formatInstantRelatively(now: Instant, target: Instant): String {
     val relativeFormatter = RelativeDateTimeFormatter.getInstance()
 
     val duration = now - target
@@ -29,7 +26,6 @@ fun formatInstantRelatively(
             LAST,
             MINUTES,
         )
-
 
         duration.inWholeDays < 1 -> relativeFormatter.format(
             duration.inWholeHours.toDouble(),

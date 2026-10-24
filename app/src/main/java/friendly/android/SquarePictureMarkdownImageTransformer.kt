@@ -1,6 +1,7 @@
 package friendly.android
 
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -59,6 +60,7 @@ class SquarePictureMarkdownImageTransformer(private val imageWidth: Dp) :
             alignment = Center,
             painter = painter,
             modifier = Modifier
+                .padding(vertical = 8.dp)
                 .width(imageWidth)
                 .aspectRatio(ratio)
                 .clip(RoundedCornerShape(12.dp)),
