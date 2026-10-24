@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -213,25 +213,23 @@ private fun BoxScope.StatusBarBlurBox(
     backgroundColor: Color,
     modifier: Modifier = Modifier,
 ) {
+    val statusBarHeight = WindowInsets.statusBars
+        .asPaddingValues()
+        .calculateTopPadding()
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .windowInsetsTopHeight(WindowInsets.statusBars)
+            .height(statusBarHeight * 0.8f)
             .hazeBlur(
                 input = HazeInput.Sources(hazeState),
                 style = HazeBlurStyle {
                     blurEnabled(true)
-                    blurRadius(10.dp)
-                    noiseFactor(1f)
-                    colorEffects(
-                        effects = listOf(
-                            HazeColorEffect.tint(color = backgroundColor),
-                        ),
-                    )
+                    noiseFactor(0f)
                     fallbackColorEffect(HazeColorEffect.tint(backgroundColor))
                     progressive(
                         HazeProgressive.verticalGradient(
-                            startIntensity = 0.5f,
+                            startIntensity = 0.7f,
                             endIntensity = 0f,
                         ),
                     )
