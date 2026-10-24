@@ -1,5 +1,8 @@
 package friendly.android
 
+import android.content.ClipData
+import android.content.Context
+import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -15,11 +18,15 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -28,16 +35,27 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import friendly.query.QueryState
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
 import friendly.sdk.CommunityPostReply
+import kotlinx.coroutines.launch
 
 @Composable
 fun CommunityPostScreen(
@@ -99,6 +117,7 @@ private fun Content(
     Scaffold(
         topBar = {
             TopAppBar(
+                post = post,
                 onBack = onBack,
                 modifier = Modifier,
                 scrollBehavior = topAppBarBehavior,
@@ -225,10 +244,12 @@ private fun CommunityPostReply.listKey(): Long {
 
 @Composable
 private fun TopAppBar(
+    post: CommunityPost,
     onBack: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior,
     modifier: Modifier = Modifier,
 ) {
+    var dropdownMenuExpanded by remember { mutableStateOf(false) }
     TopAppBar(
         navigationIcon = {
             IconButton(
@@ -241,7 +262,143 @@ private fun TopAppBar(
             }
         },
         title = { Text(stringResource(R.string.post)) },
+        actions = {
+            Box {
+                IconButton(
+                    onClick = { dropdownMenuExpanded = true },
+                    shape = IconButtonDefaults.mediumSquareShape,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_more_vert),
+                        contentDescription = null,
+                    )
+                }
+                PostActionsDropdownMenu(
+                    post = post,
+                    expanded = dropdownMenuExpanded,
+                    onDismissRequest = { dropdownMenuExpanded = false },
+                )
+            }
+        },
         scrollBehavior = scrollBehavior,
         modifier = modifier,
     )
+}
+
+@Composable
+private fun PostActionsDropdownMenu(
+    post: CommunityPost,
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+) {
+    val clipboardManager = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+        containerColor = MenuDefaults.groupStandardContainerColor,
+        shape = MenuDefaults.standaloneGroupShape,
+    ) {
+        DropdownMenuItem(
+            text = { Text("Copy raw markdown") },
+            shape = MenuDefaults.itemShape(1, 4).shape,
+            trailingContent = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_copy),
+                    contentDescription = null,
+                )
+            },
+            onClick = {
+                scope.launch {
+                    if (post.details is CommunityPostDetails.Plain) {
+                        copyRawMarkdown(clipboardManager, post.details)
+                    }
+                }
+                onDismissRequest()
+            },
+        )
+        DropdownMenuItem(
+            text = { Text("Open in web") },
+            trailingContent = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_open_in),
+                    contentDescription = null,
+                )
+            },
+            shape = MenuDefaults.itemShape(2, 4).shape,
+            onClick = {
+                openInBrowser(post, context)
+                onDismissRequest()
+            },
+        )
+        DropdownMenuItem(
+            text = { Text("Copy link") },
+            trailingContent = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_link),
+                    contentDescription = null,
+                )
+            },
+            shape = MenuDefaults.itemShape(2, 4).shape,
+            onClick = {
+                scope.launch { copyWebLink(clipboardManager, post) }
+                onDismissRequest()
+            },
+        )
+        DropdownMenuItem(
+            text = { Text("Share (WIP)") },
+            trailingContent = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_share),
+                    contentDescription = null,
+                )
+            },
+            shape = MenuDefaults.itemShape(3, 4).shape,
+            onClick = onDismissRequest,
+        )
+    }
+}
+
+private suspend fun copyRawMarkdown(
+    clipboardManager: Clipboard,
+    details: CommunityPostDetails.Plain,
+) {
+    clipboardManager.setClipEntry(
+        label = "post raw markdown",
+        content = details.text.string,
+    )
+}
+
+private fun openInBrowser(post: CommunityPost, context: Context) {
+    val intent = Intent(
+        Intent.ACTION_VIEW,
+        formWebLink(post).toUri(),
+    )
+    context.startActivity(intent)
+}
+
+private suspend fun copyWebLink(
+    clipboardManager: Clipboard,
+    post: CommunityPost,
+) {
+    clipboardManager.setClipEntry(
+        label = "post web link",
+        content = formWebLink(post),
+    )
+}
+
+private suspend fun Clipboard.setClipEntry(
+    label: String,
+    content: String,
+) {
+    val entry = ClipEntry(
+        ClipData.newPlainText(label, content),
+    )
+    this.setClipEntry(entry)
+}
+
+private fun formWebLink(post: CommunityPost): String {
+    return "https://web.getfriend.ly/community/${post.details.id.long}/replies"
 }

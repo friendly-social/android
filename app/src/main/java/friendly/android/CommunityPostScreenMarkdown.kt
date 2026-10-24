@@ -2,6 +2,7 @@ package friendly.android
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -30,33 +31,35 @@ fun CommunityPostMarkdown(
     val highlightsBuilder = remember(isDarkTheme) {
         Highlights.Builder().theme(SyntaxThemes.atom(darkMode = isDarkTheme))
     }
-    Markdown(
-        markdownState = markdownState,
-        imageTransformer = SquarePictureMarkdownImageTransformer(imageWidth),
-        components = markdownComponents(
-            paragraph = { paragraphModel ->
-                PreviewMarkdownParagraph(
-                    model = paragraphModel,
-                    onImageClick = onImageClick,
-                )
-            },
-            codeBlock = {
-                MarkdownHighlightedCodeBlock(
-                    content = it.content,
-                    node = it.node,
-                    highlightsBuilder = highlightsBuilder,
-                    showHeader = true,
-                )
-            },
-            codeFence = {
-                MarkdownHighlightedCodeFence(
-                    content = it.content,
-                    node = it.node,
-                    highlightsBuilder = highlightsBuilder,
-                    showHeader = true,
-                )
-            },
-        ),
-        modifier = modifier.fillMaxSize(),
-    )
+    SelectionContainer {
+        Markdown(
+            markdownState = markdownState,
+            imageTransformer = SquarePictureMarkdownImageTransformer(imageWidth),
+            components = markdownComponents(
+                paragraph = { paragraphModel ->
+                    PreviewMarkdownParagraph(
+                        model = paragraphModel,
+                        onImageClick = onImageClick,
+                    )
+                },
+                codeBlock = {
+                    MarkdownHighlightedCodeBlock(
+                        content = it.content,
+                        node = it.node,
+                        highlightsBuilder = highlightsBuilder,
+                        showHeader = true,
+                    )
+                },
+                codeFence = {
+                    MarkdownHighlightedCodeFence(
+                        content = it.content,
+                        node = it.node,
+                        highlightsBuilder = highlightsBuilder,
+                        showHeader = true,
+                    )
+                },
+            ),
+            modifier = modifier.fillMaxSize(),
+        )
+    }
 }
