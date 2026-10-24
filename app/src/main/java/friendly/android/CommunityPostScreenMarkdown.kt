@@ -34,7 +34,9 @@ fun CommunityPostMarkdown(
     SelectionContainer {
         Markdown(
             markdownState = markdownState,
-            imageTransformer = SquarePictureMarkdownImageTransformer(imageWidth),
+            imageTransformer = SquarePictureMarkdownImageTransformer(
+                imageWidth,
+            ),
             components = markdownComponents(
                 paragraph = { paragraphModel ->
                     PreviewMarkdownParagraph(

@@ -1,5 +1,8 @@
 package friendly.android
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +21,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
@@ -32,6 +39,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -47,6 +58,10 @@ import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
 import friendly.sdk.CommunityPostDetails.Deleted
 import friendly.sdk.CommunityPostDetails.Plain
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun CommunityScreen(
@@ -119,13 +134,18 @@ fun ScaffoldContent(
     val pullToRefreshDistanceFraction = pullToRefreshState.distanceFraction
     val extraHeight = 24.dp * pullToRefreshDistanceFraction
 
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+    val lazyListState = rememberLazyListState()
+
+    val scope = rememberCoroutineScope()
+
+    Box(
         modifier = modifier,
     ) {
         if (posts.items.isNotEmpty()) {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = lazyListState,
+                modifier = Modifier.fillMaxSize(),
+            ) {
                 item {
                     Spacer(Modifier.statusBarsPadding())
                     CommuintyFeedTopBar(
@@ -185,6 +205,51 @@ fun ScaffoldContent(
                     color = MaterialTheme.colorScheme.secondary,
                 )
             }
+        }
+
+        ScrollToTopButton(
+            scope = scope,
+            lazyListState = lazyListState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(vertical = 8.dp),
+        )
+    }
+}
+
+@Composable
+private fun ScrollToTopButton(
+    scope: CoroutineScope,
+    lazyListState: LazyListState,
+    modifier: Modifier = Modifier,
+) {
+    var showButton by remember { mutableStateOf(false) }
+
+    LaunchedEffect(lazyListState.lastScrolledBackward) {
+        val scrolledBeyondThreshold =
+            lazyListState.firstVisibleItemIndex > 10
+        if (lazyListState.lastScrolledBackward && scrolledBeyondThreshold) {
+            delay(300.milliseconds)
+            showButton = true
+        } else {
+            showButton = false
+        }
+    }
+
+    AnimatedVisibility(
+        visible = showButton,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = modifier,
+    ) {
+        FilledTonalButton(
+            shape = ButtonDefaults.squareShape,
+            onClick = {
+                scope.launch { lazyListState.scrollToItem(0) }
+                showButton = false
+            },
+        ) {
+            Text(stringResource(R.string.to_the_top))
         }
     }
 }

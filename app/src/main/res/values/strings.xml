@@ -133,4 +133,5 @@
     <string name="replied">replied</string>
     <string name="new_friend_request_from">New friend request from</string>
     <string name="accepted_your_friend_request">accepted your friend request</string>
+    <string name="to_the_top">To the top</string>
 </resources>

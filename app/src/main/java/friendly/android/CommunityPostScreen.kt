@@ -389,16 +389,12 @@ private suspend fun copyWebLink(
     )
 }
 
-private suspend fun Clipboard.setClipEntry(
-    label: String,
-    content: String,
-) {
+private suspend fun Clipboard.setClipEntry(label: String, content: String) {
     val entry = ClipEntry(
         ClipData.newPlainText(label, content),
     )
     this.setClipEntry(entry)
 }
 
-private fun formWebLink(post: CommunityPost): String {
-    return "https://web.getfriend.ly/community/${post.details.id.long}/replies"
-}
+private fun formWebLink(post: CommunityPost): String =
+    "https://web.getfriend.ly/community/${post.details.id.long}/replies"
