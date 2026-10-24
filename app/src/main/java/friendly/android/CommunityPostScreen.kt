@@ -293,6 +293,14 @@ private fun PostActionsDropdownMenu(
 ) {
     val clipboardManager = LocalClipboard.current
     val scope = rememberCoroutineScope()
+    val sendIntent = remember(post) {
+        Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, formWebLink(post))
+            type = "text/plain"
+        }
+    }
+    val shareIntent = Intent.createChooser(sendIntent, null)
     val context = LocalContext.current
 
     DropdownMenu(
@@ -302,7 +310,7 @@ private fun PostActionsDropdownMenu(
         shape = MenuDefaults.standaloneGroupShape,
     ) {
         DropdownMenuItem(
-            text = { Text("Copy raw markdown") },
+            text = { Text(stringResource(R.string.copy_raw_markdown)) },
             shape = MenuDefaults.itemShape(1, 4).shape,
             trailingContent = {
                 Icon(
@@ -320,7 +328,7 @@ private fun PostActionsDropdownMenu(
             },
         )
         DropdownMenuItem(
-            text = { Text("Open in web") },
+            text = { Text(stringResource(R.string.open_in_web)) },
             trailingContent = {
                 Icon(
                     painter = painterResource(R.drawable.ic_open_in),
@@ -334,7 +342,7 @@ private fun PostActionsDropdownMenu(
             },
         )
         DropdownMenuItem(
-            text = { Text("Copy link") },
+            text = { Text(stringResource(R.string.copy_link)) },
             trailingContent = {
                 Icon(
                     painter = painterResource(R.drawable.ic_link),
@@ -348,7 +356,7 @@ private fun PostActionsDropdownMenu(
             },
         )
         DropdownMenuItem(
-            text = { Text("Share (WIP)") },
+            text = { Text(stringResource(R.string.share_link)) },
             trailingContent = {
                 Icon(
                     painter = painterResource(R.drawable.ic_share),
@@ -356,7 +364,10 @@ private fun PostActionsDropdownMenu(
                 )
             },
             shape = MenuDefaults.itemShape(3, 4).shape,
-            onClick = onDismissRequest,
+            onClick = {
+                context.startActivity(shareIntent)
+                onDismissRequest()
+            },
         )
     }
 }

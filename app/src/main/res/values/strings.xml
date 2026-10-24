@@ -134,4 +134,8 @@
     <string name="new_friend_request_from">New friend request from</string>
     <string name="accepted_your_friend_request">accepted your friend request</string>
     <string name="to_the_top">To the top</string>
+    <string name="copy_link">Copy link</string>
+    <string name="open_in_web">Open in web</string>
+    <string name="copy_raw_markdown">Copy raw markdown</string>
+    <string name="share_link">Share link</string>
 </resources>
