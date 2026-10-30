@@ -30,7 +30,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -277,8 +276,7 @@ private fun ScreenContent(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .padding(horizontal = 16.dp),
             ) {
                 PostTextField(
                     vm = vm,
@@ -375,7 +373,6 @@ private fun PostTextField(
         snapshotFlow { state.text.toString() }
             .drop(1)
             .collect {
-                println("meow")
                 vm.onPostTextChange()
             }
     }
