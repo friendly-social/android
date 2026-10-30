@@ -314,7 +314,7 @@ private fun PostActionsDropdownMenu(
             shape = MenuDefaults.itemShape(1, 4).shape,
             trailingContent = {
                 Icon(
-                    painter = painterResource(R.drawable.ic_copy),
+                    painter = painterResource(R.drawable.ic_md_copy),
                     contentDescription = null,
                 )
             },

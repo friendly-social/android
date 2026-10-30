@@ -50,6 +50,7 @@ class CommunityPostScreenViewModel(
                 is Details2Result.IOError,
                 is Details2Result.ServerError,
                 is Details2Result.Unauthorized,
+                is Details2Result.NotFound,
                 -> QueryFetchResult.Failure
 
                 is Details2Result.Success -> {
@@ -114,6 +115,7 @@ class CommunityPostScreenViewModel(
             is Details2Result.IOError,
             is Details2Result.ServerError,
             is Details2Result.Unauthorized,
+            is Details2Result.NotFound,
             -> QueryFetchResult.Failure
 
             is Details2Result.Success -> {

@@ -138,4 +138,20 @@
     <string name="open_in_web">Open in web</string>
     <string name="copy_raw_markdown">Copy raw markdown</string>
     <string name="share_link">Share link</string>
+    <string name="create_post">Create post</string>
+    <string name="create_post_text_field_placeholder">Don\'t overthink it too much</string>
+    <string name="save_draft">Save draft</string>
+    <string name="copy_all">Copy all</string>
+    <string name="attach_media">Attach media</string>
+    <string name="unsaved_post_title">Unsaved post</string>
+    <string name="unsaved_post_text">Your post won\'t be saved, but you can the draft</string>
+    <string name="exita">Delete</string>
+    <string name="delete">Delete</string>
+    <string name="keep_saved_draft">Keep saved draft</string>
+    <string name="preview">Preview</string>
+    <string name="help">Help</string>
+    <string name="formatting">Formatting</string>
+    <string name="formatting_helper_dialog_text">Currently, we use GitHub-flavoured Markdown (GFM) as a base, with plans to support custom entities in the future. Currently, the Android client only supports the basic version of GFM and doesn\'t support features such as LaTeX or audio tag rendering. Stay tuned!</string>
+    <string name="close_dialog">Close dialog</string>
+    <string name="open_gfm_spec">Open GFM spec</string>
 </resources>

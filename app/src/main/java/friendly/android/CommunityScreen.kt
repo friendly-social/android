@@ -1,6 +1,9 @@
 package friendly.android
 
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +27,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -43,14 +48,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.offset
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import friendly.query.InfiniteQueryState
@@ -59,16 +67,30 @@ import friendly.sdk.CommunityPostDetails
 import friendly.sdk.CommunityPostDetails.Deleted
 import friendly.sdk.CommunityPostDetails.Plain
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
+fun Modifier.ignoreLayoutPadding(amount: Dp) =
+    layout { measurable, constraints ->
+        val extra = (amount * 2).roundToPx()
+        val placeable = measurable.measure(constraints.offset(extra, extra))
+        layout(placeable.width - extra, placeable.height - extra) {
+            placeable.place(-amount.roundToPx(), -amount.roundToPx())
+        }
+    }
+
+@OptIn(FlowPreview::class)
 @Composable
 fun CommunityScreen(
     vm: CommunityScreenViewModel,
     contentPadding: PaddingValues,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
     onImageClick: (url: String) -> Unit,
     onPostClick: (CommunityPostDescriptor) -> Unit,
+    onCreatePostClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val posts by vm.posts.state.collectAsState()
@@ -77,6 +99,18 @@ fun CommunityScreen(
 
     val hapticFeedback = LocalHapticFeedback.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val lazyListState = rememberLazyListState()
+
+    var fabExpanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(lazyListState.lastScrolledBackward) {
+        snapshotFlow { lazyListState.lastScrolledBackward }
+            .debounce(300.milliseconds)
+            .collect {
+                fabExpanded = it
+            }
+    }
 
     LaunchedEffect(Unit) {
         vm.runQueries()
@@ -102,6 +136,15 @@ fun CommunityScreen(
             .fillMaxSize(),
     ) {
         Scaffold(
+            floatingActionButton = {
+                with(sharedTransitionScope) {
+                    CreatePostFab(
+                        animatedContentScope = animatedContentScope,
+                        onCreatePostClick = onCreatePostClick,
+                        fabExpanded = fabExpanded,
+                    )
+                }
+            },
             contentWindowInsets = WindowInsets.safeDrawing
                 .only(WindowInsetsSides.Bottom)
                 .only(WindowInsetsSides.Horizontal),
@@ -114,11 +157,53 @@ fun CommunityScreen(
                 onImageClick = onImageClick,
                 onPostClick = onPostClick,
                 pullToRefreshState = pullToRefreshState,
+                lazyListState = lazyListState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
             )
         }
+    }
+}
+
+@Composable
+private fun SharedTransitionScope.CreatePostFab(
+    animatedContentScope: AnimatedContentScope,
+    onCreatePostClick: () -> Unit,
+    fabExpanded: Boolean,
+) {
+    Box(
+        modifier = Modifier
+            .ignoreLayoutPadding(24.dp)
+            .sharedBounds(
+                sharedContentState =
+                rememberSharedContentState("create_post_shared_fab"),
+                animatedVisibilityScope = animatedContentScope,
+                boundsTransform = { _, _ ->
+                    spring(
+                        dampingRatio = 0.8f,
+                        stiffness = 380f,
+                    )
+                },
+                resizeMode = RemeasureToBounds,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                clipInOverlayDuringTransition =
+                OverlayClip(RoundedCornerShape(16.dp)),
+            ),
+    ) {
+        ExtendedFloatingActionButton(
+            onClick = { onCreatePostClick() },
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_edit_filled),
+                    contentDescription = null,
+                )
+            },
+            expanded = fabExpanded,
+            text = { Text(stringResource(R.string.create_post)) },
+            modifier = Modifier.padding(24.dp),
+        )
     }
 }
 
@@ -129,13 +214,11 @@ fun ScaffoldContent(
     pullToRefreshState: PullToRefreshState,
     onImageClick: (url: String) -> Unit,
     onPostClick: (CommunityPostDescriptor) -> Unit,
+    lazyListState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
     val pullToRefreshDistanceFraction = pullToRefreshState.distanceFraction
     val extraHeight = 24.dp * pullToRefreshDistanceFraction
-
-    val lazyListState = rememberLazyListState()
-
     val scope = rememberCoroutineScope()
 
     Box(
@@ -211,12 +294,14 @@ fun ScaffoldContent(
             scope = scope,
             lazyListState = lazyListState,
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(vertical = 8.dp),
+                .statusBarsPadding()
+                .padding(top = 8.dp)
+                .align(Alignment.TopCenter),
         )
     }
 }
 
+@OptIn(FlowPreview::class)
 @Composable
 private fun ScrollToTopButton(
     scope: CoroutineScope,
@@ -225,15 +310,16 @@ private fun ScrollToTopButton(
 ) {
     var showButton by remember { mutableStateOf(false) }
 
-    LaunchedEffect(lazyListState.lastScrolledBackward) {
-        val scrolledBeyondThreshold =
-            lazyListState.firstVisibleItemIndex > 10
-        if (lazyListState.lastScrolledBackward && scrolledBeyondThreshold) {
-            delay(300.milliseconds)
-            showButton = true
-        } else {
-            showButton = false
+    LaunchedEffect(lazyListState) {
+        snapshotFlow {
+            lazyListState.lastScrolledBackward
         }
+            .debounce(300.milliseconds)
+            .collect { lastScrolledBackward ->
+                val scrolledBeyondThreshold =
+                    lazyListState.firstVisibleItemIndex > 10
+                showButton = scrolledBeyondThreshold && lastScrolledBackward
+            }
     }
 
     AnimatedVisibility(

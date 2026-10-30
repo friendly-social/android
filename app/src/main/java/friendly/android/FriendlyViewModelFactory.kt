@@ -19,6 +19,8 @@ class FriendlyViewModelFactory(
     private val addFriendUseCase: AddFriendUseCase,
     private val authStorage: AuthStorage,
     private val selfProfileStorage: SelfProfileStorage,
+    private val createPostUseCase: CreatePostUseCase,
+    private val postDraftStorage: PostDraftStorage,
     private val client: FriendlyClient,
     private val database: FriendlyDatabase,
 ) : ViewModelProvider.Factory {
@@ -153,6 +155,12 @@ class FriendlyViewModelFactory(
                 authStorage = authStorage,
                 client = client,
                 db = database,
+            ) as T
+        }
+        if (modelClass == CreatePostDialogViewModel::class) {
+            return CreatePostDialogViewModel(
+                create = createPostUseCase,
+                draft = postDraftStorage,
             ) as T
         }
         error("unknown viewmodel class")

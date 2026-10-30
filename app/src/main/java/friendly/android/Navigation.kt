@@ -329,6 +329,9 @@ object FriendlyNavGraph {
         data class PictureViewerDialog(val uri: String) : Home()
 
         @Serializable
+        data object CreatePostDialog : Home()
+
+        @Serializable
         data class EditInterestsDialog(val interests: List<String>) : Home()
 
         // todo: do they really should belong to the Home?
@@ -522,6 +525,8 @@ fun FriendlyNavGraph(
                             factory = viewModelFactory,
                         ),
                         contentPadding = contentPadding(Home.Community),
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedContentScope = this@composable,
                         onPostClick = { descriptor ->
                             navController.navigate(
                                 Home.CommunityPost(descriptor.serializable()),
@@ -530,6 +535,11 @@ fun FriendlyNavGraph(
                         onImageClick = { uri: String ->
                             navController.navigate(
                                 route = Home.PictureViewerDialog(uri),
+                            )
+                        },
+                        onCreatePostClick = {
+                            navController.navigate(
+                                route = Home.CreatePostDialog,
                             )
                         },
                         modifier = Modifier,
@@ -775,6 +785,20 @@ fun FriendlyNavGraph(
                         uri = route.uri.toUri(),
                         contentPadding = contentPadding(route),
                         modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                composable<Home.CreatePostDialog> { backStackEntry ->
+                    val route: Home.CreatePostDialog = backStackEntry
+                        .toRoute()
+                    CreatePostDialog(
+                        vm = viewModel<CreatePostDialogViewModel>(
+                            factory = viewModelFactory,
+                        ),
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedContentScope = this@composable,
+                        contentPadding = contentPadding(route),
+                        onGoBack = { navController.popBackStack() },
                     )
                 }
 

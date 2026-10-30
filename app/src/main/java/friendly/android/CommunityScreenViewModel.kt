@@ -205,7 +205,8 @@ class CommunityScreenViewModel(
             is Details2Result.IOError,
             is Details2Result.ServerError,
             is Details2Result.Unauthorized,
-            -> QueryFetchResult.Failure
+            is Details2Result.NotFound,
+            -> Failure
 
             is Details2Result.Success -> {
                 val post = CommunityPost(

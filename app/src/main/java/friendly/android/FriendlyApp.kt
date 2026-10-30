@@ -189,6 +189,11 @@ fun FriendlyApp(
                                     .dropBottom()
                                     .plusBottom(navigationBarsPadding)
 
+                            is Home.CreatePostDialog ->
+                                innerPadding
+                                    .dropBottom()
+                                    .plusBottom(navigationBarsPadding)
+
                             is Home.CommunityPost ->
                                 innerPadding
                                     .dropBottom()

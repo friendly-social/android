@@ -31,6 +31,7 @@ class MainActivity : ComponentActivity() {
         FirebaseKit.onAppCreate(context, client, authStorage)
         val localeRepository = LocaleRepository(context.applicationContext)
         val selfProfileStorage = SelfProfileStorage(context)
+        val postDraftStorage = PostDraftStorage(context)
 
         val database = Room
             .databaseBuilder<FriendlyDatabase>(
@@ -82,8 +83,13 @@ class MainActivity : ComponentActivity() {
                 authStorage = authStorage,
                 selfProfileStorage = selfProfileStorage,
             ),
+            createPostUseCase = CreatePostUseCase(
+                client = client.community,
+                authStorage = authStorage,
+            ),
             authStorage = authStorage,
             selfProfileStorage = selfProfileStorage,
+            postDraftStorage = postDraftStorage,
             client = client,
             database = database,
         )
