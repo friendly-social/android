@@ -17,7 +17,6 @@ class AddFriendUseCase(
         val result = friendsClient.add(
             authorization = authorization,
             token = friendToken,
-            userId = userId,
         )
         return when (result) {
             is Success -> {

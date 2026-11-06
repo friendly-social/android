@@ -157,7 +157,7 @@ class MockDataActivity : ComponentActivity() {
             println(friend1Token)
             println()
             val add1ResultSuccess = client.friends
-                .add(authorization2, friend1Token, authorization1.id)
+                .add(authorization2, friend1Token)
                 .orThrow()
             println("=== Add Friend 1 Success ===")
             println(add1ResultSuccess)
@@ -167,7 +167,7 @@ class MockDataActivity : ComponentActivity() {
             println(friend1Token)
             println()
             val add2ResultSuccess = client.friends
-                .add(authorization3, friend2Token, authorization2.id)
+                .add(authorization3, friend2Token)
                 .orThrow()
             println("=== Add Friend 2 Success ===")
             println(add2ResultSuccess)
@@ -177,7 +177,7 @@ class MockDataActivity : ComponentActivity() {
             println(friend2Token)
             println()
             val add3ResultSuccess = client.friends
-                .add(authorization4, friend3Token, authorization3.id)
+                .add(authorization4, friend3Token)
                 .orThrow()
             println("=== Add Friend 3 Success ===")
             println(add3ResultSuccess)
