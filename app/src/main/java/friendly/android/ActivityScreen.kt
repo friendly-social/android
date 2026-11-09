@@ -17,6 +17,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator
@@ -24,6 +25,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,6 +37,12 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import friendly.sdk.ActivityDetails
 import friendly.sdk.CommunityPostDescriptor
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 @Composable
 fun ActivityScreen(
@@ -46,6 +54,14 @@ fun ActivityScreen(
     val pullToRefreshState = rememberPullToRefreshState()
 
     val activityState by vm.activity.state.collectAsState()
+
+    val groupedActivity = remember(activityState.items) {
+        groupActivityByDateSegment(
+            activity = activityState.items,
+            nowInstant = Clock.System.now(),
+            zone = TimeZone.currentSystemDefault(),
+        )
+    }
 
     val lazyColumnState = rememberLazyListState()
 
@@ -92,28 +108,38 @@ fun ActivityScreen(
                     }
                 }
 
-                items(
-                    items = activityState.items,
-                    contentType = { "feed" },
-                    key = { item -> item.id.long },
-                ) { item ->
-                    ActivityDetails(
-                        onActivityClick = { activity ->
-                            vm.markRead(activity)
-                            when (activity) {
-                                is IndirectReplies ->
-                                    onActivityClick(activity.post.descriptor)
+                groupedActivity.forEach { activityGroup ->
+                    stickyHeader {
+                        DateGroupStickyHeader(
+                            groupKind = activityGroup.kind,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
 
-                                is NewReply ->
-                                    onActivityClick(activity.post.descriptor)
+                    items(
+                        items = activityGroup.activity,
+                        contentType = { "activity" },
+                        key = { item -> item.id.long },
+                    ) { item ->
+                        ActivityDetails(
+                            onActivityClick = { activity ->
+                                vm.markRead(activity)
+                                when (activity) {
+                                    is IndirectReplies ->
+                                        onActivityClick(activity.post.descriptor)
 
-                                is NewRequest -> {}
-                            }
-                        },
-                        vm = vm,
-                        details = item,
-                        modifier = Modifier,
-                    )
+                                    is NewReply ->
+                                        onActivityClick(activity.post.descriptor)
+
+                                    is NewRequest -> {}
+                                }
+                            },
+                            vm = vm,
+                            details = item,
+                            modifier = Modifier,
+                        )
+                    }
+
                 }
 
                 item("bottom") {
@@ -132,6 +158,28 @@ fun ActivityScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DateGroupStickyHeader(
+    groupKind: DateGroupKind,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        modifier = modifier,
+    ) {
+        Text(
+            text = when (groupKind) {
+                Today -> stringResource(R.string.today)
+                Yesterday -> stringResource(R.string.yesterday)
+                Older -> stringResource(R.string.older)
+            },
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(16.dp),
+        )
     }
 }
 
@@ -325,4 +373,35 @@ private fun ReplyActivityListItem(
         },
         modifier = modifier,
     )
+}
+
+private enum class DateGroupKind {
+    Today,
+    Yesterday,
+    Older,
+}
+
+private data class ActivityGroup(
+    val kind: DateGroupKind,
+    val activity: List<ActivityDetails>,
+)
+
+private fun groupActivityByDateSegment(
+    activity: List<ActivityDetails>,
+    nowInstant: Instant,
+    zone: TimeZone,
+): List<ActivityGroup> {
+    val today = nowInstant.toLocalDateTime(zone).date
+    val yesterday = today.minus(1, DateTimeUnit.DAY)
+    return activity
+        .groupBy { item ->
+            val date = item.instant.toLocalDateTime(zone).date
+            when {
+                date >= today -> DateGroupKind.Today
+                date == yesterday -> DateGroupKind.Yesterday
+                else -> DateGroupKind.Older
+            }
+        }
+        .map { (kind, items) -> ActivityGroup(kind, items) }
+        .sortedBy { group -> group.kind }
 }

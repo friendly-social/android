@@ -155,4 +155,7 @@
     <string name="close_dialog">Close dialog</string>
     <string name="open_gfm_spec">Open GFM spec</string>
     <string name="minimized_reply_field_placeholder">Reply with smth here</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="older">Older</string>
 </resources>
