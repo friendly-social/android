@@ -180,7 +180,7 @@ private fun Content(
             animatedContentScope = animatedContentScope,
             onMaximizeReplyFieldClick = onMaximizeReplyFieldClick,
             vm = vm,
-            modifier = modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }

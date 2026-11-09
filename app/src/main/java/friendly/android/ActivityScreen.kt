@@ -126,10 +126,14 @@ fun ActivityScreen(
                                 vm.markRead(activity)
                                 when (activity) {
                                     is IndirectReplies ->
-                                        onActivityClick(activity.post.descriptor)
+                                        onActivityClick(
+                                            activity.post.descriptor,
+                                        )
 
                                     is NewReply ->
-                                        onActivityClick(activity.post.descriptor)
+                                        onActivityClick(
+                                            activity.post.descriptor,
+                                        )
 
                                     is NewRequest -> {}
                                 }
@@ -139,7 +143,6 @@ fun ActivityScreen(
                             modifier = Modifier,
                         )
                     }
-
                 }
 
                 item("bottom") {

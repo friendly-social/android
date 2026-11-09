@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Modifier
@@ -56,6 +58,10 @@ class SquarePictureMarkdownImageTransformer(private val imageWidth: Dp) :
 
         val painter = rememberAsyncImagePainter(model = request)
 
+        val painterState by painter.state.collectAsState()
+        val isLoading = painterState is Loading || painterState is Empty
+        val shimmerModifier = if (isLoading) Modifier.shimmer() else Modifier
+
         val imageData = ImageData(
             alignment = Center,
             painter = painter,
@@ -63,7 +69,8 @@ class SquarePictureMarkdownImageTransformer(private val imageWidth: Dp) :
                 .padding(vertical = 8.dp)
                 .width(imageWidth)
                 .aspectRatio(ratio)
-                .clip(RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(12.dp))
+                .then(shimmerModifier),
             contentScale = ContentScale.Crop,
         )
         return imageData
