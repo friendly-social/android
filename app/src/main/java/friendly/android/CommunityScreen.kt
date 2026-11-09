@@ -120,8 +120,6 @@ fun CommunityScreen(
     }
 
     LaunchedEffect(Unit) {
-        vm.runQueries()
-
         lifecycleOwner.lifecycle.repeatOnLifecycle(STARTED) {
             vm.events.collect { event ->
                 when (event) {

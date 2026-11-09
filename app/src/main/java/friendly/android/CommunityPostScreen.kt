@@ -40,7 +40,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,8 +82,6 @@ fun CommunityPostScreen(
     val postDetails = vm.query.data.collectAsState()
 
     val state by vm.state.collectAsState()
-
-    LaunchedEffect(Unit) { vm.runQueries() }
 
     when (val item = postDetails.value.item) {
         null -> {

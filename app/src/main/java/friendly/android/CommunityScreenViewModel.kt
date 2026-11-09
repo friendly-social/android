@@ -115,6 +115,7 @@ sealed interface CommunityScreenEvent {
     data object DataFetched : CommunityScreenEvent
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class CommunityScreenViewModel(
     private val client: FriendlyClient,
     private val authStorage: AuthStorage,
@@ -153,7 +154,7 @@ class CommunityScreenViewModel(
                 is IOError,
                 is ServerError,
                 is Unauthorized,
-                    -> InfiniteQueryFetchResult.Failure
+                -> InfiniteQueryFetchResult.Failure
 
                 is Success -> InfiniteQueryFetchResult.Success(
                     value = result.cursor.data,
@@ -176,8 +177,7 @@ class CommunityScreenViewModel(
     val events: SharedFlow<CommunityScreenEvent> =
         _events.shareIn(viewModelScope, Eagerly)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun runQueries() {
+    init {
         viewModelScope.launch {
             initialRefresh.await()
             posts.state
@@ -207,7 +207,7 @@ class CommunityScreenViewModel(
             is Details2Result.ServerError,
             is Details2Result.Unauthorized,
             is Details2Result.NotFound,
-                -> Failure
+            -> Failure
 
             is Details2Result.Success -> {
                 val post = CommunityPost(

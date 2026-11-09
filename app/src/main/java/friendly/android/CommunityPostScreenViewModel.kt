@@ -92,8 +92,7 @@ class CommunityPostScreenViewModel(
         },
     )
 
-    // TODO: has to be refactored & simplified a bit
-    fun runQueries() {
+    init {
         viewModelScope.launch {
             query.data
                 .filter { it.fetch is Idle }
@@ -110,20 +109,18 @@ class CommunityPostScreenViewModel(
                             }
 
                             for (postToFetch in postsToFetch) {
-                                launch {
-                                    queryClient.save(
-                                        key = QueryKey(
-                                            "community-post-${postToFetch.id.long}",
-                                        ),
-                                        retries = 3,
-                                        retryDelay = 300.milliseconds,
-                                        fetch = {
-                                            fetchCommunityPostDetails(
-                                                postToFetch,
-                                            )
-                                        },
-                                    )
-                                }
+                                queryClient.save(
+                                    key = QueryKey(
+                                        "community-post-${postToFetch.id.long}",
+                                    ),
+                                    retries = 3,
+                                    retryDelay = 300.milliseconds,
+                                    fetch = {
+                                        fetchCommunityPostDetails(
+                                            postToFetch,
+                                        )
+                                    },
+                                )
                             }
                         }
                     }

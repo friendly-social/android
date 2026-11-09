@@ -113,7 +113,24 @@ private class DefaultQuery<T>(
 }
 
 // TODO: make it fetch new value only if there is no any cache
-public fun <T> QueryClient<T>.save(
+public suspend fun <T> QueryClient<T>.save(
+    key: QueryKey,
+    retries: Int,
+    retryDelay: Duration,
+    fetch: suspend () -> QueryFetchResult<T>,
+) {
+    val client = this
+    val cache = client.cache
+    client.scope.launch(Dispatchers.IO) {
+        val fetchResult = fetchWithRetries(retries, retryDelay) { fetch() }
+        when (fetchResult) {
+            is Failure -> {}
+            is Success -> cache.store(key, fetchResult.value)
+        }
+    }.join()
+}
+
+public fun <T> QueryClient<T>.launchSave(
     key: QueryKey,
     retries: Int,
     retryDelay: Duration,
