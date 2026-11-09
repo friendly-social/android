@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -39,6 +40,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -136,6 +140,67 @@ private fun Content(
         initialFirstVisibleItemIndex = post.upstream.size + 1,
     )
 
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    val isRefreshing = remember(postState.fetch) {
+        postState.fetch is Refreshing
+    }
+    val isLoading = remember(postState.fetch) {
+        postState.fetch is Loading
+    }
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        state = pullToRefreshState,
+        onRefresh = vm.query::refresh,
+        indicator = {
+            PullToRefreshDefaults.LoadingIndicator(
+                modifier = Modifier
+                    .safeDrawingPadding()
+                    .align(Alignment.TopCenter),
+                isRefreshing = isRefreshing,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                state = pullToRefreshState,
+            )
+        },
+        modifier = modifier
+            .fillMaxSize(),
+    ) {
+        CommunityPostScreenScaffold(
+            lazyColumnState = lazyColumnState,
+            isLoading = isLoading,
+            topAppBarBehavior = topAppBarBehavior,
+            state = state,
+            post = post,
+            onPostClick = onPostClick,
+            onBack = onBack,
+            onImageClick = onImageClick,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedContentScope = animatedContentScope,
+            onMaximizeReplyFieldClick = onMaximizeReplyFieldClick,
+            vm = vm,
+            modifier = modifier.fillMaxSize(),
+        )
+    }
+}
+
+@Composable
+private fun CommunityPostScreenScaffold(
+    isLoading: Boolean,
+    lazyColumnState: LazyListState,
+    topAppBarBehavior: TopAppBarScrollBehavior,
+    state: CommunityPostScreenUiState,
+    post: CommunityPost,
+    onPostClick: (CommunityPostDescriptor) -> Unit,
+    onBack: () -> Unit,
+    onImageClick: (String) -> Unit,
+    onMaximizeReplyFieldClick: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
+    vm: CommunityPostScreenViewModel,
+    modifier: Modifier = Modifier,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -165,7 +230,7 @@ private fun Content(
             )
 
             AnimatedVisibility(
-                visible = postState.fetch !is Idle,
+                visible = isLoading,
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier.align(Alignment.TopCenter),
