@@ -1,7 +1,6 @@
 package friendly.android
 
 import android.net.Uri
-import android.os.Bundle
 import android.view.View
 import android.view.Window
 import androidx.compose.animation.SharedTransitionLayout
@@ -55,210 +54,40 @@ import friendly.sdk.UserAccessHash
 import friendly.sdk.UserDescriptionSerializable
 import friendly.sdk.UserId
 import friendly.sdk.UserIdSerializable
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
+import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 // TODO: plans for this god file
 //  - dsl for navigation to specific destinations
-//  - consistency in nav types
 //  - make navigation operations live in the same file per each destination
 
 private val addFriendDeepLink = navDeepLink {
     uriPattern = "friendly://add/{userId}/{friendToken}"
 }
 
-val NicknameSerializableNavType =
-    object : NavType<NicknameSerializable>(isNullableAllowed = false) {
-        override fun get(bundle: Bundle, key: String): NicknameSerializable? =
-            bundle.getString(key)?.let(::NicknameSerializable)
+class JsonNavType<T>(
+    private val serializer: KSerializer<T>,
+    isNullableAllowed: Boolean,
+) : NavType<T>(isNullableAllowed) {
+    override fun put(bundle: SavedState, key: String, value: T) =
+        bundle.putString(key, Json.encodeToString(serializer, value))
 
-        override fun parseValue(value: String): NicknameSerializable =
-            NicknameSerializable(value)
+    override fun get(bundle: SavedState, key: String): T? =
+        bundle.getString(key)?.let { Json.decodeFromString(serializer, it) }
 
-        override fun serializeAsValue(value: NicknameSerializable): String =
-            Uri.encode(value.string)
+    override fun parseValue(value: String): T =
+        Json.decodeFromString(serializer, value)
 
-        override fun put(
-            bundle: Bundle,
-            key: String,
-            value: NicknameSerializable,
-        ) = bundle.putString(key, value.string)
-    }
+    override fun serializeAsValue(value: T): String =
+        Uri.encode(Json.encodeToString(serializer, value))
+}
 
-val UserDescriptionSerializableNavType =
-    object : NavType<UserDescriptionSerializable>(isNullableAllowed = false) {
-        override fun get(
-            bundle: Bundle,
-            key: String,
-        ): UserDescriptionSerializable? =
-            bundle.getString(key)?.let(::UserDescriptionSerializable)
-
-        override fun parseValue(value: String): UserDescriptionSerializable =
-            UserDescriptionSerializable(value)
-
-        override fun serializeAsValue(
-            value: UserDescriptionSerializable,
-        ): String = Uri.encode(value.string)
-
-        override fun put(
-            bundle: Bundle,
-            key: String,
-            value: UserDescriptionSerializable,
-        ) = bundle.putString(key, value.string)
-    }
-
-val InterestSerializableNavType =
-    object : NavType<InterestSerializable>(isNullableAllowed = false) {
-        override fun get(bundle: Bundle, key: String): InterestSerializable? =
-            bundle.getString(key)?.let(::InterestSerializable)
-
-        override fun parseValue(value: String): InterestSerializable =
-            InterestSerializable(value)
-
-        override fun serializeAsValue(value: InterestSerializable): String =
-            Uri.encode(value.string)
-
-        override fun put(
-            bundle: Bundle,
-            key: String,
-            value: InterestSerializable,
-        ) = bundle.putString(key, value.string)
-    }
-
-val EmailSerializableNavType =
-    object : NavType<EmailSerializable>(isNullableAllowed = true) {
-        override fun put(
-            bundle: SavedState,
-            key: String,
-            value: EmailSerializable,
-        ) {
-            bundle.putString(key, value.string)
-        }
-
-        override fun get(bundle: SavedState, key: String): EmailSerializable? =
-            bundle.getString(key)?.let(::EmailSerializable)
-
-        override fun serializeAsValue(value: EmailSerializable): String =
-            value.string.let(Uri::encode)
-
-        override fun parseValue(value: String): EmailSerializable =
-            EmailSerializable(value)
-    }
-
-val NullableEmailSerializableNavType =
-    object : NavType<EmailSerializable?>(isNullableAllowed = true) {
-        override fun put(
-            bundle: SavedState,
-            key: String,
-            value: EmailSerializable?,
-        ) {
-            bundle.putString(key, value?.string)
-        }
-
-        override fun get(bundle: SavedState, key: String): EmailSerializable? =
-            bundle.getString(key)?.let(::EmailSerializable)
-
-        override fun serializeAsValue(value: EmailSerializable?): String =
-            value?.string?.let(Uri::encode) ?: "null"
-
-        override fun parseValue(value: String): EmailSerializable? =
-            if (value == "null") null else EmailSerializable(value)
-    }
-
-val SocialLinkSerializableNavType =
-    object : NavType<SocialLinkSerializable>(isNullableAllowed = true) {
-        override fun get(bundle: Bundle, key: String): SocialLinkSerializable? =
-            bundle.getString(key)?.let(::SocialLinkSerializable)
-
-        override fun parseValue(value: String): SocialLinkSerializable =
-            SocialLinkSerializable(value)
-
-        override fun serializeAsValue(value: SocialLinkSerializable): String =
-            Uri.encode(value.string)
-
-        override fun put(
-            bundle: Bundle,
-            key: String,
-            value: SocialLinkSerializable,
-        ) = bundle.putString(key, value.string)
-    }
-
-val UserIdSerializableNavType =
-    object : NavType<UserIdSerializable>(isNullableAllowed = false) {
-        override fun get(bundle: Bundle, key: String): UserIdSerializable =
-            bundle.getLong(key).let(::UserIdSerializable)
-
-        override fun parseValue(value: String): UserIdSerializable =
-            UserIdSerializable(value.toLong())
-
-        override fun serializeAsValue(value: UserIdSerializable): String =
-            value.long.toString()
-
-        override fun put(
-            bundle: Bundle,
-            key: String,
-            value: UserIdSerializable,
-        ) = bundle.putLong(key, value.long)
-    }
-
-val InterestSerializableListNavType =
-    object : NavType<List<InterestSerializable>>(isNullableAllowed = false) {
-        override fun get(
-            bundle: Bundle,
-            key: String,
-        ): List<InterestSerializable>? = bundle.getString(key)?.let { json ->
-            Json.decodeFromString<List<String>>(json)
-                .map(::InterestSerializable)
-        }
-
-        override fun parseValue(value: String): List<InterestSerializable> =
-            Json.decodeFromString<List<String>>(Uri.decode(value))
-                .map(::InterestSerializable)
-
-        override fun serializeAsValue(
-            value: List<InterestSerializable>,
-        ): String = Uri.encode(Json.encodeToString(value.map { it.string }))
-
-        override fun put(
-            bundle: Bundle,
-            key: String,
-            value: List<InterestSerializable>,
-        ) = bundle.putString(key, Json.encodeToString(value.map { it.string }))
-    }
-
-val CommunityPostDescriptorSerializableNavType =
-    object :
-        NavType<CommunityPostDescriptorSerializable>(
-            isNullableAllowed = false,
-        ) {
-        override fun get(
-            bundle: Bundle,
-            key: String,
-        ): CommunityPostDescriptorSerializable? =
-            bundle.getString(key)?.let { json ->
-                Json.decodeFromString<CommunityPostDescriptorSerializable>(json)
-            }
-
-        override fun parseValue(
-            value: String,
-        ): CommunityPostDescriptorSerializable =
-            Json.decodeFromString<CommunityPostDescriptorSerializable>(
-                Uri.decode(
-                    value,
-                ),
-            )
-
-        override fun serializeAsValue(
-            value: CommunityPostDescriptorSerializable,
-        ): String = Json.encodeToString(value)
-
-        override fun put(
-            bundle: Bundle,
-            key: String,
-            value: CommunityPostDescriptorSerializable,
-        ) = bundle.putString(key, Json.encodeToString(value))
-    }
+inline fun <reified T> navTypeOf(): Pair<KType, NavType<T>> =
+    typeOf<T>() to JsonNavType(serializer<T>(), isNullableAllowed = null is T)
 
 object FriendlyNavGraph {
     sealed interface NavDestination
@@ -329,7 +158,9 @@ object FriendlyNavGraph {
         data class PictureViewerDialog(val uri: String) : Home()
 
         @Serializable
-        data object CreatePostDialog : Home()
+        data class CreatePostDialog(
+            val replyTo: CommunityPostDescriptorSerializable?,
+        ) : Home()
 
         @Serializable
         data class EditInterestsDialog(val interests: List<String>) : Home()
@@ -345,22 +176,23 @@ object FriendlyNavGraph {
 }
 
 val EditProfileTypeMap = mapOf(
-    typeOf<NicknameSerializable>() to NicknameSerializableNavType,
-    typeOf<UserDescriptionSerializable>() to UserDescriptionSerializableNavType,
-    typeOf<InterestSerializable>() to InterestSerializableNavType,
-    typeOf<SocialLinkSerializable?>() to SocialLinkSerializableNavType,
-    typeOf<EmailSerializable?>() to NullableEmailSerializableNavType,
-    typeOf<UserIdSerializable>() to UserIdSerializableNavType,
-    typeOf<List<InterestSerializable>>() to InterestSerializableListNavType,
+    navTypeOf<NicknameSerializable>(),
+    navTypeOf<UserDescriptionSerializable>(),
+    navTypeOf<InterestSerializable>(),
+    navTypeOf<SocialLinkSerializable?>(),
+    navTypeOf<EmailSerializable?>(),
+    navTypeOf<UserIdSerializable>(),
+    navTypeOf<List<InterestSerializable>>(),
 )
 
-val EmailSheetTypeMap = mapOf(
-    typeOf<EmailSerializable>() to EmailSerializableNavType,
-)
+val EmailSheetTypeMap = mapOf(navTypeOf<EmailSerializable>())
 
 val CommunityPostTypeMap = mapOf(
-    typeOf<CommunityPostDescriptorSerializable>()
-        to CommunityPostDescriptorSerializableNavType,
+    navTypeOf<CommunityPostDescriptorSerializable>(),
+)
+
+val CreatePostDialogTypeMap = mapOf(
+    navTypeOf<CommunityPostDescriptorSerializable?>(),
 )
 
 private const val VerificationCodeStateKey = "verification_code_state"
@@ -539,7 +371,7 @@ fun FriendlyNavGraph(
                         },
                         onCreatePostClick = {
                             navController.navigate(
-                                route = Home.CreatePostDialog,
+                                route = Home.CreatePostDialog(null),
                             )
                         },
                         modifier = Modifier,
@@ -550,18 +382,18 @@ fun FriendlyNavGraph(
                     typeMap = CommunityPostTypeMap,
                 ) { backStackEntry ->
                     val route: Home.CommunityPost = backStackEntry.toRoute()
-                    val descriptor = route.descriptor.typed()
                     CommunityPostScreen(
                         vm = viewModel<CommunityPostScreenViewModel>(
                             factory = viewModelFactory,
                         ),
-                        descriptor = descriptor,
                         contentPadding = contentPadding(route),
                         onImageClick = { uri: String ->
                             navController.navigate(
                                 route = Home.PictureViewerDialog(uri),
                             )
                         },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedContentScope = this@composable,
                         onPostClick = { descriptor ->
                             val descriptorSerializable =
                                 descriptor.serializable()
@@ -575,6 +407,12 @@ fun FriendlyNavGraph(
                                     saveState = true
                                 }
                             }
+                        },
+                        onMaximizeReplyFieldClick = { descriptor ->
+                            val route = Home.CreatePostDialog(
+                                descriptor.serializable(),
+                            )
+                            navController.navigate(route)
                         },
                         onBack = { navController.popBackStack() },
                     )
@@ -788,7 +626,9 @@ fun FriendlyNavGraph(
                     )
                 }
 
-                composable<Home.CreatePostDialog> { backStackEntry ->
+                composable<Home.CreatePostDialog>(
+                    typeMap = CreatePostDialogTypeMap,
+                ) { backStackEntry ->
                     val route: Home.CreatePostDialog = backStackEntry
                         .toRoute()
                     CreatePostDialog(

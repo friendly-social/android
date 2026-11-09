@@ -1,6 +1,8 @@
 package friendly.android
 
 import android.net.Uri
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -13,10 +15,17 @@ import friendly.query.query
 import friendly.query.save
 import friendly.sdk.CommunityPostDetails
 import friendly.sdk.CommunityPostReply
+import friendly.sdk.CommunityPostText
 import friendly.sdk.FileDescriptor
 import friendly.sdk.FriendlyClient
+import friendly.sdk.FriendlyCommunityClient
 import friendly.sdk.FriendlyCommunityClient.Details2Result
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -25,6 +34,7 @@ class CommunityPostScreenViewModel(
     private val client: FriendlyClient,
     private val authStorage: AuthStorage,
     private val db: FriendlyDatabase,
+    private val createPostUseCase: CreatePostUseCase,
 ) : ViewModel() {
     private val route = savedStateHandle
         .toRoute<FriendlyNavGraph.Home.CommunityPost>(CommunityPostTypeMap)
@@ -38,6 +48,23 @@ class CommunityPostScreenViewModel(
         ),
         scope = viewModelScope,
     )
+
+    private data class CommunityPostScreenVmState(
+        val isReplySending: Boolean = false,
+    ) {
+        fun toUiState(): CommunityPostScreenUiState =
+            CommunityPostScreenUiState(
+                isReplySending = isReplySending,
+            )
+    }
+
+    private val _state = MutableStateFlow(CommunityPostScreenVmState())
+
+    val state: StateFlow<CommunityPostScreenUiState> = _state
+        .map(CommunityPostScreenVmState::toUiState)
+        .stateIn(viewModelScope, Eagerly, CommunityPostScreenUiState())
+
+    val replyPostTextState = TextFieldState()
 
     val query = queryClient.query(
         key = QueryKey("community-post-${descriptor.id.long}"),
@@ -132,4 +159,32 @@ class CommunityPostScreenViewModel(
 
     fun fileUri(fileDescriptor: FileDescriptor): Uri =
         client.files.getEndpoint(fileDescriptor).string.toUri()
+
+    fun sendReply() {
+        val isPostTextValid =
+            CommunityPostText.validate(replyPostTextState.string)
+        if (!isPostTextValid) return
+
+        viewModelScope.launch {
+            _state.update { it.copy(isReplySending = true) }
+            val result = createPostUseCase(
+                text = CommunityPostText.orThrow(replyPostTextState.string),
+                replyTo = route.descriptor.typed(),
+            )
+            when (result) {
+                is FriendlyCommunityClient.PostResult.IOError,
+                is NotFound,
+                is FriendlyCommunityClient.PostResult.ServerError,
+                is FriendlyCommunityClient.PostResult.Unauthorized,
+                -> TODO()
+
+                is FriendlyCommunityClient.PostResult.Success -> {
+                    replyPostTextState.clearText()
+                    // todo error handling must be here
+                    query.refresh()
+                }
+            }
+            _state.update { it.copy(isReplySending = false) }
+        }
+    }
 }

@@ -47,8 +47,6 @@ class ShareProfileScreenViewModel(
 
             _state.update { old ->
                 val shareUrl = buildShareUrlOrNull(userId, friendToken)
-                println(friendToken)
-                println(shareUrl)
                 old.copy(shareUrl = shareUrl)
             }
         }

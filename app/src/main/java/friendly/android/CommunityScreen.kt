@@ -3,6 +3,7 @@ package friendly.android
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -54,6 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -182,12 +184,13 @@ private fun SharedTransitionScope.CreatePostFab(
             .ignoreLayoutPadding(24.dp)
             .sharedBounds(
                 sharedContentState =
-                rememberSharedContentState("create_post_shared_fab"),
+                rememberSharedContentState(CreatePostSharedTransitionKey),
                 animatedVisibilityScope = animatedContentScope,
                 boundsTransform = { _, _ ->
                     spring(
                         dampingRatio = 0.8f,
                         stiffness = 380f,
+                        visibilityThreshold = Rect.VisibilityThreshold,
                     )
                 },
                 resizeMode = RemeasureToBounds,

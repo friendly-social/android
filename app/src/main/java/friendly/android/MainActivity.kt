@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
             HttpClient(CIO) {
                 install(Logging) {
                     logger = Logger.ANDROID
-                    level = LogLevel.ALL
+                    level = LogLevel.HEADERS
                 }
             },
         )

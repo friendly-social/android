@@ -154,4 +154,5 @@
     <string name="formatting_helper_dialog_text">Currently, we use GitHub-flavoured Markdown (GFM) as a base, with plans to support custom entities in the future. Currently, the Android client only supports the basic version of GFM and doesn\'t support features such as LaTeX or audio tag rendering. Stay tuned!</string>
     <string name="close_dialog">Close dialog</string>
     <string name="open_gfm_spec">Open GFM spec</string>
+    <string name="minimized_reply_field_placeholder">Reply with smth here</string>
 </resources>

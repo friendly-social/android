@@ -3,7 +3,13 @@ package friendly.android
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
@@ -12,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -42,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
@@ -55,19 +63,26 @@ import friendly.query.QueryState
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
 import friendly.sdk.CommunityPostReply
+import friendly.sdk.CommunityPostText
 import kotlinx.coroutines.launch
+
+data class CommunityPostScreenUiState(val isReplySending: Boolean = false)
 
 @Composable
 fun CommunityPostScreen(
     vm: CommunityPostScreenViewModel,
-    descriptor: CommunityPostDescriptor,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
     contentPadding: PaddingValues,
     onPostClick: (CommunityPostDescriptor) -> Unit,
     onBack: () -> Unit,
     onImageClick: (String) -> Unit,
+    onMaximizeReplyFieldClick: (CommunityPostDescriptor) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val postDetails = vm.query.data.collectAsState()
+
+    val state by vm.state.collectAsState()
 
     LaunchedEffect(Unit) { vm.runQueries() }
 
@@ -83,11 +98,17 @@ fun CommunityPostScreen(
 
         else -> {
             Content(
+                state = state,
                 post = item,
-                state = postDetails.value,
+                postState = postDetails.value,
                 onPostClick = onPostClick,
                 onBack = onBack,
                 onImageClick = onImageClick,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedContentScope = animatedContentScope,
+                onMaximizeReplyFieldClick = {
+                    onMaximizeReplyFieldClick(item.details.descriptor)
+                },
                 vm = vm,
                 modifier = modifier
                     .fillMaxSize()
@@ -99,11 +120,15 @@ fun CommunityPostScreen(
 
 @Composable
 private fun Content(
+    state: CommunityPostScreenUiState,
     post: CommunityPost,
-    state: QueryState<CommunityPost>,
+    postState: QueryState<CommunityPost>,
     onPostClick: (CommunityPostDescriptor) -> Unit,
     onBack: () -> Unit,
     onImageClick: (String) -> Unit,
+    onMaximizeReplyFieldClick: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
     vm: CommunityPostScreenViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -127,6 +152,7 @@ private fun Content(
     ) { innerPadding ->
         Box(
             modifier = Modifier
+                .fillMaxSize()
                 .padding(innerPadding),
         ) {
             ScaffoldContent(
@@ -142,12 +168,44 @@ private fun Content(
             )
 
             AnimatedVisibility(
-                visible = state.fetch !is QueryState.FetchStatus.Idle,
+                visible = postState.fetch !is Idle,
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier.align(Alignment.TopCenter),
             ) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            with(sharedTransitionScope) {
+                CommunityPostReplyField(
+                    fieldState = vm.replyPostTextState,
+                    onSendClick = vm::sendReply,
+                    onMaximizeClick = onMaximizeReplyFieldClick,
+                    isSending = state.isReplySending,
+                    textValid = CommunityPostText
+                        .validate(vm.replyPostTextState.string),
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .align(BottomCenter)
+                        .sharedBounds(
+                            sharedContentState = rememberSharedContentState(
+                                CreatePostSharedTransitionKey,
+                            ),
+                            animatedVisibilityScope = animatedContentScope,
+                            boundsTransform = { _, _ ->
+                                spring(
+                                    dampingRatio = 0.8f,
+                                    stiffness = 380f,
+                                    visibilityThreshold =
+                                    Rect.VisibilityThreshold,
+                                )
+                            },
+                            resizeMode = RemeasureToBounds,
+                            enter = fadeIn(),
+                            exit = fadeOut(tween(90, easing = LinearEasing)),
+                        )
+                        .imePadding(),
+                )
             }
         }
     }
@@ -230,7 +288,7 @@ private fun ScaffoldContent(
             )
         }
 
-        item { Spacer(Modifier.fillParentMaxHeight(0.3f)) }
+        item { Spacer(Modifier.fillParentMaxHeight(0.6f)) }
     }
 }
 

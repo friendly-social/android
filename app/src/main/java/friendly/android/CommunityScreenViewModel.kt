@@ -29,10 +29,14 @@ import friendly.sdk.FriendlyCommunityClient.ListResult.IOError
 import friendly.sdk.FriendlyCommunityClient.ListResult.ServerError
 import friendly.sdk.FriendlyCommunityClient.ListResult.Success
 import friendly.sdk.FriendlyCommunityClient.ListResult.Unauthorized
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
@@ -131,6 +135,8 @@ class CommunityScreenViewModel(
         queryScope = viewModelScope,
     )
 
+    private val initialRefresh = CompletableDeferred<Unit>()
+
     val posts = infiniteQueryClient.infiniteQuery(
         config = InfiniteQueryConfig(
             key = QueryKey("community"),
@@ -141,12 +147,13 @@ class CommunityScreenViewModel(
                 authorization = authStorage.getAuth(),
                 cursorId = cursor,
             )
+            initialRefresh.complete(Unit)
             _events.emit(DataFetched)
             when (result) {
                 is IOError,
                 is ServerError,
                 is Unauthorized,
-                -> InfiniteQueryFetchResult.Failure
+                    -> InfiniteQueryFetchResult.Failure
 
                 is Success -> InfiniteQueryFetchResult.Success(
                     value = result.cursor.data,
@@ -169,29 +176,23 @@ class CommunityScreenViewModel(
     val events: SharedFlow<CommunityScreenEvent> =
         _events.shareIn(viewModelScope, Eagerly)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun runQueries() {
         viewModelScope.launch {
-            val jobs = mutableMapOf<CommunityPostDescriptor, Job>()
-
+            initialRefresh.await()
             posts.state
                 .filter { it.fetch is Idle }
-                .collect { state ->
-                    for (item in state.items) {
-                        if (jobs.containsKey(item.descriptor)) continue
-
-                        jobs[item.descriptor] = this@launch.launch {
-                            queryClient.save(
-                                retries = 3,
-                                retryDelay = 300.milliseconds,
-                                fetch = {
-                                    fetchPostDetails(item.descriptor)
-                                },
-                                key = QueryKey(
-                                    string = "community-post-${item.id.long}",
-                                ),
-                            )
-                        }
-                    }
+                .flatMapConcat { it.items.asFlow() }
+                .distinctUntilChanged()
+                .collect { item ->
+                    queryClient.save(
+                        retries = 3,
+                        retryDelay = 300.milliseconds,
+                        fetch = { fetchPostDetails(item.descriptor) },
+                        key = QueryKey(
+                            string = "community-post-${item.id.long}",
+                        ),
+                    )
                 }
         }
     }
@@ -206,7 +207,7 @@ class CommunityScreenViewModel(
             is Details2Result.ServerError,
             is Details2Result.Unauthorized,
             is Details2Result.NotFound,
-            -> Failure
+                -> Failure
 
             is Details2Result.Success -> {
                 val post = CommunityPost(

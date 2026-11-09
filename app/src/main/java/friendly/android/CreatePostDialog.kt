@@ -8,6 +8,7 @@ import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -55,6 +56,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
@@ -96,8 +98,7 @@ fun CreatePostDialog(
 
     BackHandler(
         enabled = !state.saved &&
-            CommunityPostText
-                .validate(vm.postTextState.text.toString()),
+            CommunityPostText.validate(vm.postTextState.string),
         onBack = { unsavedChangesDialog = true },
     )
 
@@ -128,11 +129,15 @@ fun CreatePostDialog(
                 .fillMaxSize()
                 .sharedBounds(
                     sharedContentState = rememberSharedContentState(
-                        "create_post_shared_fab",
+                        CreatePostSharedTransitionKey,
                     ),
                     animatedVisibilityScope = animatedContentScope,
                     boundsTransform = { _, _ ->
-                        spring(dampingRatio = 0.8f, stiffness = 380f)
+                        spring(
+                            dampingRatio = 0.8f,
+                            stiffness = 380f,
+                            visibilityThreshold = Rect.VisibilityThreshold,
+                        )
                     },
                     resizeMode = RemeasureToBounds,
                     enter = fadeIn(),
@@ -321,8 +326,7 @@ private fun TopBar(
         OutlinedButton(
             onClick = vm::saveDraft,
             enabled = !state.saved &&
-                CommunityPostText
-                    .validate(vm.postTextState.text.toString()),
+                CommunityPostText.validate(vm.postTextState.string),
             contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
         ) {
             Icon(
@@ -338,8 +342,7 @@ private fun TopBar(
         Spacer(Modifier.width(8.dp))
         Button(
             onClick = { vm.create(onCreate) },
-            enabled = CommunityPostText
-                .validate(vm.postTextState.text.toString()),
+            enabled = CommunityPostText.validate(vm.postTextState.string),
             contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
         ) {
             if (state.isSending) {

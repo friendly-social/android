@@ -140,6 +140,7 @@ class FriendlyViewModelFactory(
         if (modelClass == CommunityPostScreenViewModel::class) {
             val savedStateHandle = extras.createSavedStateHandle()
             return CommunityPostScreenViewModel(
+                createPostUseCase = createPostUseCase,
                 savedStateHandle = savedStateHandle,
                 client = client,
                 authStorage = authStorage,
@@ -158,7 +159,9 @@ class FriendlyViewModelFactory(
             ) as T
         }
         if (modelClass == CreatePostDialogViewModel::class) {
+            val savedStateHandle = extras.createSavedStateHandle()
             return CreatePostDialogViewModel(
+                savedStateHandle = savedStateHandle,
                 create = createPostUseCase,
                 draft = postDraftStorage,
             ) as T
