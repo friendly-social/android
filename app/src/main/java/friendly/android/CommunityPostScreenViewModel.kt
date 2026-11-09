@@ -184,4 +184,8 @@ class CommunityPostScreenViewModel(
             _state.update { it.copy(isReplySending = false) }
         }
     }
+
+    fun onUserReplied() {
+        query.refresh()
+    }
 }

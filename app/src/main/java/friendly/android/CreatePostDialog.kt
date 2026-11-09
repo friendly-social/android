@@ -83,6 +83,7 @@ fun CreatePostDialog(
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     contentPadding: PaddingValues,
+    onPostCreated: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsState()
@@ -151,7 +152,7 @@ fun CreatePostDialog(
                 .statusBarsPadding(),
         ) {
             ScreenContent(
-                onCreate = onGoBack,
+                onCreate = onPostCreated,
                 onFormatting = { formattingDialog = true },
                 onTryGoBack = {
                     if (state.saved || vm.postTextState.text.isBlank()) {

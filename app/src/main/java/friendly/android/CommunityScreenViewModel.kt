@@ -222,4 +222,8 @@ class CommunityScreenViewModel(
 
     fun fileUri(fileDescriptor: FileDescriptor): Uri =
         client.files.getEndpoint(fileDescriptor).string.toUri()
+
+    fun onUserCreatedPost() {
+        posts.refresh()
+    }
 }

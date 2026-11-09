@@ -197,6 +197,7 @@ val CreatePostDialogTypeMap = mapOf(
 
 private const val VerificationCodeStateKey = "verification_code_state"
 private const val PickedInterestsStateKey = "picked_interests_state"
+private const val PostCreatedStateKey = "maximized_post_editor_state"
 
 @Composable
 fun FriendlyNavGraph(
@@ -351,11 +352,29 @@ fun FriendlyNavGraph(
                     )
                 }
 
-                composable<Home.Community> {
+                composable<Home.Community> { backStackEntry ->
+                    val vm = viewModel<CommunityScreenViewModel>(
+                        factory = viewModelFactory,
+                    )
+
+                    val postCreated by backStackEntry
+                        .savedStateHandle
+                        .getStateFlow(
+                            key = PostCreatedStateKey,
+                            initialValue = false,
+                        )
+                        .collectAsStateWithLifecycle()
+
+                    LaunchedEffect(postCreated) {
+                        if (postCreated) {
+                            backStackEntry
+                                .savedStateHandle[PostCreatedStateKey] = false
+                            vm.onUserCreatedPost()
+                        }
+                    }
+
                     CommunityScreen(
-                        vm = viewModel<CommunityScreenViewModel>(
-                            factory = viewModelFactory,
-                        ),
+                        vm = vm,
                         contentPadding = contentPadding(Home.Community),
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedContentScope = this@composable,
@@ -382,10 +401,29 @@ fun FriendlyNavGraph(
                     typeMap = CommunityPostTypeMap,
                 ) { backStackEntry ->
                     val route: Home.CommunityPost = backStackEntry.toRoute()
+
+                    val vm = viewModel<CommunityPostScreenViewModel>(
+                        factory = viewModelFactory,
+                    )
+
+                    val postCreated by backStackEntry
+                        .savedStateHandle
+                        .getStateFlow(
+                            key = PostCreatedStateKey,
+                            initialValue = false,
+                        )
+                        .collectAsStateWithLifecycle()
+
+                    LaunchedEffect(postCreated) {
+                        if (postCreated) {
+                            backStackEntry
+                                .savedStateHandle[PostCreatedStateKey] = false
+                            vm.onUserReplied()
+                        }
+                    }
+
                     CommunityPostScreen(
-                        vm = viewModel<CommunityPostScreenViewModel>(
-                            factory = viewModelFactory,
-                        ),
+                        vm = vm,
                         contentPadding = contentPadding(route),
                         onImageClick = { uri: String ->
                             navController.navigate(
@@ -635,6 +673,12 @@ fun FriendlyNavGraph(
                         vm = viewModel<CreatePostDialogViewModel>(
                             factory = viewModelFactory,
                         ),
+                        onPostCreated = {
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.set(key = PostCreatedStateKey, value = true)
+                            navController.popBackStack()
+                        },
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedContentScope = this@composable,
                         contentPadding = contentPadding(route),
