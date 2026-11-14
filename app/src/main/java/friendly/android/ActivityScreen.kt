@@ -1,5 +1,6 @@
 package friendly.android
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
@@ -29,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -37,6 +40,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import friendly.sdk.ActivityDetails
 import friendly.sdk.CommunityPostDescriptor
+import friendly.sdk.CommunityPostDetails
+import friendly.sdk.FileDescriptor
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
@@ -304,17 +309,43 @@ private fun IndirectReplyActivityListItem(
     itemContainerColor: Color,
     modifier: Modifier,
 ) {
+    when (val post = details.post) {
+        is Deleted -> IndirectReplyOnDeletedPostActivityItem(
+            details = details,
+            onActivityClick = onActivityClick,
+            itemContainerColor = itemContainerColor,
+            modifier = modifier,
+        )
+
+        is Plain -> IndirectReplyOnPlainPostActivityItem(
+            post = post,
+            onActivityClick = { onActivityClick(details) },
+            avatarUri = vm::avatarUri,
+            itemContainerColor = itemContainerColor,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+fun IndirectReplyOnPlainPostActivityItem(
+    post: CommunityPostDetails.Plain,
+    onActivityClick: () -> Unit,
+    itemContainerColor: Color,
+    avatarUri: (FileDescriptor) -> Uri?,
+    modifier: Modifier = Modifier,
+) {
     ListItem(
-        onClick = { onActivityClick(details) },
+        onClick = onActivityClick,
         leadingContent = {
             UserAvatar(
-                nickname = details.post.owner.nickname,
-                userId = details.post.owner.id,
-                uri = details.post.owner.avatar?.let(vm::avatarUri),
+                nickname = post.owner.nickname,
+                userId = post.owner.id,
+                uri = post.owner.avatar?.let(avatarUri),
                 style = Small,
             )
         },
-        trailingContent = { RelativeTimestampText(instant = details.instant) },
+        trailingContent = { RelativeTimestampText(instant = post.instant) },
         colors = ListItemDefaults.colors(
             containerColor = itemContainerColor,
         ),
@@ -323,9 +354,39 @@ private fun IndirectReplyActivityListItem(
                 text = buildAnnotatedString {
                     append(stringResource(R.string.new_activity_under))
                     append(" \"")
-                    append(details.post.text.string)
+                    append(post.text.string)
                     append("\"")
                 },
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun IndirectReplyOnDeletedPostActivityItem(
+    details: ActivityDetails.IndirectReplies,
+    onActivityClick: (ActivityDetails) -> Unit,
+    itemContainerColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    ListItem(
+        onClick = { onActivityClick(details) },
+        leadingContent = {
+            Icon(
+                painter = painterResource(R.drawable.ic_construction_filled),
+                contentDescription = null,
+            )
+        },
+        trailingContent = { RelativeTimestampText(instant = details.instant) },
+        colors = ListItemDefaults.colors(
+            containerColor = itemContainerColor,
+        ),
+        content = {
+            Text(
+                text = stringResource(R.string.new_activity_under_deleted_post),
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )

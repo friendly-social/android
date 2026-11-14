@@ -158,4 +158,5 @@
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
     <string name="older">Older</string>
+    <string name="new_activity_under_deleted_post">The original post has been deleted</string>
 </resources>
