@@ -107,7 +107,11 @@ fun CommunityScreen(
 
     val lazyListState = rememberLazyListState()
 
-    vm.posts.setFetchNextOnScroll(posts, lazyListState)
+    vm.posts.setFetchNextOnScroll(
+        queryState = posts,
+        lazyListState = lazyListState,
+        remainingItemsThreshold = 10,
+    )
 
     var fabExpanded by remember { mutableStateOf(false) }
 

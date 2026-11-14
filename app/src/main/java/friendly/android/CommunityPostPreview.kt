@@ -1,10 +1,8 @@
 package friendly.android
 
 import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -18,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,28 +35,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.mikepenz.markdown.annotator.annotatorSettings
-import com.mikepenz.markdown.annotator.buildMarkdownAnnotatedString
-import com.mikepenz.markdown.compose.LocalImageTransformer
-import com.mikepenz.markdown.compose.components.MarkdownComponentModel
-import com.mikepenz.markdown.compose.components.markdownComponents
-import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeBlock
-import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
-import com.mikepenz.markdown.compose.elements.MarkdownParagraph
-import com.mikepenz.markdown.compose.elements.MarkdownText
-import com.mikepenz.markdown.m3.Markdown
-import com.mikepenz.markdown.m3.markdownTypography
-import com.mikepenz.markdown.model.markdownAnimations
-import com.mikepenz.markdown.model.markdownAnnotator
-import com.mikepenz.markdown.model.markdownAnnotatorConfig
 import com.mikepenz.markdown.model.rememberMarkdownState
-import com.mikepenz.markdown.utils.MARKDOWN_TAG_IMAGE_URL
-import dev.snipme.highlights.Highlights
-import dev.snipme.highlights.model.SyntaxThemes
 import friendly.sdk.CommunityPostDescriptor
 import friendly.sdk.CommunityPostDetails
 import friendly.sdk.UserDetails
@@ -179,18 +158,12 @@ private fun PlainPostViewer(
                     .onSizeChanged { previewBoxHeight = it.height },
             ) {
                 val imageWidth = maxWidth
-
-                val imageTransformer = remember(imageWidth) {
-                    SquarePictureMarkdownImageTransformer(imageWidth)
-                }
-
                 Box {
                     MarkdownPreviewRenderer(
-                        imageTransformer = imageTransformer,
+                        imageWidth = imageWidth,
                         details = details,
                         onImageClick = onImageClick,
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
 
                     with(LocalDensity.current) {
@@ -282,7 +255,7 @@ private fun ReplyPreviews(
 
 @Composable
 private fun MarkdownPreviewRenderer(
-    imageTransformer: SquarePictureMarkdownImageTransformer,
+    imageWidth: Dp,
     details: CommunityPostDetails.Plain,
     onImageClick: (url: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -292,148 +265,10 @@ private fun MarkdownPreviewRenderer(
         immediate = true,
         content = details.text.string,
     )
-
-    val isDarkTheme = isSystemInDarkTheme()
-
-    val highlightsBuilder = remember(isDarkTheme) {
-        Highlights.Builder().theme(SyntaxThemes.atom(darkMode = isDarkTheme))
-    }
-
-    Markdown(
+    FriendlyMarkdown(
         markdownState = markdownState,
-        annotator = markdownAnnotator(
-            config = markdownAnnotatorConfig(inlineImageAsBlock = false),
-        ),
-        imageTransformer = imageTransformer,
-        typography = markdownTypography(
-            h1 = MaterialTheme.typography.displayMedium,
-            h2 = MaterialTheme.typography.displaySmall,
-            h3 = MaterialTheme.typography.headlineLarge,
-            text = MaterialTheme.typography.bodySmall.copy(fontSize = 8.sp),
-        ),
-        components = markdownComponents(
-            paragraph = { paragraphModel ->
-                PreviewMarkdownParagraph(
-                    model = paragraphModel,
-                    onImageClick = onImageClick,
-                )
-            },
-            codeBlock = {
-                MarkdownHighlightedCodeBlock(
-                    content = it.content,
-                    node = it.node,
-                    highlightsBuilder = highlightsBuilder,
-                    showHeader = true,
-                )
-            },
-            codeFence = {
-                MarkdownHighlightedCodeFence(
-                    content = it.content,
-                    node = it.node,
-                    highlightsBuilder = highlightsBuilder,
-                    showHeader = true,
-                )
-            },
-        ),
-        animations = markdownAnimations(animateTextSize = { this }),
-        modifier = modifier
-            .wrapContentHeight(
-                align = Alignment.Top,
-                unbounded = true,
-            ),
+        onImageClick = onImageClick,
+        imageWidth = imageWidth,
+        modifier = modifier,
     )
-}
-
-@Composable // TODO: make this private
-fun PreviewMarkdownParagraph(
-    model: MarkdownComponentModel,
-    onImageClick: (link: String) -> Unit,
-) {
-    val style = model.typography.paragraph
-    val settings = annotatorSettings()
-    val transformer = LocalImageTransformer.current
-
-    val annotated = buildAnnotatedString {
-        pushStyle(style.toSpanStyle())
-        buildMarkdownAnnotatedString(
-            content = model.content,
-            node = model.node,
-            annotatorSettings = settings,
-        )
-        pop()
-    }
-
-    val imagePrefix = "${MARKDOWN_TAG_IMAGE_URL}_"
-    val images = annotated
-        .getStringAnnotations(0, annotated.length)
-        .filter { it.item.startsWith(imagePrefix) }
-        .sortedBy { it.start }
-
-    if (images.isEmpty()) {
-        MarkdownParagraph(
-            content = model.content,
-            node = model.node,
-            style = style,
-        )
-        return
-    }
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        var cursor = 0
-
-        images.forEach { image ->
-            if (cursor < image.start) {
-                val textBefore = annotated.subSequence(
-                    cursor,
-                    image.start,
-                )
-
-                if (textBefore.text.isNotBlank()) {
-                    MarkdownText(
-                        content = textBefore,
-                        node = model.node,
-                        style = style,
-                        sourceContent = model.content,
-                    )
-                }
-            }
-
-            val url = image.item.removePrefix(imagePrefix)
-            val imageData = transformer.transform(url)
-
-            if (imageData != null) {
-                Image(
-                    painter = imageData.painter,
-                    contentDescription = imageData.contentDescription,
-                    alignment = imageData.alignment,
-                    contentScale = imageData.contentScale,
-                    alpha = imageData.alpha,
-                    colorFilter = imageData.colorFilter,
-                    modifier = imageData.modifier
-                        .clickable(onClick = { onImageClick(url) }),
-                )
-//                Spacer(Modifier.height(8.dp))
-            }
-
-            cursor = image.end
-        }
-
-        if (cursor < annotated.length) {
-            val textAfter = annotated.subSequence(
-                cursor,
-                annotated.length,
-            )
-
-            if (textAfter.text.isNotBlank()) {
-                MarkdownText(
-                    content = textAfter,
-                    node = model.node,
-                    style = style,
-                    sourceContent = model.content,
-                )
-            }
-        }
-    }
 }
