@@ -19,16 +19,15 @@ import org.intellij.markdown.ast.findChildOfType
 import org.intellij.markdown.ast.getTextInNode
 
 @Composable
-fun rememberPoorMarkdown(
-    markdown: String,
-    style: TextStyle,
-): AnnotatedString {
+fun rememberPoorMarkdown(markdown: String, style: TextStyle): AnnotatedString {
     val linkColor = MaterialTheme.colorScheme.primary
     return remember(markdown, style, linkColor) {
         markdown.buildMarkdownAnnotatedString(
             style = style,
             annotatorSettings = DefaultAnnotatorSettings(
-                linkTextSpanStyle = TextLinkStyles(SpanStyle(color = linkColor)),
+                linkTextSpanStyle = TextLinkStyles(
+                    SpanStyle(color = linkColor),
+                ),
                 codeSpanStyle = SpanStyle(fontFamily = Monospace),
                 highlightSpanStyle = SpanStyle(),
                 annotator = poorMarkdownAnnotator(linkColor),
@@ -50,7 +49,7 @@ private fun poorMarkdownAnnotator(linkColor: Color): MarkdownAnnotator {
             MarkdownElementTypes.INLINE_LINK,
             MarkdownElementTypes.FULL_REFERENCE_LINK,
             MarkdownElementTypes.SHORT_REFERENCE_LINK,
-                -> {
+            -> {
                 val textNode = child
                     .findChildOfType(MarkdownElementTypes.LINK_TEXT)
                     ?: child.findChildOfType(MarkdownElementTypes.LINK_LABEL)

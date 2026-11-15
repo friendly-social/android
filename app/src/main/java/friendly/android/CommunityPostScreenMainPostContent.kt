@@ -1,5 +1,6 @@
 package friendly.android
 
+import android.net.Uri
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import friendly.sdk.CommunityPostDetails
+import friendly.sdk.FileDescriptor
 
 @Composable
 fun CommunityPostScreenMainPostContent(
@@ -33,116 +35,151 @@ fun CommunityPostScreenMainPostContent(
     ) {
         when (isRoot) {
             true -> {
-                Spacer(Modifier.height(8.dp))
-
-                Row(
-                    verticalAlignment = Alignment.Top,
-                    modifier = Modifier,
-                ) {
-                    UserAvatar(
-                        nickname = post.owner.nickname,
-                        userId = post.owner.id,
-                        uri = post.owner.avatar?.let(vm::fileUri),
-                        style = UserAvatarStyle.Medium,
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-
-                    Column {
-                        Text(
-                            text = post.owner.nickname.string,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                        )
-
-                        Spacer(Modifier.height(4.dp))
-
-                        RelativeTimestampText(
-                            instant = post.instant,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(8.dp))
-
-                BoxWithConstraints(
-                    modifier = modifier
-                        .fillMaxWidth(),
-                ) {
-                    val imageWidth = maxWidth
-
-                    CommunityPostMarkdown(
-                        markdown = post.text.string,
-                        imageWidth = imageWidth,
-                        onImageClick = onImageClick,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                Spacer(Modifier.height(8.dp))
+                RootPost(
+                    post = post,
+                    fileUri = vm::fileUri,
+                    onImageClick = onImageClick,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
 
             false -> {
-                SegmentedListItem(
-                    shapes = endingListItemShape(),
-                    colors = ListItemDefaults.segmentedColors(
-                        containerColor =
-                        MaterialTheme.colorScheme.surfaceContainerLow,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(
-                                horizontal = 4.dp,
-                                vertical = 4.dp,
-                            )
-                            .fillMaxSize(),
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.Top,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            UserAvatar(
-                                nickname = post.owner.nickname,
-                                userId = post.owner.id,
-                                uri = post.owner.avatar?.let(vm::fileUri),
-                                style = UserAvatarStyle.Small,
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Column {
-                                Text(
-                                    text = post.owner.nickname.string,
-                                    style = MaterialTheme.typography.labelLarge,
-                                )
-                                Spacer(Modifier.height(4.dp))
-                                RelativeTimestampText(
-                                    instant = post.instant,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.height(8.dp))
-
-                        BoxWithConstraints(
-                            modifier = modifier
-                                .fillMaxWidth(),
-                        ) {
-                            val imageWidth = maxWidth
-                            CommunityPostMarkdown(
-                                markdown = post.text.string,
-                                imageWidth = imageWidth,
-                                onImageClick = onImageClick,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
-
-                        Spacer(Modifier.height(8.dp))
-                    }
-                }
+                SegmentedListItemPost(
+                    post = post,
+                    fileUri = vm::fileUri,
+                    onImageClick = onImageClick,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
+    }
+}
+
+@Composable
+fun SegmentedListItemPost(
+    post: CommunityPostDetails.Plain,
+    fileUri: (FileDescriptor) -> Uri,
+    onImageClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SegmentedListItem(
+        shapes = endingListItemShape(),
+        colors = ListItemDefaults.segmentedColors(
+            containerColor =
+            MaterialTheme.colorScheme.surfaceContainerLow,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        modifier = modifier,
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(
+                    horizontal = 4.dp,
+                    vertical = 4.dp,
+                )
+                .fillMaxSize(),
+        ) {
+            Row(
+                verticalAlignment = Alignment.Top,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                UserAvatar(
+                    nickname = post.owner.nickname,
+                    userId = post.owner.id,
+                    uri = post.owner.avatar?.let(fileUri),
+                    style = UserAvatarStyle.Small,
+                )
+                Spacer(Modifier.width(4.dp))
+                Column {
+                    Text(
+                        text = post.owner.nickname.string,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    RelativeTimestampText(
+                        instant = post.instant,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            BoxWithConstraints(
+                modifier = modifier
+                    .fillMaxWidth(),
+            ) {
+                val imageWidth = maxWidth
+                CommunityPostMarkdown(
+                    markdown = post.text.string,
+                    imageWidth = imageWidth,
+                    onImageClick = onImageClick,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun RootPost(
+    post: CommunityPostDetails.Plain,
+    fileUri: (FileDescriptor) -> Uri,
+    onImageClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+    ) {
+        Spacer(Modifier.height(8.dp))
+
+        Row(
+            verticalAlignment = Alignment.Top,
+            modifier = Modifier,
+        ) {
+            UserAvatar(
+                nickname = post.owner.nickname,
+                userId = post.owner.id,
+                uri = post.owner.avatar?.let(fileUri),
+                style = UserAvatarStyle.Medium,
+            )
+
+            Spacer(Modifier.width(8.dp))
+
+            Column {
+                Text(
+                    text = post.owner.nickname.string,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                RelativeTimestampText(
+                    instant = post.instant,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        BoxWithConstraints(
+            modifier = modifier
+                .fillMaxWidth(),
+        ) {
+            val imageWidth = maxWidth
+
+            CommunityPostMarkdown(
+                markdown = post.text.string,
+                imageWidth = imageWidth,
+                onImageClick = onImageClick,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
     }
 }
