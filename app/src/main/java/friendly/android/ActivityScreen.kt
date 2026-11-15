@@ -335,6 +335,10 @@ fun IndirectReplyOnPlainPostActivityItem(
     avatarUri: (FileDescriptor) -> Uri?,
     modifier: Modifier = Modifier,
 ) {
+    val poorMarkdown = rememberPoorMarkdown(
+        markdown = post.text.string,
+        style = MaterialTheme.typography.bodyLarge,
+    )
     ListItem(
         onClick = onActivityClick,
         leadingContent = {
@@ -354,7 +358,7 @@ fun IndirectReplyOnPlainPostActivityItem(
                 text = buildAnnotatedString {
                     append(stringResource(R.string.new_activity_under))
                     append(" \"")
-                    append(post.text.string)
+                    append(poorMarkdown)
                     append("\"")
                 },
                 maxLines = 3,
@@ -403,6 +407,10 @@ private fun ReplyActivityListItem(
     itemContainerColor: Color,
     modifier: Modifier,
 ) {
+    val poorMarkdown = rememberPoorMarkdown(
+        markdown = details.post.text.string,
+        style = MaterialTheme.typography.bodyLarge,
+    )
     ListItem(
         onClick = { onActivityClick(details) },
         leadingContent = {
@@ -428,7 +436,7 @@ private fun ReplyActivityListItem(
                         append(details.post.owner.nickname.string)
                     }
                     append(": \"")
-                    append(details.post.text.string)
+                    append(poorMarkdown)
                     append("\"")
                 },
                 maxLines = 3,
