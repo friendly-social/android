@@ -42,7 +42,7 @@ fun IndicatedCardFeed(
     currentItems: List<FeedEntry>,
     like: (FeedEntry) -> Unit,
     dislike: (FeedEntry) -> Unit,
-    onProfilePictureClick: (Uri) -> Unit,
+    onImageClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val swipeCardsState = rememberSwipeableCardsState(
@@ -117,7 +117,7 @@ fun IndicatedCardFeed(
                         swipeCardsState.swipe(SwipeableCardDirection.Left)
                         dislike(entry)
                     },
-                    onProfilePictureClick = onProfilePictureClick,
+                    onImageClick = onImageClick,
                     modifier = Modifier.fillMaxSize(),
                 )
             }

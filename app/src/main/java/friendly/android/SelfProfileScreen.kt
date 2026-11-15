@@ -23,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -46,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import friendly.android.SelfProfileScreenUiState.Present
 import friendly.android.SelfProfileScreenViewModel.UserProfile
 import friendly.sdk.Interest
@@ -71,7 +71,7 @@ fun SelfProfileScreen(
     vm: SelfProfileScreenViewModel,
     onSignOut: () -> Unit,
     onEditProfileClick: (EditProfileRoute) -> Unit,
-    onProfilePictureClick: (uri: String) -> Unit, // todo uri typing
+    onProfilePictureClick: (uri: String) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
 ) {
@@ -175,7 +175,7 @@ fun SelfProfileScreen(
                 is Present -> {
                     LoadedSelfProfileState(
                         state = state,
-                        onProfilePictureClick = { uri ->
+                        onImageClick = { uri ->
                             onProfilePictureClick(uri.toString())
                         },
                         contentPadding = contentPadding,
@@ -229,11 +229,10 @@ fun LinkEmailAlertDialog(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun LoadedSelfProfileState(
     state: Present,
-    onProfilePictureClick: (Uri) -> Unit,
+    onImageClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues.Zero,
 ) {
@@ -260,7 +259,7 @@ private fun LoadedSelfProfileState(
                     style = Large,
                     modifier = Modifier.clickable(
                         onClick = {
-                            state.profile.avatar?.let(onProfilePictureClick)
+                            state.profile.avatar?.let(onImageClick)
                         },
                         indication = null,
                         interactionSource = null,
@@ -293,9 +292,10 @@ private fun LoadedSelfProfileState(
 
         Spacer(Modifier.height(24.dp))
 
-        Text(
-            text = state.profile.description.string,
-            style = MaterialTheme.typography.bodyLarge,
+        ProfileMarkdown(
+            markdown = state.profile.description.string,
+            onImageClick = { onImageClick(it.toUri()) },
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Spacer(

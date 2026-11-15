@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ContainedLoadingIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,15 +46,12 @@ sealed interface FeedScreenUiState {
     data class Idle(val currentFeedItems: List<FeedEntry>) : FeedScreenUiState
 }
 
-@OptIn(
-    ExperimentalMaterial3Api::class,
-    ExperimentalMaterial3ExpressiveApi::class,
-)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FeedScreen(
     vm: FeedScreenViewModel,
     contentPadding: PaddingValues,
-    onProfilePictureClick: (Uri) -> Unit,
+    onImageClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsState()
@@ -93,7 +89,7 @@ fun FeedScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
             ) {
-                ScaffoldContent(vm, state, onProfilePictureClick)
+                ScaffoldContent(vm, state, onImageClick)
             }
         }
     }
@@ -103,14 +99,14 @@ fun FeedScreen(
 private fun ScaffoldContent(
     vm: FeedScreenViewModel,
     state: FeedScreenUiState,
-    onProfilePictureClick: (Uri) -> Unit,
+    onImageClick: (Uri) -> Unit,
 ) {
     AnimatedContent(
         targetState = state,
         contentKey = { state -> state::class },
     ) { state ->
         when (val state = state) {
-            is FeedScreenUiState.Idle -> {
+            is Idle -> {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize(),
@@ -125,13 +121,13 @@ private fun ScaffoldContent(
                         currentItems = state.currentFeedItems,
                         like = vm::like,
                         dislike = vm::dislike,
-                        onProfilePictureClick = onProfilePictureClick,
+                        onImageClick = onImageClick,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
 
-            is FeedScreenUiState.NetworkError -> {
+            is NetworkError -> {
                 NetworkError(
                     onRetry = vm::retry,
                     modifier = Modifier
@@ -140,7 +136,7 @@ private fun ScaffoldContent(
                 )
             }
 
-            is FeedScreenUiState.EmptyFeed -> {
+            is EmptyFeed -> {
                 EmptyFeed(
                     modifier = Modifier
                         .fillMaxSize()
@@ -148,7 +144,7 @@ private fun ScaffoldContent(
                 )
             }
 
-            is FeedScreenUiState.ServerError -> {
+            is ServerError -> {
                 ServerError(
                     modifier = Modifier
                         .fillMaxSize()
@@ -156,7 +152,7 @@ private fun ScaffoldContent(
                 )
             }
 
-            is FeedScreenUiState.Loading -> {
+            is Loading -> {
                 LoadingState()
             }
         }
@@ -181,7 +177,6 @@ private fun LoadingState() {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EmptyFeed(modifier: Modifier = Modifier) {
     Column(
@@ -212,7 +207,6 @@ private fun EmptyFeed(modifier: Modifier = Modifier) {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ServerError(modifier: Modifier = Modifier) {
     Box(
@@ -225,7 +219,6 @@ private fun ServerError(modifier: Modifier = Modifier) {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun NetworkError(onRetry: () -> Unit, modifier: Modifier = Modifier) {
     NetworkErrorBox(

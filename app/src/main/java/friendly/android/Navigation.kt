@@ -321,7 +321,7 @@ fun FriendlyNavGraph(
                         vm = viewModel<FeedScreenViewModel>(
                             factory = viewModelFactory,
                         ),
-                        onProfilePictureClick = { uri ->
+                        onImageClick = { uri ->
                             navController.navigate(
                                 route = Home.PictureViewerDialog(
                                     uri.toString(),

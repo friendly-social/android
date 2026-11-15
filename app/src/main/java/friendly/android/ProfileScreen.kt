@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import friendly.android.ProfileScreenViewModel.UserProfile
 import friendly.sdk.Nickname
 import friendly.sdk.SocialLink
@@ -125,7 +126,7 @@ fun ProfileScreen(
             onDismissRemoveFriendDialog = { removeFriendDialogVisible = false },
             vm = vm,
             onHome = onHome,
-            onProfilePictureClick = onProfilePictureClick,
+            onImageClick = onProfilePictureClick,
             profileSource = source,
             state = state,
             sharedTransitionScope = sharedTransitionScope,
@@ -141,7 +142,7 @@ private fun ScaffoldContent(
     removeFriendDialogVisible: Boolean,
     vm: ProfileScreenViewModel,
     onHome: () -> Unit,
-    onProfilePictureClick: (Uri) -> Unit,
+    onImageClick: (Uri) -> Unit,
     profileSource: ProfileScreenSource,
     state: ProfileScreenUiState,
     onDismissRemoveFriendDialog: () -> Unit,
@@ -165,7 +166,8 @@ private fun ScaffoldContent(
             state = state,
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = animatedContentScope,
-            onProfilePictureClick = onProfilePictureClick,
+            onProfilePictureClick = onImageClick,
+            onImageClick = { onImageClick(it.toUri()) },
             modifier = Modifier,
             contentPadding = contentPadding,
         )
@@ -218,6 +220,7 @@ fun SharedAvatarNicknameContent(
     animatedContentScope: AnimatedContentScope,
     contentPadding: PaddingValues,
     onProfilePictureClick: (Uri) -> Unit,
+    onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ): Unit = with(sharedTransitionScope) {
     Column(
@@ -239,13 +242,14 @@ fun SharedAvatarNicknameContent(
 
         Spacer(Modifier.height(16.dp))
 
-        AnimatedStateContent(state = state)
+        AnimatedStateContent(state = state, onImageClick = onImageClick)
     }
 }
 
 @Composable
 private fun AnimatedStateContent(
     state: ProfileScreenUiState,
+    onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     AnimatedContent(targetState = state) { state ->
@@ -254,6 +258,7 @@ private fun AnimatedStateContent(
 
             is ProfileScreenUiState.Present -> PresentState(
                 state = state,
+                onImageClick = onImageClick,
                 modifier = modifier,
             )
 
@@ -265,6 +270,7 @@ private fun AnimatedStateContent(
 @Composable
 private fun PresentState(
     state: ProfileScreenUiState.Present,
+    onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -288,9 +294,10 @@ private fun PresentState(
 
         Spacer(Modifier.height(24.dp))
 
-        Text(
-            text = state.profile.description.string,
-            style = MaterialTheme.typography.bodyLarge,
+        ProfileMarkdown(
+            markdown = state.profile.description.string,
+            onImageClick = onImageClick,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -403,7 +410,6 @@ private fun openSocialLink(context: Context, socialLink: SocialLink) {
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun FriendProfileDropdownMenu(
     socialLink: SocialLink?,
     onRemoveFriendDialogShow: () -> Unit,

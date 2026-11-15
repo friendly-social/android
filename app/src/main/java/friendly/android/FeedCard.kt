@@ -1,10 +1,8 @@
 package friendly.android
 
 import android.net.Uri
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,7 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults.elevatedCardElevation
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -36,11 +33,6 @@ import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,11 +40,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import coil3.compose.SubcomposeAsyncImage
 import friendly.sdk.Interest
 import friendly.sdk.Nickname
@@ -64,7 +55,7 @@ fun FeedCard(
     entry: FeedEntry,
     like: (FeedEntry) -> Unit,
     dislike: (FeedEntry) -> Unit,
-    onProfilePictureClick: (Uri) -> Unit,
+    onImageClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -76,20 +67,19 @@ fun FeedCard(
                 entry = entry,
                 like = like,
                 dislike = dislike,
-                onProfilePictureClick = onProfilePictureClick,
+                onImageClick = onImageClick,
                 modifier = Modifier.fillMaxSize(),
             )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FeedCardContent(
     entry: FeedEntry,
     like: (FeedEntry) -> Unit,
     dislike: (FeedEntry) -> Unit,
-    onProfilePictureClick: (Uri) -> Unit,
+    onImageClick: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
@@ -104,7 +94,7 @@ private fun FeedCardContent(
                 avatarUri = entry.avatarUri,
                 isExtendedNetwork = entry.isExtendedNetwork,
                 isRequest = entry.isRequest,
-                onProfilePictureClick = onProfilePictureClick,
+                onProfilePictureClick = onImageClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f),
@@ -114,18 +104,25 @@ private fun FeedCardContent(
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
                 Column {
-                    ExpandableDescription(
+                    ProfileDescription(
                         description = entry.description,
-                        expandText = stringResource(R.string.expand),
                         interests = entry.interests,
-                        collapsedMaxLine = 7,
+                        onImageClick = { onImageClick(it.toUri()) },
                         modifier = Modifier.fillMaxWidth(),
                     )
 
-                    Spacer(Modifier.height(96.dp))
+                    Spacer(Modifier.height(128.dp))
                 }
             }
         }
+
+        FadingEdgesOverlay(
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier
+                .height(128.dp)
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter),
+        )
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -184,27 +181,16 @@ private fun FeedCardContent(
 }
 
 @Composable
-fun ExpandableDescription(
+private fun ProfileDescription(
     description: UserDescription,
-    expandText: String,
     interests: List<Interest>,
+    onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
-    collapsedMaxLine: Int = 7,
 ) {
-    val text = description.string
-    var isExpanded by remember { mutableStateOf(false) }
-    var isClickable by remember { mutableStateOf(false) }
-    var lastCharacterIndex by remember { mutableIntStateOf(0) }
-
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = modifier
             .padding(horizontal = 8.dp)
-            .clickable(
-                onClick = { isExpanded = true },
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            )
             .clip(MaterialTheme.shapes.medium),
     ) {
         Column(Modifier.padding(vertical = 16.dp)) {
@@ -212,49 +198,13 @@ fun ExpandableDescription(
 
             Spacer(Modifier.height(8.dp))
 
-            val annotatedText = buildAnnotatedString {
-                if (isClickable) {
-                    if (isExpanded) {
-                        append(text)
-                    } else {
-                        val adjustText = text
-                            .take(lastCharacterIndex)
-                            .dropLast(expandText.length)
-                            .dropLastWhile { it.isWhitespace() || it == '.' }
-
-                        append(adjustText)
-                    }
-                } else {
-                    append(text)
-                }
-            }
-
-            Text(
-                text = annotatedText,
-                maxLines = if (isExpanded) Int.MAX_VALUE else collapsedMaxLine,
-                onTextLayout = { textLayoutResult ->
-                    if (!isExpanded && textLayoutResult.hasVisualOverflow) {
-                        isClickable = true
-                        lastCharacterIndex = textLayoutResult
-                            .getLineEnd(collapsedMaxLine - 1)
-                    }
-                },
-                style = MaterialTheme.typography.bodyMedium,
+            ProfileMarkdown(
+                markdown = description.string,
+                onImageClick = onImageClick,
                 modifier = Modifier
-                    .padding(horizontal = 20.dp)
-                    .animateContentSize(),
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
             )
-            if (isClickable && !isExpanded) {
-                Text(
-                    text = expandText,
-                    fontWeight = FontWeight.Black,
-                    textAlign = TextAlign.End,
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
-                )
-            }
         }
     }
 }
@@ -354,7 +304,6 @@ private fun Interests(interests: List<Interest>) {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun Avatar(
     userId: UserId,
