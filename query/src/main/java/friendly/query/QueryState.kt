@@ -1,5 +1,12 @@
 package friendly.query
 
+// TODO:
+//  this state management looks very dumb…
+//  possible solution:
+//      Loading
+//      Error
+//      Present(isRefreshing, isError, isCached)
+
 public data class QueryState<T>(
     val item: T?,
     val fetch: FetchStatus,

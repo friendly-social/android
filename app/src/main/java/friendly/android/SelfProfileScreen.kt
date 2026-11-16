@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -33,8 +34,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,25 +49,22 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import friendly.android.SelfProfileScreenUiState.Present
-import friendly.android.SelfProfileScreenViewModel.UserProfile
+import friendly.android.SelfProfileScreenUiState.Idle
+import friendly.query.QueryState
+import friendly.sdk.FileDescriptor
 import friendly.sdk.Interest
+import friendly.sdk.UserDetails
 import friendly.android.FriendlyNavGraph.Home.EditProfile as EditProfileRoute
 
-private val SelfProfileScreenUiState.unlinkedEmailBadgeVisible: Boolean
-    get() = if (this is Present) profile.email == null else false
+private val UserDetails.unlinkedEmailBadgeVisible: Boolean
+    get() = this.email == null
 
 sealed interface SelfProfileScreenUiState {
-    data class Present(val profile: UserProfile, val isLoggingOut: Boolean) :
-        SelfProfileScreenUiState
-
-    data object Loading : SelfProfileScreenUiState
-
-    data object Error : SelfProfileScreenUiState
+    data class Idle(val isLoggingOut: Boolean) : SelfProfileScreenUiState
 }
 
 private val SelfProfileScreenUiState.isLoggingOut
-    get() = (this as? Present)?.isLoggingOut ?: false
+    get() = (this as? Idle)?.isLoggingOut ?: false
 
 @Composable
 fun SelfProfileScreen(
@@ -79,91 +79,184 @@ fun SelfProfileScreen(
     var signOutDialogVisible by remember { mutableStateOf(false) }
     var linkEmailDialogVisible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { vm.load() }
+    val queryState by vm.profileQuery.data.collectAsState()
+    val profile = queryState.item
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {},
-                actions = {
-                    val state = state
-                    if (state is Present) {
-                        IconButton(
-                            onClick = {
-                                onEditProfileClick(state.toEditRoute())
-                            },
-                        ) {
-                            Icon(
-                                painter = painterResource(
-                                    R.drawable.ic_edit_outlined,
-                                ),
-                                contentDescription = null,
-                            )
-                        }
-                    }
+    val pullToRefreshState = rememberPullToRefreshState()
 
-                    if (state.unlinkedEmailBadgeVisible) {
-                        IconButton(
-                            onClick = { linkEmailDialogVisible = true },
-                        ) {
-                            BadgedBox(
-                                badge = { Badge() },
-                            ) {
-                                Icon(
-                                    painter = painterResource(
-                                        R.drawable.ic_mail_outlined,
-                                    ),
-                                    contentDescription = null,
-                                )
-                            }
-                        }
-                    }
+    val isRefreshing = remember(queryState) {
+        queryState.fetch is Refreshing
+    }
 
-                    IconButton(
-                        onClick = { signOutDialogVisible = true },
-                    ) {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        state = pullToRefreshState,
+        onRefresh = vm.profileQuery::refresh,
+        indicator = {
+            LoadingIndicator(
+                modifier = Modifier
+                    .safeDrawingPadding()
+                    .align(Alignment.TopCenter),
+                isRefreshing = isRefreshing,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                state = pullToRefreshState,
+            )
+        },
+        modifier = modifier
+            .padding(contentPadding)
+            .fillMaxSize(),
+    ) {
+        Scaffold(
+            topBar = {
+                TopBar(
+                    state = state,
+                    profile = profile,
+                    onEditProfileClick = {
+                        profile
+                            ?.toEditRoute(vm::fileUri)
+                            ?.let(onEditProfileClick)
+                    },
+                    onSignOutClick = { signOutDialogVisible = true },
+                    onLinkEmailClick = { linkEmailDialogVisible = true },
+                    modifier = Modifier,
+                )
+            },
+            modifier = Modifier.fillMaxSize(),
+        ) { innerPadding ->
+            ScaffoldContent(
+                state = state,
+                vm = vm,
+                contentPadding = contentPadding,
+                onProfilePictureClick = onProfilePictureClick,
+                onSignOut = onSignOut,
+                queryState = queryState,
+                profile = profile,
+                signOutDialogVisible = signOutDialogVisible,
+                linkEmailDialogVisible = linkEmailDialogVisible,
+                onSignOutDialogVisible = { signOutDialogVisible = it },
+                onLinkEmailAlertDialog = { linkEmailDialogVisible = it },
+                onEditProfileClick = {
+                    val route = profile?.toEditRoute(vm::fileUri)
+                    route?.let(onEditProfileClick)
+                },
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TopBar(
+    state: SelfProfileScreenUiState,
+    profile: UserDetails?,
+    onEditProfileClick: () -> Unit,
+    onSignOutClick: () -> Unit,
+    onLinkEmailClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TopAppBar(
+        title = {},
+        actions = {
+            if (state is Idle) {
+                IconButton(onClick = onEditProfileClick) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_edit_outlined),
+                        contentDescription = null,
+                    )
+                }
+            }
+
+            if (profile?.unlinkedEmailBadgeVisible ?: false) {
+                IconButton(onClick = onLinkEmailClick) {
+                    BadgedBox(badge = { Badge() }) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_logout),
+                            painter = painterResource(
+                                R.drawable.ic_mail_outlined,
+                            ),
                             contentDescription = null,
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    scrolledContainerColor =
-                    MaterialTheme.colorScheme.surfaceContainer,
-                ),
-            )
+                }
+            }
+
+            IconButton(onClick = onSignOutClick) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_logout),
+                    contentDescription = null,
+                )
+            }
         },
-        modifier = modifier.fillMaxSize(),
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-        ) {
-            LinkEmailAlertDialog(
-                visible = linkEmailDialogVisible,
-                onAlertVisibility = { newValue ->
-                    linkEmailDialogVisible = newValue
-                },
-                onEditProfileClick = {
-                    val route = (state as? Present)?.let(Present::toEditRoute)
-                    route?.let(onEditProfileClick)
-                },
-            )
+        colors = TopAppBarDefaults.topAppBarColors(
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+        ),
+        modifier = modifier,
+    )
+}
 
-            SignOutAlertDialog(
-                visible = signOutDialogVisible,
-                isLoggingOut = state.isLoggingOut,
-                onAlertVisibility = { newValue ->
-                    signOutDialogVisible = newValue
-                },
-                vm = vm,
-                onSignOut = onSignOut,
-            )
+@Composable
+private fun ScaffoldContent(
+    vm: SelfProfileScreenViewModel,
+    queryState: QueryState<UserDetails>,
+    profile: UserDetails?,
+    signOutDialogVisible: Boolean,
+    onSignOutDialogVisible: (Boolean) -> Unit,
+    linkEmailDialogVisible: Boolean,
+    onLinkEmailAlertDialog: (Boolean) -> Unit,
+    onEditProfileClick: () -> Unit,
+    onSignOut: () -> Unit,
+    onProfilePictureClick: (String) -> Unit,
+    contentPadding: PaddingValues,
+    state: SelfProfileScreenUiState,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier,
+    ) {
+        LinkEmailAlertDialog(
+            visible = linkEmailDialogVisible,
+            onAlertVisibility = onLinkEmailAlertDialog,
+            onEditProfileClick = onEditProfileClick,
+        )
 
-            when (val state = state) {
-                is SelfProfileScreenUiState.Loading -> {
+        SignOutAlertDialog(
+            visible = signOutDialogVisible,
+            isLoggingOut = state.isLoggingOut,
+            onAlertVisibility = onSignOutDialogVisible,
+            vm = vm,
+            onSignOut = onSignOut,
+        )
+
+        if (profile != null) {
+            LoadedSelfProfileState(
+                profile = profile,
+                onImageClick = { uri ->
+                    onProfilePictureClick(uri.toString())
+                },
+                contentPadding = contentPadding,
+                modifier = Modifier.fillMaxSize(),
+                fileUri = vm::fileUri,
+            )
+        } else {
+            when (queryState.fetch) {
+                is QueryState.FetchStatus.Idle -> {
+                    if (queryState.error) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            Text(
+                                text = stringResource(
+                                    R.string.profile_screen_error_text,
+                                ),
+                            )
+                        }
+                    }
+                }
+
+                is Loading -> {
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.fillMaxSize(),
@@ -172,23 +265,7 @@ fun SelfProfileScreen(
                     }
                 }
 
-                is Present -> {
-                    LoadedSelfProfileState(
-                        state = state,
-                        onImageClick = { uri ->
-                            onProfilePictureClick(uri.toString())
-                        },
-                        contentPadding = contentPadding,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-
-                is SelfProfileScreenUiState.Error ->
-                    Text(
-                        text = stringResource(
-                            R.string.profile_screen_error_text,
-                        ),
-                    )
+                is Refreshing -> TODO()
             }
         }
     }
@@ -231,10 +308,11 @@ fun LinkEmailAlertDialog(
 
 @Composable
 private fun LoadedSelfProfileState(
-    state: Present,
+    profile: UserDetails,
     onImageClick: (Uri) -> Unit,
+    fileUri: (FileDescriptor) -> Uri?,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues.Zero,
+    contentPadding: PaddingValues = Zero,
 ) {
     Column(
         modifier = modifier
@@ -253,13 +331,13 @@ private fun LoadedSelfProfileState(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 UserAvatar(
-                    nickname = state.profile.nickname,
-                    userId = state.profile.userId,
-                    uri = state.profile.avatar,
+                    nickname = profile.nickname,
+                    userId = profile.id,
+                    uri = profile.avatar?.let(fileUri),
                     style = Large,
                     modifier = Modifier.clickable(
                         onClick = {
-                            state.profile.avatar?.let(onImageClick)
+                            profile.avatar?.let(fileUri)?.let(onImageClick)
                         },
                         indication = null,
                         interactionSource = null,
@@ -269,7 +347,7 @@ private fun LoadedSelfProfileState(
                 Spacer(Modifier.height(24.dp))
 
                 Text(
-                    text = state.profile.nickname.string,
+                    text = profile.nickname.string,
                     style = MaterialTheme.typography.headlineSmall,
                 )
             }
@@ -285,7 +363,7 @@ private fun LoadedSelfProfileState(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            state.profile.interests.raw.forEachIndexed { _, interest ->
+            profile.interests.raw.forEachIndexed { _, interest ->
                 InterestChip(interest)
             }
         }
@@ -293,15 +371,13 @@ private fun LoadedSelfProfileState(
         Spacer(Modifier.height(24.dp))
 
         ProfileMarkdown(
-            markdown = state.profile.description.string,
+            markdown = profile.description.string,
             onImageClick = { onImageClick(it.toUri()) },
             modifier = Modifier.fillMaxWidth(),
         )
 
         Spacer(
-            Modifier
-                .padding(contentPadding.takeBottom())
-                .height(32.dp),
+            modifier = Modifier.padding(contentPadding.takeBottom()),
         )
     }
 }
@@ -360,15 +436,17 @@ private fun SignOutAlertDialog(
     }
 }
 
-private fun Present.toEditRoute(): EditProfileRoute {
-    val state = this
+private fun UserDetails.toEditRoute(
+    fileUri: (FileDescriptor) -> Uri?,
+): EditProfileRoute {
+    val profile = this
     return EditProfileRoute(
-        nickname = state.profile.nickname.serializable(),
-        description = state.profile.description.serializable(),
-        interests = state.profile.interests.raw.map(Interest::serializable),
-        socialLink = state.profile.socialLink?.serializable(),
-        email = state.profile.email?.serializable(),
-        userId = state.profile.userId.serializable(),
-        avatarUri = state.profile.avatar?.toString(),
+        nickname = profile.nickname.serializable(),
+        description = profile.description.serializable(),
+        interests = profile.interests.raw.map(Interest::serializable),
+        socialLink = profile.socialLink?.serializable(),
+        email = profile.email?.serializable(),
+        userId = profile.id.serializable(),
+        avatarUri = profile.avatar?.let(fileUri)?.toString(),
     )
 }

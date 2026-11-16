@@ -4,13 +4,19 @@ import android.net.Uri
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import friendly.query.QueryClient
+import friendly.query.QueryFetchResult
+import friendly.query.QueryKey
+import friendly.query.query
 import friendly.sdk.Email
-import friendly.sdk.FriendlyFilesClient
+import friendly.sdk.FileDescriptor
+import friendly.sdk.FriendlyClient
 import friendly.sdk.InterestList
 import friendly.sdk.Nickname
 import friendly.sdk.SocialLink
 import friendly.sdk.UserAccessHash
 import friendly.sdk.UserDescription
+import friendly.sdk.UserDetails
 import friendly.sdk.UserId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,38 +25,29 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 private data class SelfProfileScreenVmState(
-    val profile: SelfProfileScreenViewModel.UserProfile? = null,
-    val isError: Boolean = false,
-    val isLoading: Boolean = true,
     val isLoggingOut: Boolean = false,
 ) {
-    fun toUiState(): SelfProfileScreenUiState {
-        if (isLoading) return SelfProfileScreenUiState.Loading
-        if (isError) return SelfProfileScreenUiState.Error
-
-        if (profile != null) {
-            return SelfProfileScreenUiState.Present(profile, isLoggingOut)
-        }
-
-        return SelfProfileScreenUiState.Error
-    }
+    fun toUiState(): SelfProfileScreenUiState =
+        SelfProfileScreenUiState.Idle(isLoggingOut)
 }
 
 class SelfProfileScreenViewModel(
     private val authStorage: AuthStorage,
-    private val selfProfileStorage: SelfProfileStorage,
     private val logout: LogoutUseCase,
-    private val filesClient: FriendlyFilesClient,
+    private val client: FriendlyClient,
+    private val db: FriendlyDatabase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SelfProfileScreenVmState())
+
     val state: StateFlow<SelfProfileScreenUiState> = _state
         .map(SelfProfileScreenVmState::toUiState)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = SelfProfileScreenUiState.Loading,
+            initialValue = SelfProfileScreenUiState.Idle(false),
         )
 
     data class UserProfile(
@@ -64,33 +61,34 @@ class SelfProfileScreenViewModel(
         val email: Email?,
     )
 
-    fun load() {
-        _state.update { old -> old.copy(isLoading = true) }
+    val queryClient = QueryClient<UserDetails>(
+        cache = roomQueryCache(
+            dao = db.queryItemDao(),
+            itemSerializable = { it.serializable() },
+            itemTyped = { it.typed() },
+        ),
+        scope = viewModelScope,
+    )
 
-        val auth = authStorage.getAuthOrNull()
+    val profileQuery = queryClient.query(
+        key = QueryKey("self-profile"),
+        retriesOnRefresh = 3,
+        retryDelay = 300.milliseconds,
+        fetch = {
+            when (val result = client.users.details(authStorage.getAuth())) {
+                is IOError,
+                is ServerError,
+                is Unauthorized,
+                -> {
+                    QueryFetchResult.Failure
+                }
 
-        if (auth == null) {
-            _state.update { old -> old.copy(isError = true) }
-            return
-        }
-        viewModelScope.launch {
-            val profile: UserProfile? = getUserProfile()
-
-            if (profile == null) {
-                _state.update { old ->
-                    old.copy(isError = true)
+                is Success -> {
+                    QueryFetchResult.Success(value = result.details)
                 }
             }
-
-            _state.update { old ->
-                old.copy(
-                    profile = profile,
-                    isError = false,
-                    isLoading = false,
-                )
-            }
-        }
-    }
+        },
+    )
 
     fun logout(onSignOut: () -> Unit) {
         viewModelScope.launch {
@@ -103,22 +101,6 @@ class SelfProfileScreenViewModel(
         }
     }
 
-    private fun getUserProfile(): UserProfile? {
-        val cache = selfProfileStorage.getCache() ?: return null
-
-        val avatarUrl = cache.avatar?.let { avatar ->
-            filesClient.getEndpoint(avatar).string.toUri()
-        }
-
-        return UserProfile(
-            nickname = cache.nickname,
-            userId = cache.userId,
-            description = cache.description,
-            avatar = avatarUrl,
-            interests = cache.interests,
-            socialLink = cache.socialLink,
-            email = cache.email,
-            userAccessHash = null,
-        )
-    }
+    fun fileUri(descriptor: FileDescriptor): Uri =
+        client.files.getEndpoint(descriptor).string.toUri()
 }

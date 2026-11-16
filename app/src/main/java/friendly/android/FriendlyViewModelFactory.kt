@@ -49,8 +49,8 @@ class FriendlyViewModelFactory(
         if (isSelfProfileVm) {
             return SelfProfileScreenViewModel(
                 authStorage = authStorage,
-                selfProfileStorage = selfProfileStorage,
-                filesClient = client.files,
+                client = client,
+                db = database,
                 logout = LogoutUseCase(
                     authStorage = authStorage,
                     selfProfileStorage = selfProfileStorage,
