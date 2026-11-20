@@ -64,6 +64,7 @@ import kotlin.reflect.typeOf
 // TODO: plans for this god file
 //  - dsl for navigation to specific destinations
 //  - make navigation operations live in the same file per each destination
+//  - related: introduce "namespaces" through objects or feature modules here
 
 private val addFriendDeepLink = navDeepLink {
     uriPattern = "friendly://add/{userId}/{friendToken}"
@@ -198,6 +199,7 @@ val CreatePostDialogTypeMap = mapOf(
 private const val VerificationCodeStateKey = "verification_code_state"
 private const val PickedInterestsStateKey = "picked_interests_state"
 private const val PostCreatedStateKey = "maximized_post_editor_state"
+const val ProfileUpdatedStateKey = "profile_updated"
 
 @Composable
 fun FriendlyNavGraph(
@@ -534,11 +536,26 @@ fun FriendlyNavGraph(
                     )
                 }
 
-                composable<Home.SelfProfile> {
+                composable<Home.SelfProfile> { backStackEntry ->
+                    val vm = viewModel<SelfProfileScreenViewModel>(
+                        factory = viewModelFactory,
+                    )
+
+                    val profileUpdateState by backStackEntry.savedStateHandle
+                        .getStateFlow(ProfileUpdatedStateKey, false)
+                        .collectAsStateWithLifecycle()
+
+                    LaunchedEffect(profileUpdateState) {
+                        if (profileUpdateState) {
+                            vm.profileQuery.refresh()
+                            val savedStateHandle =
+                                backStackEntry.savedStateHandle
+                            savedStateHandle[ProfileUpdatedStateKey] = false
+                        }
+                    }
+
                     SelfProfileScreen(
-                        vm = viewModel<SelfProfileScreenViewModel>(
-                            factory = viewModelFactory,
-                        ),
+                        vm = vm,
                         onSignOut = {
                             navController.navigate(Welcome) {
                                 popUpTo(navController.graph.id)
@@ -595,7 +612,12 @@ fun FriendlyNavGraph(
                     }
 
                     EditProfileScreen(
-                        onBack = { navController.popBackStack() },
+                        onBack = {
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.set(ProfileUpdatedStateKey, true)
+                            navController.popBackStack()
+                        },
                         onSendEmailCode = { email ->
                             navController.navigate(
                                 Home.CodeConfirmationSheet(
