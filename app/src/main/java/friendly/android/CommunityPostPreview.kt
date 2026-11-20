@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -147,8 +148,6 @@ private fun PlainPostViewer(
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = MaxPreviewHeight)
-                    .clipToBounds()
                     .onSizeChanged { previewBoxHeight = it.height },
             ) {
                 val imageWidth = maxWidth
@@ -157,11 +156,18 @@ private fun PlainPostViewer(
                         imageWidth = imageWidth,
                         details = details,
                         onImageClick = onImageClick,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = MaxPreviewHeight)
+                            .clipToBounds()
+                            .wrapContentHeight(
+                                align = Alignment.Top,
+                                unbounded = true,
+                            ),
                     )
 
                     with(LocalDensity.current) {
-                        if (previewBoxHeight.toDp() == MaxPreviewHeight) {
+                        if (previewBoxHeight.toDp() >= MaxPreviewHeight) {
                             FadingEdgesOverlay(
                                 color = MaterialTheme.colorScheme.background,
                                 modifier = Modifier
