@@ -17,7 +17,6 @@ import friendly.android.UnlinkEmailUseCase.UnlinkResult
 import friendly.sdk.Email
 import friendly.sdk.Field
 import friendly.sdk.FileDescriptor
-import friendly.sdk.FilePreuploadDescriptor
 import friendly.sdk.FriendlyFilesClient
 import friendly.sdk.FriendlyUsersClient
 import friendly.sdk.Interest
@@ -250,7 +249,7 @@ class EditProfileScreenViewModel(
 
         viewModelScope.launch {
             val uploadingResult = uploadAvatar(
-                avatarUri = uri,
+                uri = uri,
                 block = { flow ->
                     flow.collect { update ->
                         _state.setStartAvatarUploadingState(percentage = update)
@@ -260,8 +259,7 @@ class EditProfileScreenViewModel(
             when (uploadingResult) {
                 is Success -> {
                     _state.setStartAvatarUploadedState(
-                        filePreuploadDescriptor =
-                        uploadingResult.fileDescriptor,
+                        fileDescriptor = uploadingResult.descriptor,
                         filesClient = filesClient,
                     )
                 }
@@ -399,19 +397,11 @@ private fun EditProfileScreenVmStateFlow.setStartAvatarUploadingState(
 }
 
 private fun EditProfileScreenVmStateFlow.setStartAvatarUploadedState(
-    filePreuploadDescriptor: FilePreuploadDescriptor,
+    fileDescriptor: FileDescriptor,
     filesClient: FriendlyFilesClient,
 ) {
     val currentProfile = this.value.currentProfile
-
-    val fileDescriptor = filePreuploadDescriptor.regular()
-
-    val endpoint = filesClient
-        // todo: contribute appropriate endpoint to the sdk
-        // todo 2: introduce auth-based file uploading
-        .getEndpoint(
-            descriptor = fileDescriptor,
-        )
+    val endpoint = filesClient.getEndpoint(descriptor = fileDescriptor)
     val newProfile = currentProfile.copy(
         avatar = AvatarState.Uploaded(
             fileDescriptor = fileDescriptor,

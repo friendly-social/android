@@ -62,8 +62,13 @@ class MainActivity : ComponentActivity() {
                 authStorage = authStorage,
                 profileStorage = selfProfileStorage,
             ),
+            avatarPreuploadUseCase = AvatarPreuploadUseCase(
+                client = client,
+                context = context,
+            ),
             avatarUploadUseCase = AvatarUploadUseCase(
                 client = client,
+                authStorage = authStorage,
                 context = context,
             ),
             sendAuthCodeUseCase = SendEmailAuthVerificationCodeUseCase(

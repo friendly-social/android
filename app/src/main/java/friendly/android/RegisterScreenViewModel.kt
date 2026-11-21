@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import friendly.android.AvatarPreuploadUseCase.UploadingPercentage
 import friendly.android.RegisterScreenUiEvent.SnackbarEvent
 import friendly.android.RegisterScreenUiEvent.SnackbarEvent.SnackbarEventKind
 import friendly.android.RegisterScreenUiState.AvatarState
@@ -12,7 +13,8 @@ import friendly.android.RegisterScreenUiState.AvatarState.Uploaded
 import friendly.android.RegisterUseCase.RegistrationResult.NetworkError
 import friendly.android.RegisterUseCase.RegistrationResult.ServerError
 import friendly.android.RegisterUseCase.RegistrationResult.Success
-import friendly.sdk.FileDescriptor
+import friendly.sdk.FilePreuploadDescriptor
+import friendly.sdk.FriendlyFilesClient.PreuploadFileResult
 import friendly.sdk.Interest
 import friendly.sdk.InterestList
 import friendly.sdk.Nickname
@@ -34,7 +36,7 @@ private data class RegisterState(
     val pickedInterests: List<String>,
     val isGenerating: Boolean,
     val avatar: AvatarState,
-    val avatarFileDescriptor: FileDescriptor?,
+    val avatarFileDescriptor: FilePreuploadDescriptor?,
 ) {
     fun toUiState(): RegisterScreenUiState {
         if (isGenerating) return RegisterScreenUiState.Generating
@@ -49,7 +51,7 @@ private data class RegisterState(
 }
 
 class RegisterScreenViewModel(
-    private val uploadAvatar: AvatarUploadUseCase,
+    private val uploadAvatar: AvatarPreuploadUseCase,
     private val register: RegisterUseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(
@@ -132,7 +134,7 @@ class RegisterScreenViewModel(
                 description = description,
                 interests = interests,
                 socialLink = socialLink,
-                avatar = avatarFileDescriptor?.preupload(),
+                avatar = avatarFileDescriptor,
             )
             when (result) {
                 NetworkError -> {
@@ -158,7 +160,7 @@ class RegisterScreenViewModel(
         _state.update { old ->
             old.copy(
                 avatar = AvatarState.Uploading(
-                    progress = AvatarUploadUseCase.UploadingPercentage(0.0f),
+                    progress = UploadingPercentage(0f),
                     uri = uri,
                 ),
             )
@@ -186,33 +188,23 @@ class RegisterScreenViewModel(
         }
 
         when (uploadingResult) {
-            is AvatarUploadUseCase.UploadingResult.Success -> {
+            is PreuploadFileResult.Success -> {
                 _state.update { old ->
                     old.copy(
                         avatar = Uploaded(uri),
-                        avatarFileDescriptor =
-                        uploadingResult.fileDescriptor.regular(),
+                        avatarFileDescriptor = uploadingResult.descriptor,
                     )
                 }
             }
 
-            is AvatarUploadUseCase.UploadingResult.CompressionFailure -> {
-                _state.update { old ->
-                    _events.emit(
-                        SnackbarEvent(SnackbarEventKind.CompressionFailure),
-                    )
-                    old.copy(avatar = None)
-                }
-            }
-
-            is AvatarUploadUseCase.UploadingResult.IOError -> {
+            is PreuploadFileResult.IOError -> {
                 _state.update { old ->
                     _events.emit(SnackbarEvent(SnackbarEventKind.NetworkError))
                     old.copy(avatar = None)
                 }
             }
 
-            is AvatarUploadUseCase.UploadingResult.ServerError -> {
+            is PreuploadFileResult.ServerError -> {
                 _state.update { old ->
                     _events.emit(SnackbarEvent(SnackbarEventKind.ServerError))
                     old.copy(avatar = None)

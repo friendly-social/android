@@ -43,7 +43,7 @@ class RegisterUseCase(
                     nickname = nickname,
                     userId = authorization.id,
                     description = description,
-                    avatar = avatar?.regular(),
+                    avatar = avatar?.common(),
                     interests = interests,
                     socialLink = socialLink,
                 )

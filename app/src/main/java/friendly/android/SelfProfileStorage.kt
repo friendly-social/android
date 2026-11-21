@@ -105,7 +105,7 @@ class SelfProfileStorage(context: Context) {
         nickname: Nickname,
         userId: UserId,
         description: UserDescription,
-        avatar: FileDescriptor?,
+        avatar: CommonFileDescriptor?,
         interests: InterestList,
         socialLink: SocialLink?,
         email: Email? = null,

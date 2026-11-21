@@ -38,7 +38,7 @@ class SignInUseCase(
                     nickname = details.nickname,
                     userId = details.id,
                     description = details.description,
-                    avatar = details.avatar,
+                    avatar = details.avatar?.common(),
                     interests = details.interests,
                     socialLink = details.socialLink,
                     email = details.email,

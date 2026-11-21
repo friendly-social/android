@@ -1,7 +1,7 @@
 package friendly.android
 
 import android.net.Uri
-import friendly.android.AvatarUploadUseCase.UploadingPercentage
+import friendly.android.AvatarPreuploadUseCase.UploadingPercentage
 import friendly.android.RegisterScreenUiState.AvatarState
 import friendly.sdk.Nickname
 import friendly.sdk.UserDescription

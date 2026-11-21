@@ -11,6 +11,7 @@ class FriendlyViewModelFactory(
     private val linkEmailUseCase: LinkEmailUseCase,
     private val unlinkEmailUseCase: UnlinkEmailUseCase,
     private val registerUseCase: RegisterUseCase,
+    private val avatarPreuploadUseCase: AvatarPreuploadUseCase,
     private val avatarUploadUseCase: AvatarUploadUseCase,
     private val confirmCodeUseCase: ConfirmCodeUseCase,
     private val sendAuthCodeUseCase: SendEmailAuthVerificationCodeUseCase,
@@ -34,7 +35,7 @@ class FriendlyViewModelFactory(
         if (modelClass == RegisterScreenViewModel::class) {
             return RegisterScreenViewModel(
                 register = registerUseCase,
-                uploadAvatar = avatarUploadUseCase,
+                uploadAvatar = avatarPreuploadUseCase,
             ) as T
         }
         if (modelClass == ProfileScreenViewModel::class) {
