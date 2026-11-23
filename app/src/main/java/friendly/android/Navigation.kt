@@ -67,7 +67,7 @@ import kotlin.reflect.typeOf
 //  - related: introduce "namespaces" through objects or feature modules here
 
 private val addFriendDeepLink = navDeepLink {
-    uriPattern = "friendly://add/{userId}/{friendToken}"
+    uriPattern = "friendly://add/{friendToken}"
 }
 
 class JsonNavType<T>(
@@ -733,8 +733,6 @@ fun FriendlyNavGraph(
             composable<AddFriendByToken>(
                 deepLinks = listOf(addFriendDeepLink),
             ) { backStackEntry ->
-                val userId = backStackEntry.arguments
-                    ?.getString("userId") ?: error("no userId")
                 val friendToken = backStackEntry.arguments
                     ?.getString("friendToken") ?: error("no friendToken")
 
@@ -747,7 +745,6 @@ fun FriendlyNavGraph(
                         }
                     },
                     friendToken = FriendToken.orThrow(friendToken),
-                    userId = UserId(userId.toLong()),
                     vm = viewModel<AddFriendByTokenScreenViewModel>(
                         factory = viewModelFactory,
                     ),

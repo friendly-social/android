@@ -26,6 +26,7 @@
     <string name="add_friend_by_token_unauthorized_text">You should authorize to start adding friends</string>
     <string name="unknown_error_occurred">Unknown error occurred.</string>
     <string name="add_friend_by_token_success_text">You are friends now!</string>
+    <string name="add_friend_by_token_failure_text">An error occurred during adding this friend</string>
     <string name="profile_screen_error_text">An error occurred during loading the profile screen</string>
     <string name="go_home">Go home</string>
     <string name="go_back">Go back</string>
@@ -45,7 +46,8 @@
     <string name="log_out">Log out</string>
     <string name="log_out_alert_text">Are you sure you want to log out? You could permanently lose your account if you haven’t linked an email address.</string>
     <string name="attention">Attention</string>
-    <string name="share_profile_qr_code_description">Your friend should scan this QR code. The QR code is only available once.</string>
+    <string name="share_profile_qr_code_description">Your friend should scan this QR code. The QR code will live only 24H</string>
+    <string name="share_profile_qr_code_description_with_expiration">Your friend should scan this QR code. The QR code will expire in %1$s</string>
     <string name="hold_to_copy">Hold to copy</string>
     <string name="your_social_link">Your social link (https://…)</string>
     <string name="remove_friend">Remove friend</string>
@@ -120,7 +122,7 @@
     <string name="valid_email_address">Valid email address</string>
     <string name="you_should_enter_a_valid_email_address">You should enter a valid email address</string>
     <string name="activity">Activity</string>
-    <string name="expand_network">Expand network</string>
+    <string name="explore_network">Explore network</string>
     <string name="reply_from">Reply from</string>
     <string name="post">Post</string>
     <string name="replies">Replies</string>
@@ -159,4 +161,8 @@
     <string name="yesterday">Yesterday</string>
     <string name="older">Older</string>
     <string name="new_activity_under_deleted_post">The original post has been deleted</string>
+    <string name="add_friend_by_invite_link">Add friend by invite link</string>
+    <string name="add_friend_by_invite_link_placeholder">https://invite.getfriend.ly/...</string>
+    <string name="add_your_friend_by_invite_link">Add your friend by invite link</string>
+    <string name="add">Add</string>
 </resources>

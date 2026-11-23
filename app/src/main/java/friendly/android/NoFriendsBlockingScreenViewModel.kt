@@ -3,8 +3,6 @@ package friendly.android
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import friendly.android.NoFriendsBlockingScreenUiEvent.SnackbarEvent
-import friendly.sdk.FriendToken
-import friendly.sdk.UserId
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +12,6 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.net.URLDecoder
 import kotlin.time.Duration.Companion.milliseconds
 
 private data class NoFriendsBlockingScreenVmState(
@@ -51,16 +48,16 @@ class NoFriendsBlockingScreenViewModel(
             it.copy(
                 friendLink = ValidatableField(
                     value = newValue,
-                    isValid = isFriendLinkValid(newValue),
+                    isValid = FriendInviteLink.validate(newValue),
                 ),
             )
         }
     }
 
     private suspend fun addFriendByLink() {
-        val parsed = parseFriendLink(_state.value.friendLink.value)
-
-        if (parsed == null) {
+        val friendLink = FriendInviteLink(_state.value.friendLink.value)
+        val friendToken = friendLink.asFriendToken()
+        if (friendToken == null) {
             _events.emit(SnackbarEvent(LinkIsInvalid))
             _state.update { old ->
                 old.copy(
@@ -70,12 +67,7 @@ class NoFriendsBlockingScreenViewModel(
             return
         }
 
-        val (userId, friendToken) = parsed
-
-        val addFriendResult = addFriend(
-            friendToken = friendToken,
-            userId = userId,
-        )
+        val addFriendResult = addFriend(friendToken = friendToken)
 
         when (addFriendResult) {
             is FriendTokenExpired -> {
@@ -110,21 +102,4 @@ class NoFriendsBlockingScreenViewModel(
             _state.update { it.copy(isLoading = false) }
         }
     }
-}
-
-private fun isFriendLinkValid(link: String): Boolean {
-    // TODO: add proper validation
-    return link.isNotBlank()
-}
-
-private fun parseFriendLink(link: String): Pair<UserId, FriendToken>? {
-    val encodedPart = link.split("?reference=")
-        .getOrNull(1) ?: return null
-    val charset = "UTF-8"
-    val decoded = URLDecoder.decode(encodedPart, charset)
-    val segments = decoded.split('/')
-    val userId = segments.getOrNull(1)?.toLongOrNull() ?: return null
-    val friendToken = segments.getOrNull(2) ?: return null
-
-    return UserId(userId) to FriendToken.orThrow(friendToken)
 }

@@ -1,15 +1,19 @@
 package friendly.android
 
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import friendly.android.NetworkScreenUiState.Success.FriendItem
 import friendly.sdk.FriendlyClient
+import friendly.sdk.FriendlyFriendsClient
 import friendly.sdk.FriendlyNetworkClient
 import friendly.sdk.NetworkDetails
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -80,9 +84,17 @@ private data class NetworkScreenVmState(
     }
 }
 
+sealed interface NetworkScreenEvent {
+    data object FriendLinkInvalid : NetworkScreenEvent
+    data object FriendLinkExpired : NetworkScreenEvent
+    data object AddFriendByLinkFailure : NetworkScreenEvent
+    data object AddFriendByLinkSuccess : NetworkScreenEvent
+}
+
 class NetworkScreenViewModel(
     private val client: FriendlyClient,
     private val authStorage: AuthStorage,
+    private val addFriendUseCase: AddFriendUseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(NetworkScreenVmState.Initial)
 
@@ -93,6 +105,13 @@ class NetworkScreenViewModel(
             started = SharingStarted.Eagerly,
             initialValue = NetworkScreenUiState.Loading(),
         )
+
+    private val _events = MutableSharedFlow<NetworkScreenEvent>()
+
+    val events: SharedFlow<NetworkScreenEvent> = _events.shareIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+    )
 
     fun initialize() {
         if (_state.value.friends == null) {
@@ -149,11 +168,48 @@ class NetworkScreenViewModel(
     ): List<FriendItem> = details.friends.map { friend ->
         FriendItem(
             avatar = friend.avatar?.let { avatar ->
-                Uri.parse(client.files.getEndpoint(avatar).string)
+                client.files.getEndpoint(avatar).string.toUri()
             },
             nickname = friend.nickname,
             id = friend.id,
             accessHash = friend.accessHash,
         )
+    }
+
+    fun addFriendByLink(link: String) {
+        viewModelScope.launch {
+            if (!FriendInviteLink.validate(link)) {
+                _events.emit(FriendLinkInvalid)
+            }
+
+            val inviteLink = FriendInviteLink(link)
+
+            val friendToken = inviteLink.asFriendToken()
+
+            if (friendToken == null) {
+                _events.emit(FriendLinkInvalid)
+                return@launch
+            }
+
+            val addFriendResult = addFriendUseCase(friendToken)
+
+            when (addFriendResult) {
+                is FriendlyFriendsClient.AddResult.FriendTokenExpired -> {
+                    _events.emit(FriendLinkExpired)
+                }
+
+                is FriendlyFriendsClient.AddResult.Success -> {
+                    _events.emit(AddFriendByLinkSuccess)
+                    refresh()
+                }
+
+                is FriendlyFriendsClient.AddResult.IOError,
+                is FriendlyFriendsClient.AddResult.ServerError,
+                is FriendlyFriendsClient.AddResult.Unauthorized,
+                -> {
+                    _events.emit(AddFriendByLinkFailure)
+                }
+            }
+        }
     }
 }

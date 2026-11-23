@@ -79,6 +79,7 @@ class FriendlyViewModelFactory(
             return NetworkScreenViewModel(
                 client = client,
                 authStorage = authStorage,
+                addFriendUseCase = addFriendUseCase,
             ) as T
         }
         if (modelClass == ConfirmEmailCodeSheetViewModel::class) {

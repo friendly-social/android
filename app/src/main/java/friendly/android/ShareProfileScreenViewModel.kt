@@ -1,11 +1,10 @@
 package friendly.android
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import friendly.sdk.FriendToken
 import friendly.sdk.FriendlyClient
 import friendly.sdk.FriendlyFriendsClient
-import friendly.sdk.UserId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -13,12 +12,19 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private data class ShareProfileScreenVmState(val shareUrl: String?) {
+private data class ShareProfileScreenVmState(
+    val shareResult: FriendlyFriendsClient.GenerateResult.Success?,
+    val error: Boolean,
+) {
     fun toUiState(): ShareProfileScreenUiState {
-        if (shareUrl == null) {
+        if (shareResult == null) {
+            if (error) return ShareProfileScreenUiState.Error
             return ShareProfileScreenUiState.Generating
         }
-        return ShareProfileScreenUiState.Share(shareUrl)
+        return ShareProfileScreenUiState.Share(
+            shareUrl = buildShareUrl(friendToken = shareResult.token),
+            expiration = shareResult.expiration,
+        )
     }
 }
 
@@ -27,7 +33,7 @@ class ShareProfileScreenViewModel(
     private val client: FriendlyClient,
 ) : ViewModel() {
     private val _state: MutableStateFlow<ShareProfileScreenVmState> =
-        MutableStateFlow(ShareProfileScreenVmState(null))
+        MutableStateFlow(ShareProfileScreenVmState(null, false))
 
     val state = _state
         .map(ShareProfileScreenVmState::toUiState)
@@ -38,29 +44,25 @@ class ShareProfileScreenViewModel(
         )
 
     fun generateUrl() {
-        _state.update { it.copy(shareUrl = null) }
+        _state.update { it.copy(shareResult = null, error = false) }
 
         viewModelScope.launch {
-            val auth = authStorage.getAuthOrNull() ?: return@launch // TODO
-            val friendToken = client.friends.generate(auth)
-            val userId = authStorage.getUserId() ?: return@launch
+            val auth = authStorage.getAuth()
+            when (val result = client.friends.generate(auth)) {
+                is FriendlyFriendsClient.GenerateResult.Success -> {
+                    _state.update { old -> old.copy(shareResult = result) }
+                }
 
-            _state.update { old ->
-                val shareUrl = buildShareUrlOrNull(userId, friendToken)
-                old.copy(shareUrl = shareUrl)
+                is FriendlyFriendsClient.GenerateResult.IOError,
+                is FriendlyFriendsClient.GenerateResult.ServerError,
+                is FriendlyFriendsClient.GenerateResult.Unauthorized,
+                -> {
+                    _state.update { old -> old.copy(error = true) }
+                }
             }
         }
     }
-
-    private fun buildShareUrlOrNull(
-        userId: UserId,
-        friendTokenResult: FriendlyFriendsClient.GenerateResult,
-    ): String? = buildString {
-        val friendToken = (friendTokenResult as? Success)?.token ?: return null
-        val friendTokenString = friendToken.string
-        val userIdLong = userId.long
-        val encodedPart = Uri.encode("add/$userIdLong/$friendTokenString")
-        append("https://friendly-social.github.io/landing/#/?reference=")
-        append(encodedPart)
-    }
 }
+
+private fun buildShareUrl(friendToken: FriendToken): String =
+    "https://invite.getfriend.ly/${friendToken.string}"

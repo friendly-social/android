@@ -6,7 +6,6 @@ import friendly.android.AddFriendByTokenScreenUiEvents.SnackbarEvent
 import friendly.android.AddFriendByTokenScreenUiEvents.SnackbarEvent.SnackbarEventKind.FriendLinkExpired
 import friendly.sdk.FriendToken
 import friendly.sdk.FriendlyFriendsClient
-import friendly.sdk.UserId
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,9 +24,9 @@ class AddFriendByTokenScreenViewModel(
     private val _events = MutableSharedFlow<AddFriendByTokenScreenUiEvents>()
     val events = _events.shareIn(viewModelScope, Eagerly)
 
-    fun add(userId: UserId, friendToken: FriendToken) {
+    fun add(friendToken: FriendToken) {
         viewModelScope.launch {
-            val result = addFriend(friendToken, userId)
+            val result = addFriend(friendToken)
             val finalState = when (result) {
                 is FriendlyFriendsClient.AddResult.FriendTokenExpired -> {
                     _events.emit(SnackbarEvent(FriendLinkExpired))

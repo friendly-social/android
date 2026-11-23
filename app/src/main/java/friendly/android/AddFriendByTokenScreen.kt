@@ -33,7 +33,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import friendly.android.AddFriendByTokenScreenUiEvents.SnackbarEvent
 import friendly.android.AddFriendByTokenScreenUiEvents.SnackbarEvent.SnackbarEventKind
 import friendly.sdk.FriendToken
-import friendly.sdk.UserId
 
 sealed interface AddFriendByTokenScreenUiState {
     data object Waiting : AddFriendByTokenScreenUiState
@@ -79,7 +78,6 @@ fun AddFriendByTokenScreen(
     onNetworkScreen: () -> Unit,
     onGoBack: () -> Unit,
     friendToken: FriendToken,
-    userId: UserId,
     vm: AddFriendByTokenScreenViewModel,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
@@ -93,7 +91,7 @@ fun AddFriendByTokenScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
-        vm.add(userId, friendToken)
+        vm.add(friendToken)
 
         lifecycleOwner.lifecycle.repeatOnLifecycle(STARTED) {
             vm.events.collect { event ->
@@ -127,7 +125,6 @@ fun AddFriendByTokenScreen(
                 AddFriendByTokenScreenUiState.NetworkError -> {
                     NetworkError(
                         vm = vm,
-                        userId = userId,
                         friendToken = friendToken,
                         onGoBack = onGoBack,
                         modifier = Modifier,
@@ -177,7 +174,6 @@ private fun FriendTokenExpired(
 @Composable
 private fun NetworkError(
     vm: AddFriendByTokenScreenViewModel,
-    userId: UserId,
     friendToken: FriendToken,
     onGoBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -187,7 +183,7 @@ private fun NetworkError(
         modifier = modifier,
     ) {
         NetworkErrorBox(
-            onRetry = { vm.add(userId, friendToken) },
+            onRetry = { vm.add(friendToken) },
             modifier = Modifier,
         )
         Spacer(Modifier.height(16.dp))

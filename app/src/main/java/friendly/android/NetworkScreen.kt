@@ -4,7 +4,10 @@ import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,13 +16,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,10 +36,15 @@ import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -45,6 +59,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -55,6 +72,8 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.rememberLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import friendly.android.FriendlyNavGraph.Home
 import friendly.android.NetworkScreenUiState.Success.FriendItem
 import friendly.sdk.Nickname
@@ -103,16 +122,27 @@ fun NetworkScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
 ) {
-    LaunchedEffect(Unit) {
-        vm.initialize()
-    }
-
     val state by vm.state.collectAsState()
 
     val pullToRefreshState = rememberPullToRefreshState()
     val topAppBar = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         rememberTopAppBarState(),
     )
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val lifecycleOwner = rememberLifecycleOwner()
+    val snackbarStrings = snackbarStrings()
+
+    LaunchedEffect(Unit) {
+        vm.initialize()
+
+        lifecycleOwner.lifecycle.repeatOnLifecycle(STARTED) {
+            vm.events.collect { event ->
+                val message = snackbarStrings[event] ?: return@collect
+                snackbarHostState.showSnackbar(message)
+            }
+        }
+    }
 
     PullToRefreshBox(
         isRefreshing = state.isRefreshing,
@@ -142,6 +172,7 @@ fun NetworkScreen(
                 )
             },
             floatingActionButton = { ExpandNetworkFab(onFeed) },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(topAppBar.nestedScrollConnection),
@@ -165,16 +196,16 @@ private fun ExpandNetworkFab(onFeed: () -> Unit) {
     //  the user. also display this amount in the tooltip
     TooltipBox(
         positionProvider =
-        TooltipDefaults.rememberTooltipPositionProvider(
-            TooltipAnchorPosition.Above,
-        ),
+            TooltipDefaults.rememberTooltipPositionProvider(
+                TooltipAnchorPosition.Above,
+            ),
         tooltip = {
             PlainTooltip(
                 modifier =
-                Modifier.semantics {
-                    liveRegion = LiveRegionMode.Assertive
-                    paneTitle = "Expand network"
-                },
+                    Modifier.semantics {
+                        liveRegion = LiveRegionMode.Assertive
+                        paneTitle = "Expand network"
+                    },
             ) {
                 Text("You have 3 friend requests")
             }
@@ -186,15 +217,15 @@ private fun ExpandNetworkFab(onFeed: () -> Unit) {
             icon = {
                 Icon(
                     painter =
-                    painterResource(
-                        R.drawable.ic_partner_exchange_filled,
-                    ),
+                        painterResource(
+                            R.drawable.ic_partner_exchange_filled,
+                        ),
                     contentDescription = null,
                 )
             },
             text = {
                 Text(
-                    text = stringResource(R.string.expand_network),
+                    text = stringResource(R.string.explore_network),
                 )
             },
         )
@@ -240,6 +271,18 @@ private fun TopAppBar(
 }
 
 @Composable
+private fun snackbarStrings(): Map<NetworkScreenEvent, String> = mapOf(
+    NetworkScreenEvent.AddFriendByLinkSuccess to
+        stringResource(R.string.add_friend_by_token_success_text),
+    NetworkScreenEvent.AddFriendByLinkFailure to
+        stringResource(R.string.add_friend_by_token_failure_text),
+    NetworkScreenEvent.FriendLinkExpired to
+        stringResource(R.string.friend_link_expired),
+    NetworkScreenEvent.FriendLinkInvalid to
+        stringResource(R.string.link_is_invalid),
+)
+
+@Composable
 private fun ScaffoldContent(
     vm: NetworkScreenViewModel,
     state: NetworkScreenUiState,
@@ -248,11 +291,22 @@ private fun ScaffoldContent(
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
 ) {
+    var addFriendByLinkDialogVisible by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(padding),
     ) {
+        AddFriendByLinkDialog(
+            visible = addFriendByLinkDialogVisible,
+            onDismiss = { addFriendByLinkDialogVisible = false },
+            onAdd = { link ->
+                vm.addFriendByLink(link)
+                addFriendByLinkDialogVisible = false
+            },
+        )
+
         AnimatedContent(
             targetState = state,
             contentKey = { state ->
@@ -307,7 +361,7 @@ private fun ScaffoldContent(
                     ) {
                         Text(
                             text =
-                            stringResource(R.string.unknown_error_occurred),
+                                stringResource(R.string.unknown_error_occurred),
                             modifier = Modifier,
                         )
                     }
@@ -358,6 +412,9 @@ private fun ScaffoldContent(
                         },
                         sharedTransitionScope = sharedTransitionScope,
                         animatedContentScope = animatedContentScope,
+                        onAddFriendByLink = {
+                            addFriendByLinkDialogVisible = true
+                        },
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -372,6 +429,7 @@ private fun Success(
     onFriendClick: (FriendItem) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
+    onAddFriendByLink: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -403,6 +461,23 @@ private fun Success(
             )
             if (i == state.friends.lastIndex) {
                 Spacer(Modifier.height(8.dp))
+            }
+        }
+        item {
+            OutlinedButton(
+                contentPadding = ButtonDefaults.MediumContentPadding,
+                shape = ButtonDefaults.squareShape,
+                onClick = onAddFriendByLink,
+                modifier = Modifier
+                    .heightIn(ButtonDefaults.MediumContainerHeight)
+                    .fillMaxWidth(),
+            ) {
+                Text(
+                    text = stringResource(
+                        R.string.add_your_friend_by_invite_link,
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                )
             }
         }
         item { Spacer(Modifier.height(72.dp)) }
@@ -456,6 +531,66 @@ private fun FriendItem(
                         ),
                     animatedVisibilityScope = animatedContentScope,
                 ),
+        )
+    }
+}
+
+@Composable
+private fun AddFriendByLinkDialog(
+    visible: Boolean,
+    onDismiss: () -> Unit,
+    onAdd: (link: String) -> Unit,
+) {
+    val textFieldState = rememberTextFieldState()
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + expandIn(),
+        exit = ExitTransition.None,
+    ) {
+        AlertDialog(
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_group_add),
+                    contentDescription = null,
+                )
+            },
+            title = {
+                Text(stringResource(R.string.add_friend_by_invite_link))
+            },
+            text = {
+                OutlinedTextField(
+                    state = textFieldState,
+                    placeholder = {
+                        Text(
+                            text = stringResource(
+                                R.string.add_friend_by_invite_link_placeholder,
+                            ),
+                        )
+                    },
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                )
+            },
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        textFieldState.clearText()
+                        onAdd(textFieldState.string)
+                    },
+                ) {
+                    Text(stringResource(R.string.add))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        textFieldState.clearText()
+                        onDismiss()
+                    },
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
         )
     }
 }
