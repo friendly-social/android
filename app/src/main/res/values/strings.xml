@@ -166,4 +166,5 @@
     <string name="add_your_friend_by_invite_link">Add your friend by invite link</string>
     <string name="add">Add</string>
     <string name="mark_all_as_read">Mark all as read</string>
+    <string name="see_friends_of_your_friends">See friends of your friends</string>
 </resources>

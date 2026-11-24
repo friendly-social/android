@@ -207,7 +207,7 @@ private fun ExpandNetworkFab(onFeed: () -> Unit) {
                     paneTitle = "Expand network"
                 },
             ) {
-                Text("You have 3 friend requests")
+                Text(stringResource(R.string.see_friends_of_your_friends))
             }
         },
         state = rememberTooltipState(),
