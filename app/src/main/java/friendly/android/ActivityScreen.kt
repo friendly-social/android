@@ -3,10 +3,8 @@ package friendly.android
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -27,7 +25,9 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -76,6 +76,8 @@ fun ActivityScreen(
 
     vm.activity.setFetchNextOnScroll(activityState, lazyColumnState)
 
+    var dropdownMenuExpanded by remember { mutableStateOf(false) }
+
     PullToRefreshBox(
         isRefreshing = isRefreshing || isInitiallyLoading,
         state = pullToRefreshState,
@@ -96,6 +98,31 @@ fun ActivityScreen(
             .fillMaxSize(),
     ) {
         Scaffold(
+            // TODO: make once the backend will be ready
+//            topBar = {
+//                TopAppBar(
+//                    title = {
+//                        Text("Activity")
+//                    },
+//                    actions = {
+//                        IconButton(
+//                            onClick = {
+//                                dropdownMenuExpanded = true
+//                            },
+//                        ) {
+//                            Icon(
+//                                painter = painterResource(R.drawable.ic_more_vert),
+//                                contentDescription = null,
+//                            )
+//                        }
+//                        TopBarActionsDropdownMenu(
+//                            onReadAll = { dropdownMenuExpanded = false },
+//                            onDismissRequest = { dropdownMenuExpanded = false },
+//                            expanded = dropdownMenuExpanded,
+//                        )
+//                    },
+//                )
+//            },
             modifier = Modifier
                 .fillMaxSize(),
         ) { innerPadding ->
@@ -106,8 +133,6 @@ fun ActivityScreen(
                     .fillMaxSize(),
             ) {
                 item(key = "header") {
-                    Spacer(Modifier.height(12.dp))
-
                     if (activityState.error) {
                         Text("some error occurred")
                     }
@@ -168,6 +193,34 @@ fun ActivityScreen(
         }
     }
 }
+
+// @Composable
+// fun TopBarActionsDropdownMenu(
+//    expanded: Boolean,
+//    onDismissRequest: () -> Unit,
+//    onReadAll: () -> Unit,
+//    modifier: Modifier = Modifier,
+// ) {
+//    DropdownMenu(
+//        expanded = expanded,
+//        onDismissRequest = onDismissRequest,
+//        containerColor = MenuDefaults.groupStandardContainerColor,
+//        shape = MenuDefaults.standaloneGroupShape,
+//        modifier = modifier,
+//    ) {
+//        DropdownMenuItem(
+//            text = { Text(stringResource(R.string.mark_all_as_read)) },
+//            shape = MenuDefaults.itemShape(1, 4).shape,
+//            trailingContent = {
+//                Icon(
+//                    painter = painterResource(R.drawable.ic_done_all),
+//                    contentDescription = null,
+//                )
+//            },
+//            onClick = { onReadAll() },
+//        )
+//    }
+// }
 
 @Composable
 private fun DateGroupStickyHeader(

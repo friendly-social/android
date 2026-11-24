@@ -196,16 +196,16 @@ private fun ExpandNetworkFab(onFeed: () -> Unit) {
     //  the user. also display this amount in the tooltip
     TooltipBox(
         positionProvider =
-            TooltipDefaults.rememberTooltipPositionProvider(
-                TooltipAnchorPosition.Above,
-            ),
+        TooltipDefaults.rememberTooltipPositionProvider(
+            TooltipAnchorPosition.Above,
+        ),
         tooltip = {
             PlainTooltip(
                 modifier =
-                    Modifier.semantics {
-                        liveRegion = LiveRegionMode.Assertive
-                        paneTitle = "Expand network"
-                    },
+                Modifier.semantics {
+                    liveRegion = LiveRegionMode.Assertive
+                    paneTitle = "Expand network"
+                },
             ) {
                 Text("You have 3 friend requests")
             }
@@ -217,9 +217,9 @@ private fun ExpandNetworkFab(onFeed: () -> Unit) {
             icon = {
                 Icon(
                     painter =
-                        painterResource(
-                            R.drawable.ic_partner_exchange_filled,
-                        ),
+                    painterResource(
+                        R.drawable.ic_partner_exchange_filled,
+                    ),
                     contentDescription = null,
                 )
             },
@@ -361,7 +361,7 @@ private fun ScaffoldContent(
                     ) {
                         Text(
                             text =
-                                stringResource(R.string.unknown_error_occurred),
+                            stringResource(R.string.unknown_error_occurred),
                             modifier = Modifier,
                         )
                     }

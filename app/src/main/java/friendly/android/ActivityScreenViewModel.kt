@@ -1,12 +1,9 @@
-@file:OptIn(ExperimentalPagingApi::class)
-
 package friendly.android
 
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.ExperimentalPagingApi
 import friendly.query.InfiniteQueryClient
 import friendly.query.InfiniteQueryConfig
 import friendly.query.InfiniteQueryFetchResult

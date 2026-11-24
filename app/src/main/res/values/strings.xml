@@ -165,4 +165,5 @@
     <string name="add_friend_by_invite_link_placeholder">https://invite.getfriend.ly/...</string>
     <string name="add_your_friend_by_invite_link">Add your friend by invite link</string>
     <string name="add">Add</string>
+    <string name="mark_all_as_read">Mark all as read</string>
 </resources>

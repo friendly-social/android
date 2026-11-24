@@ -60,6 +60,8 @@ class CommunityPostScreenViewModel(
 
     private val _state = MutableStateFlow(CommunityPostScreenVmState())
 
+    private val auth = authStorage.getAuth()
+
     val state: StateFlow<CommunityPostScreenUiState> = _state
         .map(CommunityPostScreenVmState::toUiState)
         .stateIn(viewModelScope, Eagerly, CommunityPostScreenUiState())
@@ -94,6 +96,7 @@ class CommunityPostScreenViewModel(
 
     init {
         viewModelScope.launch {
+            launch { client.community.read(auth, descriptor) }
             query.data
                 .filter { it.fetch is Idle }
                 .collect { state ->
