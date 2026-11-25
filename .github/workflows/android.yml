@@ -28,8 +28,8 @@ jobs:
                 env:
                     KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
 
-            -   name: Build debug with signing
-                run: ./gradlew assembleDebug
+            -   name: Build nightly with signing
+                run: ./gradlew assembleNightly
                 env:
                     KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
                     KEYSTORE_KEY_ALIAS: ${{ secrets.KEYSTORE_KEY_ALIAS }}
@@ -39,15 +39,15 @@ jobs:
                 uses: actions/upload-artifact@v4
                 with:
                     name: android-app
-                    path: app/build/outputs/apk/debug/app-debug.apk
+                    path: app/build/outputs/apk/nightly/app-nightly.apk
 
             -   name: Deploy Apk
                 uses: WebFreak001/deploy-nightly@v3.2.0
                 with:
                     upload_url: https://uploads.github.com/repos/friendly-social/android/releases/280899065/assets{?name,label}
                     release_id: 280899065
-                    asset_path: app/build/outputs/apk/debug/app-debug.apk
-                    asset_name: friendly-latest.apk
+                    asset_path: app/build/outputs/apk/nightly/app-nightly.apk
+                    asset_name: friendly-nightly.apk
                     asset_content_type: application/zip
                     max_releases: 1
                     ignore_hash: true
